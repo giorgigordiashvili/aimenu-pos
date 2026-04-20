@@ -1,0 +1,21 @@
+name: aimenu-pos
+region: fra
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
+features:
+  - buildpack-stack=ubuntu-22
+static_sites:
+  - name: aimenu-pos
+    github:
+      branch: main
+      deploy_on_push: true
+      repo: giorgigordiashvili/aimenu-pos
+    source_dir: /
+    build_command: npm install && npm run build:web
+    output_dir: dist
+    catchall_document: index.html
+    envs:
+      - key: EXPO_PUBLIC_API_URL
+        scope: BUILD_TIME
+        value: https://admin.aimenu.ge
