@@ -40,6 +40,15 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name='tables'
+        options={{
+          title: t.nav.tables,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name='grid-outline' color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name='settings'
         options={{
           title: t.nav.settings,
