@@ -109,12 +109,14 @@ export async function getOrder(id: string): Promise<Order> {
 export async function updateOrderStatus(
   id: string,
   status: OrderStatus,
-  notes?: string
+  options?: { notes?: string; cancellationReason?: string }
 ): Promise<Order> {
-  const response = await api.patch<Order>(`/api/v1/dashboard/orders/${id}/status/`, {
-    status,
-    notes,
-  });
+  const body: Record<string, string> = { status };
+  if (options?.notes) body.notes = options.notes;
+  if (status === 'cancelled') {
+    body.cancellation_reason = options?.cancellationReason ?? 'Cancelled by staff';
+  }
+  const response = await api.patch<Order>(`/api/v1/dashboard/orders/${id}/status/`, body);
   return response.data;
 }
 

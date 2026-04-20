@@ -35,6 +35,49 @@ function formatCurrency(raw: string | undefined | null): string {
   return `${n.toFixed(2)} ₾`;
 }
 
+const COLUMN_TONES: Record<OrderStatus, { bg: string; border: string; accent: string }> = {
+  pending_payment: {
+    bg: colors.warningTint,
+    border: colors.warning,
+    accent: colors.warning,
+  },
+  pending: {
+    bg: colors.warningTint,
+    border: colors.warning,
+    accent: colors.warning,
+  },
+  confirmed: {
+    bg: colors.infoTint,
+    border: colors.info,
+    accent: colors.info,
+  },
+  preparing: {
+    bg: colors.accentTint,
+    border: colors.accent,
+    accent: colors.accent,
+  },
+  ready: {
+    bg: colors.successTint,
+    border: colors.success,
+    accent: colors.success,
+  },
+  served: {
+    bg: colors.slate100,
+    border: colors.slate400,
+    accent: colors.slate600,
+  },
+  completed: {
+    bg: colors.slate100,
+    border: colors.slate400,
+    accent: colors.slate600,
+  },
+  cancelled: {
+    bg: colors.dangerTint,
+    border: colors.danger,
+    accent: colors.danger,
+  },
+};
+
 export default function OrdersScreen() {
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -155,12 +198,14 @@ function Column({
   rows: OrderListRow[];
   onOpen: (id: string) => void;
 }) {
+  const tone = COLUMN_TONES[status];
   return (
-    <View style={styles.column}>
-      <View style={styles.columnHeader}>
-        <Text style={styles.columnLabel}>{label}</Text>
-        <View style={styles.countPill}>
-          <Text style={styles.countText}>{rows.length}</Text>
+    <View style={[styles.column, { backgroundColor: tone.bg, borderColor: tone.border }]}>
+      <View style={[styles.columnHeader, { borderBottomColor: tone.border }]}>
+        <View style={[styles.columnDot, { backgroundColor: tone.accent }]} />
+        <Text style={[styles.columnLabel, { color: tone.accent }]}>{label}</Text>
+        <View style={[styles.countPill, { backgroundColor: tone.accent }]}>
+          <Text style={[styles.countText, { color: colors.white }]}>{rows.length}</Text>
         </View>
       </View>
       {rows.length === 0 ? (
@@ -171,7 +216,7 @@ function Column({
         <FlatList
           data={rows}
           keyExtractor={item => item.id}
-          contentContainerStyle={{ paddingBottom: spacing.md }}
+          contentContainerStyle={{ padding: spacing.sm, paddingBottom: spacing.md }}
           ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
           renderItem={({ item }) => (
             <OrderCard row={item} onPress={() => onOpen(item.id)} compact />
@@ -250,29 +295,38 @@ const styles = StyleSheet.create({
   column: {
     flex: 1,
     minWidth: 200,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    overflow: 'hidden',
   },
   columnHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.sm,
-    marginBottom: spacing.sm,
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderBottomWidth: 1,
+  },
+  columnDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
   columnLabel: {
     fontSize: typography.sizes.md,
     fontWeight: typography.weights.bold,
-    color: colors.foreground,
+    flex: 1,
   },
   countPill: {
-    backgroundColor: colors.slate100,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
+    minWidth: 24,
+    alignItems: 'center',
   },
   countText: {
     fontSize: typography.sizes.xs,
     fontWeight: typography.weights.bold,
-    color: colors.slate700,
   },
   columnEmpty: {
     flex: 1,
