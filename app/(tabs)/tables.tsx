@@ -13,6 +13,8 @@ import {
   useWindowDimensions,
 } from 'react-native';
 
+import { AxiosError } from 'axios';
+
 import {
   closeTableSession,
   listActiveTableSessions,
@@ -36,17 +38,58 @@ export default function TablesScreen() {
   });
 
   const closeMutation = useMutation({
-    mutationFn: (id: string) => closeTableSession(id),
+    mutationFn: ({ id, force }: { id: string; force?: boolean }) =>
+      closeTableSession(id, force),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['active-sessions'] });
       qc.invalidateQueries({ queryKey: ['orders-board'] });
     },
   });
 
+  function promptUnpaid(session: TableSessionRow, unpaidCount: number, unpaidTotal: string) {
+    const title = t.tablesScreen.unpaidWarningTitle;
+    const body = t.tablesScreen.unpaidWarningBody
+      .replace('{count}', String(unpaidCount))
+      .replace('{total}', unpaidTotal);
+    const run = () => closeMutation.mutate({ id: session.id, force: true });
+    if (Platform.OS === 'web') {
+      if (typeof globalThis.confirm === 'function' && globalThis.confirm(`${title}\n\n${body}`)) {
+        run();
+      }
+      return;
+    }
+    Alert.alert(title, body, [
+      { text: t.tablesScreen.closeCancel, style: 'cancel' },
+      { text: t.tablesScreen.unpaidForceAction, style: 'destructive', onPress: run },
+    ]);
+  }
+
   function confirmClose(session: TableSessionRow) {
+    const summary = session.orders_summary;
+    if (summary.unpaid_count > 0) {
+      promptUnpaid(session, summary.unpaid_count, summary.unpaid_total);
+      return;
+    }
     const title = t.tablesScreen.closeConfirm;
     const body = t.tablesScreen.closeConfirmBody;
-    const run = () => closeMutation.mutate(session.id);
+    const run = () => {
+      closeMutation.mutate(
+        { id: session.id },
+        {
+          onError: err => {
+            const data = (err as AxiosError<{ error?: { code?: string; unpaid_order_numbers?: string[]; unpaid_total?: string } }>)
+              .response?.data?.error;
+            if (data?.code === 'unpaid_orders') {
+              promptUnpaid(
+                session,
+                data.unpaid_order_numbers?.length ?? 0,
+                data.unpaid_total ?? '0'
+              );
+            }
+          },
+        }
+      );
+    };
     if (Platform.OS === 'web') {
       if (typeof globalThis.confirm === 'function' && !globalThis.confirm(`${title}\n\n${body}`)) {
         return;
@@ -87,7 +130,9 @@ export default function TablesScreen() {
                   row={session}
                   t={t}
                   onClose={() => confirmClose(session)}
-                  isClosing={closeMutation.isPending && closeMutation.variables === session.id}
+                  isClosing={
+                    closeMutation.isPending && closeMutation.variables?.id === session.id
+                  }
                 />
               </View>
             ))}
@@ -107,7 +152,13 @@ interface CardProps {
 
 function SessionCard({ row, t, onClose, isClosing }: CardProps) {
   const summary = row.orders_summary;
-  const canClose = summary.all_terminal;
+  const hasUnpaid = (summary.unpaid_count ?? 0) > 0;
+  const canClose = summary.all_terminal && !hasUnpaid;
+  const closeLabel = hasUnpaid
+    ? t.tablesScreen.unpaidBlocked
+    : canClose
+      ? t.tablesScreen.closeButton
+      : t.tablesScreen.closeDisabled;
   const modeLabel =
     row.payment_mode === 'host_covers' ? t.tablesScreen.hostCovers : t.tablesScreen.splitBill;
 
@@ -126,6 +177,15 @@ function SessionCard({ row, t, onClose, isClosing }: CardProps) {
         </View>
       </View>
 
+      {hasUnpaid ? (
+        <View style={styles.unpaidBanner}>
+          <Ionicons name='warning' size={16} color={colors.danger} />
+          <Text style={styles.unpaidText}>
+            {t.tablesScreen.unpaidBadge}: {summary.unpaid_count} · {summary.unpaid_total} ₾
+          </Text>
+        </View>
+      ) : null}
+
       <View style={styles.statsRow}>
         <Stat label={t.tablesScreen.guestsLabel} value={row.guest_count} />
         <Stat label={t.tablesScreen.ordersLabel} value={summary.total_orders} />
@@ -141,10 +201,10 @@ function SessionCard({ row, t, onClose, isClosing }: CardProps) {
       </View>
 
       <Button
-        title={canClose ? t.tablesScreen.closeButton : t.tablesScreen.closeDisabled}
-        variant={canClose ? 'danger' : 'outline'}
+        title={closeLabel}
+        variant={canClose ? 'danger' : hasUnpaid ? 'outline' : 'outline'}
         fullWidth
-        disabled={!canClose || isClosing}
+        disabled={(!canClose && !hasUnpaid) || isClosing}
         loading={isClosing}
         onPress={onClose}
       />
@@ -217,6 +277,23 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.semibold,
     color: colors.foreground,
     marginTop: 2,
+  },
+  unpaidBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.danger + '1A',
+    borderWidth: 1,
+    borderColor: colors.danger,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.md,
+  },
+  unpaidText: {
+    fontSize: typography.sizes.sm,
+    color: colors.danger,
+    fontWeight: typography.weights.semibold,
+    flex: 1,
   },
   statusRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: {

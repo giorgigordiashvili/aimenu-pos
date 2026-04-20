@@ -6,6 +6,17 @@ export interface SessionOrdersSummary {
   non_terminal: number;
   grand_total: string;
   all_terminal: boolean;
+  unpaid_count: number;
+  unpaid_order_numbers: string[];
+  unpaid_total: string;
+  all_paid: boolean;
+}
+
+export interface CloseSessionError {
+  code?: string;
+  message: string;
+  unpaid_order_numbers?: string[];
+  unpaid_total?: string;
 }
 
 export interface TableSessionRow {
@@ -31,6 +42,6 @@ export async function listActiveTableSessions(): Promise<Paginated<TableSessionR
   return res.data;
 }
 
-export async function closeTableSession(id: string): Promise<void> {
-  await api.post(`/api/v1/dashboard/tables/sessions/${id}/close/`);
+export async function closeTableSession(id: string, force = false): Promise<void> {
+  await api.post(`/api/v1/dashboard/tables/sessions/${id}/close/`, force ? { force: true } : {});
 }

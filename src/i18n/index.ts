@@ -39,6 +39,13 @@ export const dictionaries = {
       closeAction: 'დახურვა',
       closeSuccess: 'მაგიდა დახურულია',
       closeFail: 'ვერ დაიხურა',
+      unpaidLabel: 'გადაუხდელი',
+      unpaidBadge: 'გადაუხდელი შეკვეთები',
+      unpaidBlocked: 'გადაუხდელი შეკვეთები უნდა დახურდეს ან გაუქმდეს',
+      unpaidWarningTitle: 'ფული გადაუხდელია',
+      unpaidWarningBody:
+        '{count} შეკვეთა გადახდილი არ არის (სულ {total} ₾). გააგრძელო ძალით დახურვა? ფული დაიკარგება.',
+      unpaidForceAction: 'დახურვა მაინც',
     },
     dashboard: {
       title: 'რესტორნის პანელი',
@@ -204,6 +211,13 @@ export const dictionaries = {
       closeAction: 'Close',
       closeSuccess: 'Table closed',
       closeFail: 'Failed to close',
+      unpaidLabel: 'Unpaid',
+      unpaidBadge: 'Unpaid orders',
+      unpaidBlocked: 'Settle or cancel the unpaid orders first',
+      unpaidWarningTitle: 'Money is unpaid',
+      unpaidWarningBody:
+        '{count} order(s) totaling {total} ₾ have not been paid. Force-close anyway? The money will be lost.',
+      unpaidForceAction: 'Close anyway',
     },
     dashboard: {
       title: 'Restaurant panel',
