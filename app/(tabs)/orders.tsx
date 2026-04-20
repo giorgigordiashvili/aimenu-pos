@@ -334,6 +334,12 @@ export default function OrdersScreen() {
           />
         </View>
         <Button
+          title={t.loyalty.openButton}
+          variant='outline'
+          onPress={() => router.push('/loyalty/redeem')}
+          size='md'
+        />
+        <Button
           title='↻'
           variant='outline'
           onPress={() =>

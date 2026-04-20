@@ -76,6 +76,17 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.card}>
+          <Text style={styles.cardTitle}>{t.loyalty.title}</Text>
+          <Text style={styles.cardBody}>{t.loyalty.codeHint}</Text>
+          <Button
+            title={t.loyalty.openButton}
+            variant='primary'
+            fullWidth
+            onPress={() => router.push('/loyalty/redeem')}
+          />
+        </View>
+
+        <View style={styles.card}>
           <Text style={styles.cardTitle}>{t.settings.account}</Text>
           <Text style={styles.cardBody}>{t.settings.accountBody}</Text>
           <Button title={t.settings.signOut} variant='danger' fullWidth onPress={handleSignOut} />

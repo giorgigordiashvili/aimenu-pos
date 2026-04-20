@@ -18,6 +18,11 @@ import type {
   UserRegistration,
   TokenRefreshRequest,
   TokenRefresh,
+  PaginatedLoyaltyProgramList,
+  LoyaltyProgramWriteRequest,
+  LoyaltyProgramWrite,
+  LoyaltyProgram,
+  PatchedLoyaltyProgramWriteRequest,
   PaginatedMenuCategoryList,
   MenuCategoryRequest,
   MenuCategory,
@@ -87,6 +92,7 @@ import type {
   PaginatedFavoriteRestaurantList,
   FavoriteRestaurantCreateRequest,
   FavoriteRestaurantCreate,
+  PaginatedLoyaltyCounterList,
   PaginatedOrderList,
   PaginatedPaymentMethodList,
   ReservationCreateRequest,
@@ -217,6 +223,88 @@ export async function dashboardAuditExportRetrieve(): Promise<any> {
 
 export async function dashboardAuditStatsRetrieve(): Promise<any> {
   const response = await axios.get(`/api/v1/dashboard/audit/stats/`);
+  return response.data;
+}
+
+export async function dashboardLoyaltyProgramsList(
+  ordering?: string,
+  page?: number,
+  pageSize?: number,
+  search?: string,
+): Promise<PaginatedLoyaltyProgramList> {
+  const response = await axios.get(
+    `/api/v1/dashboard/loyalty/programs/${(() => {
+      const parts = [
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
+  return response.data;
+}
+
+export async function dashboardLoyaltyProgramsCreate(
+  data: LoyaltyProgramWriteRequest,
+): Promise<LoyaltyProgramWrite> {
+  const response = await axios.post(
+    `/api/v1/dashboard/loyalty/programs/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardLoyaltyProgramsRetrieve(
+  id: string,
+): Promise<LoyaltyProgram> {
+  const response = await axios.get(`/api/v1/dashboard/loyalty/programs/${id}/`);
+  return response.data;
+}
+
+export async function dashboardLoyaltyProgramsUpdate(
+  id: string,
+  data: LoyaltyProgramWriteRequest,
+): Promise<LoyaltyProgramWrite> {
+  const response = await axios.put(
+    `/api/v1/dashboard/loyalty/programs/${id}/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardLoyaltyProgramsPartialUpdate(
+  id: string,
+  data: PatchedLoyaltyProgramWriteRequest,
+): Promise<LoyaltyProgramWrite> {
+  const response = await axios.patch(
+    `/api/v1/dashboard/loyalty/programs/${id}/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardLoyaltyProgramsDestroy(
+  id: string,
+): Promise<any> {
+  const response = await axios.delete(
+    `/api/v1/dashboard/loyalty/programs/${id}/`,
+  );
+  return response.data;
+}
+
+export async function dashboardLoyaltyRedeemConfirmCreate(): Promise<any> {
+  const response = await axios.post(
+    `/api/v1/dashboard/loyalty/redeem/confirm/`,
+  );
+  return response.data;
+}
+
+export async function dashboardLoyaltyRedeemValidateCreate(): Promise<any> {
+  const response = await axios.post(
+    `/api/v1/dashboard/loyalty/redeem/validate/`,
+  );
   return response.data;
 }
 
@@ -1337,6 +1425,31 @@ export async function favoritesRestaurantsBulkStatusCreate(): Promise<any> {
 
 export async function healthRetrieve(): Promise<any> {
   const response = await axios.get(`/api/v1/health/`);
+  return response.data;
+}
+
+export async function loyaltyMyList(
+  ordering?: string,
+  page?: number,
+  pageSize?: number,
+  search?: string,
+): Promise<PaginatedLoyaltyCounterList> {
+  const response = await axios.get(
+    `/api/v1/loyalty/my/${(() => {
+      const parts = [
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
+  return response.data;
+}
+
+export async function loyaltyMyRedeemCreate(): Promise<any> {
+  const response = await axios.post(`/api/v1/loyalty/my/redeem/`);
   return response.data;
 }
 

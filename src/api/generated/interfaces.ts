@@ -127,6 +127,69 @@ export interface KitchenOrder {
   created_at: string;
 }
 
+export interface LoyaltyCounter {
+  id: string;
+  program: LoyaltyProgram;
+  restaurant_name: string;
+  restaurant_slug: string;
+  restaurant_logo: string;
+  punches: number;
+  can_redeem: boolean;
+  last_earned_at: string;
+  created_at: string;
+}
+
+export interface LoyaltyProgram {
+  id: string;
+  name: string;
+  description?: string;
+  is_active?: boolean;
+  is_live: boolean;
+  trigger_item: string;
+  trigger_item_detail: MenuItemBrief;
+  threshold?: number;
+  reward_item: string;
+  reward_item_detail: MenuItemBrief;
+  reward_quantity?: number;
+  starts_at?: string;
+  ends_at?: string;
+  code_ttl_seconds?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LoyaltyProgramWrite {
+  id: string;
+  name: string;
+  description?: string;
+  is_active?: boolean;
+  is_live: boolean;
+  trigger_item: string;
+  trigger_item_detail: MenuItemBrief;
+  threshold?: number;
+  reward_item: string;
+  reward_item_detail: MenuItemBrief;
+  reward_quantity?: number;
+  starts_at?: string;
+  ends_at?: string;
+  code_ttl_seconds?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LoyaltyProgramWriteRequest {
+  name: string;
+  description?: string;
+  is_active?: boolean;
+  trigger_item: string;
+  threshold?: number;
+  reward_item: string;
+  reward_quantity?: number;
+  starts_at?: string;
+  ends_at?: string;
+  code_ttl_seconds?: number;
+}
+
 export interface MenuCategory {
   id: string;
   translations: string;
@@ -434,6 +497,20 @@ export interface PaginatedKitchenOrderList {
   results: KitchenOrder[];
 }
 
+export interface PaginatedLoyaltyCounterList {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: LoyaltyCounter[];
+}
+
+export interface PaginatedLoyaltyProgramList {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: LoyaltyProgram[];
+}
+
 export interface PaginatedMenuCategoryList {
   count: number;
   next?: string;
@@ -592,6 +669,19 @@ export interface PasswordResetRequest {
 
 export interface PasswordResetRequestRequest {
   email: string;
+}
+
+export interface PatchedLoyaltyProgramWriteRequest {
+  name?: string;
+  description?: string;
+  is_active?: boolean;
+  trigger_item?: string;
+  threshold?: number;
+  reward_item?: string;
+  reward_quantity?: number;
+  starts_at?: string;
+  ends_at?: string;
+  code_ttl_seconds?: number;
 }
 
 export interface PatchedMenuCategoryRequest {
@@ -951,6 +1041,7 @@ export interface ReservationList {
   restaurant_average_rating: string;
   deposit_amount: string;
   payment_status: string;
+  pre_order_summary: string;
   can_cancel: boolean;
   can_modify: boolean;
   created_at: string;
@@ -1437,4 +1528,17 @@ export interface UserUpdateRequest {
   avatar?: string;
   preferred_language?: PreferredLanguageEnum;
   profile?: UserProfileRequest;
+}
+
+export interface MenuItemBrief {
+  id: string;
+  name: string;
+  price: string;
+  image?: string;
+}
+
+export interface MenuItemBriefRequest {
+  id: string;
+  price: string;
+  image?: string;
 }
