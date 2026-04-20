@@ -10,6 +10,33 @@ export type ReservationStatus =
   | 'cancelled'
   | 'no_show';
 
+export interface PreOrderItemModifier {
+  id?: string;
+  modifier_name?: string;
+  total_price?: string;
+}
+
+export interface PreOrderItem {
+  id: string;
+  item_name: string;
+  quantity?: number;
+  total_price?: string;
+  special_instructions?: string;
+  modifiers?: PreOrderItemModifier[];
+}
+
+export interface PreOrder {
+  id: string;
+  order_number?: string;
+  status?: string;
+  status_display?: string;
+  subtotal?: string;
+  tax_amount?: string;
+  service_charge?: string;
+  total?: string;
+  items?: PreOrderItem[];
+}
+
 export interface Reservation {
   id: string;
   confirmation_code: string;
@@ -29,6 +56,7 @@ export interface Reservation {
   source_display?: string;
   special_requests?: string;
   internal_notes?: string;
+  pre_order?: PreOrder | null;
   can_cancel?: boolean;
   can_modify?: boolean;
   is_upcoming?: boolean;

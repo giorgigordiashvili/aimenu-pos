@@ -37,11 +37,11 @@ function formatTime(t: string): string {
   return t?.slice(0, 5) ?? '';
 }
 
-function totalFromNotes(notes?: string): { total?: string; menu?: string } {
-  if (!notes) return {};
-  const total = /total[:\s]+(\d+(?:\.\d+)?)/i.exec(notes)?.[1];
-  const menu = /menu[:\s]+(\d+(?:\.\d+)?)/i.exec(notes)?.[1];
-  return { total, menu };
+function formatAmount(raw?: string | null): string | undefined {
+  if (!raw) return undefined;
+  const n = parseFloat(raw);
+  if (Number.isNaN(n)) return undefined;
+  return n.toFixed(2);
 }
 
 export default function ReservationCard({
@@ -56,8 +56,10 @@ export default function ReservationCard({
   isMutating,
 }: Props) {
   const status: ReservationStatus = resolveReservationStatus(row.status);
-  const { total, menu } = totalFromNotes(row.internal_notes);
-  const hasOrder = Boolean(total);
+  const preOrder = row.pre_order ?? null;
+  const hasOrder = !!preOrder && (preOrder.items?.length ?? 0) > 0;
+  const total = formatAmount(preOrder?.total);
+  const menu = formatAmount(preOrder?.subtotal);
   const typeLabel = hasOrder ? t.reservationCard.reservationPlusOrder : t.reservationCard.reservationOnly;
 
   return (

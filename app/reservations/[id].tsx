@@ -59,6 +59,13 @@ function formatDateTime(iso: string, locale: string): string {
   }
 }
 
+function formatCurrency(raw: string | undefined | null): string {
+  if (!raw) return '—';
+  const n = parseFloat(raw);
+  if (Number.isNaN(n)) return raw;
+  return `${n.toFixed(2)} ₾`;
+}
+
 export default function ReservationDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -110,7 +117,11 @@ export default function ReservationDetailScreen() {
   const status = resolveReservationStatus(data.status);
   const next = ADVANCE[status];
   const isTerminal = status === 'completed' || status === 'cancelled' || status === 'no_show';
-  const typeLabel = t.reservationCard.reservationOnly;
+  const preOrder = data.pre_order ?? null;
+  const hasPreOrder = !!preOrder && (preOrder.items?.length ?? 0) > 0;
+  const typeLabel = hasPreOrder
+    ? t.reservationCard.reservationPlusOrder
+    : t.reservationCard.reservationOnly;
 
   return (
     <SafeAreaView style={styles.root}>
@@ -171,6 +182,46 @@ export default function ReservationDetailScreen() {
             </IconRow>
           ) : null}
         </View>
+
+        {hasPreOrder ? (
+          <View style={styles.preOrderBox}>
+            <Text style={styles.sectionTitle}>{t.reservationDetails.orderedItems}</Text>
+            {preOrder!.items!.map(item => (
+              <View key={item.id} style={styles.preOrderRow}>
+                <View style={styles.qtyBadge}>
+                  <Text style={styles.qtyBadgeText}>{item.quantity ?? 1}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.preOrderName}>{item.item_name}</Text>
+                  {item.modifiers && item.modifiers.length > 0 ? (
+                    <Text style={styles.preOrderSub}>
+                      {item.modifiers.map(m => m.modifier_name).filter(Boolean).join(', ')}
+                    </Text>
+                  ) : null}
+                  {item.special_instructions ? (
+                    <Text style={styles.preOrderSub}>{item.special_instructions}</Text>
+                  ) : null}
+                </View>
+                <Text style={styles.preOrderPrice}>{formatCurrency(item.total_price)}</Text>
+              </View>
+            ))}
+            <View style={styles.preOrderDivider} />
+            {preOrder!.subtotal ? (
+              <TotalRow label={t.reservationDetails.subtotal} value={formatCurrency(preOrder!.subtotal)} />
+            ) : null}
+            {preOrder!.tax_amount && parseFloat(preOrder!.tax_amount) > 0 ? (
+              <TotalRow label={t.reservationDetails.tax} value={formatCurrency(preOrder!.tax_amount)} />
+            ) : null}
+            {preOrder!.service_charge && parseFloat(preOrder!.service_charge) > 0 ? (
+              <TotalRow label={t.reservationDetails.service} value={formatCurrency(preOrder!.service_charge)} />
+            ) : null}
+            <TotalRow
+              label={t.reservationDetails.total}
+              value={formatCurrency(preOrder!.total)}
+              emphasised
+            />
+          </View>
+        ) : null}
 
         {data.special_requests ? (
           <View style={styles.noteBox}>
@@ -235,6 +286,41 @@ function IconRow({
         <Ionicons name={icon} size={16} color={iconColor} />
       </View>
       <Text style={styles.rowText}>{children}</Text>
+    </View>
+  );
+}
+
+function TotalRow({
+  label,
+  value,
+  emphasised = false,
+}: {
+  label: string;
+  value: string;
+  emphasised?: boolean;
+}) {
+  return (
+    <View style={styles.totalRow}>
+      <Text
+        style={[
+          styles.totalLabel,
+          emphasised && { color: colors.foreground, fontWeight: typography.weights.bold },
+        ]}
+      >
+        {label}
+      </Text>
+      <Text
+        style={[
+          styles.totalValue,
+          emphasised && {
+            fontSize: typography.sizes.lg,
+            color: colors.primary,
+            fontWeight: typography.weights.bold,
+          },
+        ]}
+      >
+        {value}
+      </Text>
     </View>
   );
 }
@@ -322,6 +408,67 @@ const styles = StyleSheet.create({
   rowText: {
     fontSize: typography.sizes.md,
     color: colors.foreground,
+  },
+  preOrderBox: {
+    backgroundColor: colors.infoTint,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    gap: spacing.sm,
+  },
+  preOrderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
+  },
+  qtyBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: radius.pill,
+    backgroundColor: colors.info,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qtyBadgeText: {
+    color: colors.white,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.bold,
+  },
+  preOrderName: {
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
+    color: colors.foreground,
+  },
+  preOrderSub: {
+    fontSize: typography.sizes.xs,
+    color: colors.muted,
+    marginTop: 2,
+  },
+  preOrderPrice: {
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.bold,
+    color: colors.foreground,
+  },
+  preOrderDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: spacing.xs,
+  },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+  },
+  totalLabel: {
+    fontSize: typography.sizes.sm,
+    color: colors.mutedStrong,
+  },
+  totalValue: {
+    fontSize: typography.sizes.sm,
+    color: colors.foreground,
+    fontWeight: typography.weights.semibold,
   },
   noteBox: {
     backgroundColor: colors.highlight,
