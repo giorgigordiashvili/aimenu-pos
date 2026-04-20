@@ -1,9 +1,16 @@
+import {
+  DragDropContext,
+  Draggable,
+  Droppable,
+  type DropResult,
+} from '@hello-pangea/dnd';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Platform,
   Pressable,
   RefreshControl,
   SafeAreaView,
@@ -13,13 +20,6 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
 
 import {
   getOrder,
@@ -36,8 +36,6 @@ import { useAuth } from '@/context/AuthContext';
 import { useT } from '@/i18n';
 import { printReceipt } from '@/lib/printReceipt';
 import { colors, radius, shadows, spacing, typography } from '@/theme/tokens';
-
-type ColumnBound = { key: OrderStatus; x: number; y: number; width: number; height: number };
 
 function formatTime(iso: string): string {
   try {
@@ -98,6 +96,69 @@ const COLUMN_TONES: Record<OrderStatus, { bg: string; border: string; accent: st
 
 type TopTab = 'active' | 'history';
 
+// Plain-CSS style objects used only on the web DnD path (@hello-pangea/dnd
+// needs DOM elements with innerRef). Kept out of StyleSheet.create because
+// that API emits React-Native-specific primitives.
+const webBoardStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'row',
+  gap: spacing.md,
+  padding: `0 ${spacing.xl}px ${spacing.lg}px`,
+  alignItems: 'stretch',
+  flex: 1,
+  minHeight: 0,
+};
+const webColumnStyle: React.CSSProperties = {
+  flex: 1,
+  minWidth: 220,
+  borderRadius: radius.lg,
+  borderWidth: 1,
+  borderStyle: 'solid',
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: 'hidden',
+};
+const webColumnHeaderStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: spacing.sm,
+  padding: `${spacing.md}px ${spacing.md}px`,
+  borderBottomWidth: 1,
+  borderBottomStyle: 'solid',
+  fontSize: typography.sizes.md,
+  fontWeight: typography.weights.bold,
+};
+const webColumnDotStyle: React.CSSProperties = {
+  width: 10,
+  height: 10,
+  borderRadius: 5,
+};
+const webColumnLabelStyle: React.CSSProperties = {
+  flex: 1,
+  fontWeight: typography.weights.bold,
+};
+const webColumnCountStyle: React.CSSProperties = {
+  borderRadius: 999,
+  padding: '2px 8px',
+  color: '#fff',
+  fontSize: typography.sizes.xs,
+  fontWeight: typography.weights.bold,
+  minWidth: 24,
+  textAlign: 'center',
+};
+const webColumnBodyStyle: React.CSSProperties = {
+  flex: 1,
+  padding: spacing.sm,
+  minHeight: 120,
+  overflowY: 'auto',
+};
+const webColumnEmptyStyle: React.CSSProperties = {
+  color: colors.slate400,
+  padding: spacing.lg,
+  textAlign: 'center',
+  fontSize: typography.sizes.md,
+};
+
 export default function OrdersScreen() {
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -107,8 +168,6 @@ export default function OrdersScreen() {
   const [search, setSearch] = useState('');
   const [topTab, setTopTab] = useState<TopTab>('active');
   const t = useT();
-
-  const columnBoundsRef = useRef<ColumnBound[]>([]);
 
   const moveMutation = useMutation({
     mutationFn: ({ orderId, status }: { orderId: string; status: OrderStatus }) =>
@@ -132,18 +191,17 @@ export default function OrdersScreen() {
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['orders-board'] }),
   });
 
-  function registerBound(bound: ColumnBound) {
-    const idx = columnBoundsRef.current.findIndex(c => c.key === bound.key);
-    if (idx >= 0) columnBoundsRef.current[idx] = bound;
-    else columnBoundsRef.current.push(bound);
-  }
-
-  function handleDrop(orderId: string, currentStatus: OrderStatus, absX: number, absY: number) {
-    const target = columnBoundsRef.current.find(
-      c => absX >= c.x && absX <= c.x + c.width && absY >= c.y && absY <= c.y + c.height
-    );
-    if (!target || target.key === currentStatus) return;
-    moveMutation.mutate({ orderId, status: target.key });
+  function handleDragEnd(result: DropResult) {
+    const { destination, source, draggableId } = result;
+    if (!destination) return;
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+    const targetStatus = destination.droppableId as OrderStatus;
+    moveMutation.mutate({ orderId: draggableId, status: targetStatus });
   }
   const COLUMNS: { key: OrderStatus; label: string }[] = [
     { key: 'pending', label: t.ordersScreen.columns.pending },
@@ -295,30 +353,113 @@ export default function OrdersScreen() {
             </View>
           }
         />
-      ) : isTablet ? (
+      ) : isTablet && Platform.OS === 'web' ? (
         <>
           <Text style={styles.dragHint}>{t.ordersScreen.dragHint}</Text>
-          <View style={styles.board}>
-            {COLUMNS.map(col => (
-              <Column
-                key={col.key}
-                label={col.label}
-                status={col.key}
-                rows={grouped[col.key] ?? []}
-                onOpen={id => router.push(`/orders/${id}`)}
-                onRegisterBound={registerBound}
-                onDrop={handleDrop}
-                onFinish={
-                  col.key === 'served'
-                    ? id => finishMutation.mutate(id)
-                    : undefined
-                }
-                finishLabel={t.ordersScreen.finishShort}
-                isFinishing={finishMutation.isPending}
-              />
-            ))}
-          </View>
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <div style={webBoardStyle}>
+              {COLUMNS.map(col => {
+                const tone = COLUMN_TONES[col.key];
+                const rowsForCol = grouped[col.key] ?? [];
+                return (
+                  <Droppable droppableId={col.key} key={col.key}>
+                    {(dropProvided, dropSnapshot) => (
+                      <div
+                        ref={dropProvided.innerRef}
+                        {...dropProvided.droppableProps}
+                        style={{
+                          ...webColumnStyle,
+                          backgroundColor: tone.bg,
+                          borderColor: tone.border,
+                          outline: dropSnapshot.isDraggingOver
+                            ? `2px solid ${tone.accent}`
+                            : 'none',
+                        }}
+                      >
+                        <div
+                          style={{
+                            ...webColumnHeaderStyle,
+                            borderBottomColor: tone.border,
+                          }}
+                        >
+                          <span style={{ ...webColumnDotStyle, backgroundColor: tone.accent }} />
+                          <span style={{ ...webColumnLabelStyle, color: tone.accent }}>
+                            {col.label}
+                          </span>
+                          <span style={{ ...webColumnCountStyle, backgroundColor: tone.accent }}>
+                            {rowsForCol.length}
+                          </span>
+                        </div>
+
+                        <div style={webColumnBodyStyle}>
+                          {rowsForCol.length === 0 ? (
+                            <div style={webColumnEmptyStyle}>—</div>
+                          ) : (
+                            rowsForCol.map((item, idx) => (
+                              <Draggable
+                                draggableId={item.id}
+                                index={idx}
+                                key={item.id}
+                              >
+                                {(dragProvided, dragSnapshot) => (
+                                  <div
+                                    ref={dragProvided.innerRef}
+                                    {...dragProvided.draggableProps}
+                                    {...dragProvided.dragHandleProps}
+                                    style={{
+                                      ...dragProvided.draggableProps.style,
+                                      marginBottom: spacing.sm,
+                                      boxShadow: dragSnapshot.isDragging
+                                        ? '0 8px 20px rgba(0,0,0,0.18)'
+                                        : undefined,
+                                    }}
+                                  >
+                                    <OrderCard
+                                      row={item}
+                                      onPress={() => router.push(`/orders/${item.id}`)}
+                                      compact
+                                      onFinish={
+                                        col.key === 'served'
+                                          ? () => finishMutation.mutate(item.id)
+                                          : undefined
+                                      }
+                                      finishLabel={t.ordersScreen.finishShort}
+                                      isFinishing={finishMutation.isPending}
+                                    />
+                                  </div>
+                                )}
+                              </Draggable>
+                            ))
+                          )}
+                          {dropProvided.placeholder}
+                        </div>
+                      </div>
+                    )}
+                  </Droppable>
+                );
+              })}
+            </div>
+          </DragDropContext>
         </>
+      ) : isTablet ? (
+        <View style={styles.board}>
+          {COLUMNS.map(col => (
+            <Column
+              key={col.key}
+              label={col.label}
+              status={col.key}
+              rows={grouped[col.key] ?? []}
+              onOpen={id => router.push(`/orders/${id}`)}
+              onFinish={
+                col.key === 'served'
+                  ? id => finishMutation.mutate(id)
+                  : undefined
+              }
+              finishLabel={t.ordersScreen.finishShort}
+              isFinishing={finishMutation.isPending}
+            />
+          ))}
+        </View>
       ) : (
         <FlatList
           data={filtered}
@@ -374,8 +515,6 @@ function Column({
   status,
   rows,
   onOpen,
-  onRegisterBound,
-  onDrop,
   onFinish,
   finishLabel,
   isFinishing,
@@ -384,28 +523,13 @@ function Column({
   status: OrderStatus;
   rows: OrderListRow[];
   onOpen: (id: string) => void;
-  onRegisterBound?: (bound: ColumnBound) => void;
-  onDrop?: (orderId: string, currentStatus: OrderStatus, absX: number, absY: number) => void;
   onFinish?: (orderId: string) => void;
   finishLabel?: string;
   isFinishing?: boolean;
 }) {
   const tone = COLUMN_TONES[status];
-  const columnRef = useRef<View>(null);
-
-  function handleLayout() {
-    if (!onRegisterBound) return;
-    columnRef.current?.measureInWindow((x, y, width, height) => {
-      onRegisterBound({ key: status, x, y, width, height });
-    });
-  }
-
   return (
-    <View
-      ref={columnRef}
-      onLayout={handleLayout}
-      style={[styles.column, { backgroundColor: tone.bg, borderColor: tone.border }]}
-    >
+    <View style={[styles.column, { backgroundColor: tone.bg, borderColor: tone.border }]}>
       <View style={[styles.columnHeader, { borderBottomColor: tone.border }]}>
         <View style={[styles.columnDot, { backgroundColor: tone.accent }]} />
         <Text style={[styles.columnLabel, { color: tone.accent }]}>{label}</Text>
@@ -424,11 +548,10 @@ function Column({
           contentContainerStyle={{ padding: spacing.sm, paddingBottom: spacing.md }}
           ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
           renderItem={({ item }) => (
-            <DraggableOrderCard
+            <OrderCard
               row={item}
               onPress={() => onOpen(item.id)}
-              onDrop={onDrop}
-              currentStatus={status}
+              compact
               onFinish={onFinish ? () => onFinish(item.id) : undefined}
               finishLabel={finishLabel}
               isFinishing={isFinishing}
@@ -438,74 +561,6 @@ function Column({
         />
       )}
     </View>
-  );
-}
-
-function DraggableOrderCard({
-  row,
-  onPress,
-  onDrop,
-  currentStatus,
-  onFinish,
-  finishLabel,
-  isFinishing,
-}: {
-  row: OrderListRow;
-  onPress: () => void;
-  onDrop?: (orderId: string, currentStatus: OrderStatus, absX: number, absY: number) => void;
-  currentStatus: OrderStatus;
-  onFinish?: () => void;
-  finishLabel?: string;
-  isFinishing?: boolean;
-}) {
-  const translateX = useSharedValue(0);
-  const translateY = useSharedValue(0);
-  const scale = useSharedValue(1);
-  const z = useSharedValue(0);
-
-  const drop = onDrop ?? (() => {});
-
-  const pan = Gesture.Pan()
-    .activateAfterLongPress(250)
-    .onStart(() => {
-      scale.value = withSpring(1.04);
-      z.value = 100;
-    })
-    .onUpdate(e => {
-      translateX.value = e.translationX;
-      translateY.value = e.translationY;
-    })
-    .onEnd(e => {
-      runOnJS(drop)(row.id, currentStatus, e.absoluteX, e.absoluteY);
-      translateX.value = withSpring(0);
-      translateY.value = withSpring(0);
-      scale.value = withSpring(1);
-      z.value = 0;
-    });
-
-  const animStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: translateX.value },
-      { translateY: translateY.value },
-      { scale: scale.value },
-    ],
-    zIndex: z.value,
-    elevation: z.value,
-  }));
-
-  return (
-    <GestureDetector gesture={pan}>
-      <Animated.View style={animStyle}>
-        <OrderCard
-          row={row}
-          onPress={onPress}
-          compact
-          onFinish={onFinish}
-          finishLabel={finishLabel}
-          isFinishing={isFinishing}
-        />
-      </Animated.View>
-    </GestureDetector>
   );
 }
 
