@@ -10,6 +10,7 @@ const baseURL =
 
 const TOKEN_KEY = 'aimenu_pos_access_token';
 const REFRESH_KEY = 'aimenu_pos_refresh_token';
+const RESTAURANT_KEY = 'aimenu_pos_restaurant_slug';
 
 export const tokenStore = {
   async get(): Promise<string | null> {
@@ -23,7 +24,27 @@ export const tokenStore = {
     return AsyncStorage.getItem(REFRESH_KEY);
   },
   async clear() {
-    await AsyncStorage.multiRemove([TOKEN_KEY, REFRESH_KEY]);
+    await AsyncStorage.multiRemove([TOKEN_KEY, REFRESH_KEY, RESTAURANT_KEY]);
+    cachedRestaurantSlug = null;
+  },
+};
+
+let cachedRestaurantSlug: string | null = null;
+
+export const restaurantStore = {
+  async get(): Promise<string | null> {
+    if (cachedRestaurantSlug !== null) return cachedRestaurantSlug;
+    const v = await AsyncStorage.getItem(RESTAURANT_KEY);
+    cachedRestaurantSlug = v;
+    return v;
+  },
+  async set(slug: string) {
+    cachedRestaurantSlug = slug;
+    await AsyncStorage.setItem(RESTAURANT_KEY, slug);
+  },
+  async clear() {
+    cachedRestaurantSlug = null;
+    await AsyncStorage.removeItem(RESTAURANT_KEY);
   },
 };
 
@@ -52,6 +73,10 @@ api.interceptors.request.use(async config => {
   const token = await tokenStore.get();
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+  const slug = await restaurantStore.get();
+  if (slug && config.headers) {
+    config.headers['X-Restaurant'] = slug;
   }
   return config;
 });

@@ -23,17 +23,19 @@ export default function LoginScreen() {
   const { locale, setLocale } = useLocale();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [restaurant, setRestaurant] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const canSubmit = email.trim().length > 0 && password.length > 0 && !loading;
+  const canSubmit =
+    email.trim().length > 0 && password.length > 0 && restaurant.trim().length > 0 && !loading;
 
   async function handleSubmit() {
     if (!canSubmit) return;
     setLoading(true);
     setError(null);
     try {
-      await signIn(email.trim(), password);
+      await signIn(email.trim(), password, restaurant);
       router.replace('/(tabs)/reservations');
     } catch (err) {
       setError(
@@ -89,6 +91,20 @@ export default function LoginScreen() {
                 value={password}
                 onChangeText={setPassword}
                 placeholder='••••••••'
+                placeholderTextColor={colors.slate400}
+                returnKeyType='next'
+              />
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.label}>{t.login.restaurant}</Text>
+              <TextInput
+                style={styles.input}
+                autoCapitalize='none'
+                autoCorrect={false}
+                value={restaurant}
+                onChangeText={setRestaurant}
+                placeholder={t.login.restaurantHint}
                 placeholderTextColor={colors.slate400}
                 onSubmitEditing={handleSubmit}
                 returnKeyType='go'

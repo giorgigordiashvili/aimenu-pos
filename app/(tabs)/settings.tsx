@@ -1,5 +1,17 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { Alert, Platform, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import {
+  Alert,
+  Platform,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 import Button from '@/components/Button';
 import TopBar from '@/components/TopBar';
@@ -8,9 +20,11 @@ import { useLocale } from '@/i18n';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 export default function SettingsScreen() {
-  const { signOut } = useAuth();
+  const { signOut, restaurantSlug, setRestaurantSlug } = useAuth();
   const router = useRouter();
   const { t, locale, setLocale } = useLocale();
+  const qc = useQueryClient();
+  const [slugDraft, setSlugDraft] = useState(restaurantSlug ?? '');
 
   function handleSignOut() {
     const run = async () => {
@@ -30,10 +44,37 @@ export default function SettingsScreen() {
     ]);
   }
 
+  async function handleSaveSlug() {
+    const next = slugDraft.trim().toLowerCase();
+    if (!next) return;
+    await setRestaurantSlug(next);
+    qc.invalidateQueries();
+  }
+
   return (
     <SafeAreaView style={styles.root}>
       <TopBar title={t.settings.title} />
-      <View style={styles.body}>
+      <ScrollView contentContainerStyle={styles.body}>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>{t.settings.restaurant}</Text>
+          <TextInput
+            value={slugDraft}
+            onChangeText={setSlugDraft}
+            autoCapitalize='none'
+            autoCorrect={false}
+            placeholder={t.settings.restaurantHint}
+            placeholderTextColor={colors.slate400}
+            style={styles.input}
+          />
+          <Button
+            title={t.settings.save}
+            variant='primary'
+            fullWidth
+            onPress={handleSaveSlug}
+            disabled={!slugDraft.trim() || slugDraft.trim().toLowerCase() === restaurantSlug}
+          />
+        </View>
+
         <View style={styles.card}>
           <Text style={styles.cardTitle}>{t.settings.account}</Text>
           <Text style={styles.cardBody}>{t.settings.accountBody}</Text>
@@ -63,7 +104,7 @@ export default function SettingsScreen() {
             {process.env.EXPO_PUBLIC_API_URL ?? 'https://admin.aimenu.ge'}
           </Text>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -110,6 +151,16 @@ const styles = StyleSheet.create({
     color: colors.foreground,
   },
   cardBody: { fontSize: typography.sizes.md, color: colors.muted, lineHeight: 22 },
+  input: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    fontSize: typography.sizes.md,
+    color: colors.foreground,
+    backgroundColor: colors.white,
+  },
   localeRow: { flexDirection: 'row', gap: spacing.sm },
   localeBtn: {
     flex: 1,
