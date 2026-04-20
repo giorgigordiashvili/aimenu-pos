@@ -92,7 +92,6 @@ import type {
   PaginatedFavoriteRestaurantList,
   FavoriteRestaurantCreateRequest,
   FavoriteRestaurantCreate,
-  PaginatedLoyaltyCounterList,
   PaginatedOrderList,
   PaginatedPaymentMethodList,
   ReservationCreateRequest,
@@ -543,6 +542,13 @@ export async function dashboardOrdersItemsCreate(id: string): Promise<any> {
   return response.data;
 }
 
+export async function dashboardOrdersServerPartialUpdate(
+  id: string,
+): Promise<any> {
+  const response = await axios.patch(`/api/v1/dashboard/orders/${id}/server/`);
+  return response.data;
+}
+
 export async function dashboardOrdersStatusPartialUpdate(
   id: string,
 ): Promise<any> {
@@ -603,6 +609,11 @@ export async function dashboardOrdersKitchenList(
       return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
+  return response.data;
+}
+
+export async function dashboardOrdersTipsReportRetrieve(): Promise<any> {
+  const response = await axios.get(`/api/v1/dashboard/orders/tips/report/`);
   return response.data;
 }
 
@@ -1428,23 +1439,8 @@ export async function healthRetrieve(): Promise<any> {
   return response.data;
 }
 
-export async function loyaltyMyList(
-  ordering?: string,
-  page?: number,
-  pageSize?: number,
-  search?: string,
-): Promise<PaginatedLoyaltyCounterList> {
-  const response = await axios.get(
-    `/api/v1/loyalty/my/${(() => {
-      const parts = [
-        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
-        page ? 'page=' + encodeURIComponent(page) : null,
-        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
-        search ? 'search=' + encodeURIComponent(search) : null,
-      ].filter(Boolean);
-      return parts.length > 0 ? '?' + parts.join('&') : '';
-    })()}`,
-  );
+export async function loyaltyMyRetrieve(): Promise<any> {
+  const response = await axios.get(`/api/v1/loyalty/my/`);
   return response.data;
 }
 
@@ -1804,6 +1800,15 @@ export async function tablesSessionsRetrieve(
   return response.data;
 }
 
+export async function tablesSessionsBillRetrieve(
+  sessionId: string,
+): Promise<any> {
+  const response = await axios.get(
+    `/api/v1/tables/sessions/${sessionId}/bill/`,
+  );
+  return response.data;
+}
+
 export async function tablesSessionsGuestsList(
   sessionId: string,
   ordering?: string,
@@ -1839,6 +1844,15 @@ export async function tablesSessionsLeaveCreate(
 ): Promise<any> {
   const response = await axios.post(
     `/api/v1/tables/sessions/${sessionId}/leave/`,
+  );
+  return response.data;
+}
+
+export async function tablesSessionsModePartialUpdate(
+  sessionId: string,
+): Promise<any> {
+  const response = await axios.patch(
+    `/api/v1/tables/sessions/${sessionId}/mode/`,
   );
   return response.data;
 }
