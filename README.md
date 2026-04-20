@@ -19,7 +19,7 @@ Set `EXPO_PUBLIC_API_URL` to override the default backend
 
 ## Features
 
-- **Login** — JWT auth against `/api/v1/auth/token/`.
+- **Login** — JWT auth against `/api/v1/auth/login/` (refresh via `/api/v1/auth/token/refresh/`).
 - **Dashboard** — today's reservations with live stats (waiting / confirmed /
   today total). Tablet/desktop renders a 2–3 column grid matching the Figma
   design; mobile collapses to a single column.

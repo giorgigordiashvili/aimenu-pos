@@ -6,7 +6,7 @@ export interface LoginResponse {
 }
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
-  const response = await api.post<LoginResponse>('/api/v1/auth/token/', { email, password });
+  const response = await api.post<LoginResponse>('/api/v1/auth/login/', { email, password });
   const { access, refresh } = response.data;
   await tokenStore.set(access, refresh);
   return response.data;
