@@ -37,6 +37,13 @@ export interface PreOrder {
   items?: PreOrderItem[];
 }
 
+export interface PreOrderSummary {
+  order_id: string;
+  total: string | null;
+  subtotal: string | null;
+  items_count: number;
+}
+
 export interface Reservation {
   id: string;
   confirmation_code: string;
@@ -57,6 +64,7 @@ export interface Reservation {
   special_requests?: string;
   internal_notes?: string;
   pre_order?: PreOrder | null;
+  pre_order_summary?: PreOrderSummary | null;
   can_cancel?: boolean;
   can_modify?: boolean;
   is_upcoming?: boolean;

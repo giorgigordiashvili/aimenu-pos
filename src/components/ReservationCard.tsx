@@ -56,10 +56,11 @@ export default function ReservationCard({
   isMutating,
 }: Props) {
   const status: ReservationStatus = resolveReservationStatus(row.status);
-  const preOrder = row.pre_order ?? null;
-  const hasOrder = !!preOrder && (preOrder.items?.length ?? 0) > 0;
-  const total = formatAmount(preOrder?.total);
-  const menu = formatAmount(preOrder?.subtotal);
+  const summary = row.pre_order_summary ?? null;
+  const detailPreOrder = row.pre_order ?? null;
+  const hasOrder = !!summary || (!!detailPreOrder && (detailPreOrder.items?.length ?? 0) > 0);
+  const total = formatAmount(summary?.total ?? detailPreOrder?.total);
+  const menu = formatAmount(summary?.subtotal ?? detailPreOrder?.subtotal);
   const typeLabel = hasOrder ? t.reservationCard.reservationPlusOrder : t.reservationCard.reservationOnly;
 
   return (
