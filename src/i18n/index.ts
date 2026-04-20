@@ -69,6 +69,7 @@ export const dictionaries = {
       title: 'შეკვეთები',
       search: 'ძებნა',
       empty: 'აქტიური შეკვეთები არ არის',
+      dragHint: 'გრძელად დააჭირე და ჩააგდე სხვა სვეტში',
       columns: {
         pending: 'მოლოდინში',
         confirmed: 'დადასტურებული',
@@ -180,6 +181,7 @@ export const dictionaries = {
       title: 'Orders',
       search: 'Search',
       empty: 'No active orders',
+      dragHint: 'Long-press a card, then drag it to another column',
       columns: {
         pending: 'Pending',
         confirmed: 'Confirmed',

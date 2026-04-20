@@ -1,6 +1,6 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -13,13 +13,28 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, {
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 
-import { listOrders, resolveOrderStatus, type OrderListRow, type OrderStatus } from '@/api/orders';
+import {
+  listOrders,
+  resolveOrderStatus,
+  updateOrderStatus,
+  type OrderListRow,
+  type OrderStatus,
+} from '@/api/orders';
 import Button from '@/components/Button';
 import StatusBadge from '@/components/StatusBadge';
 import TopBar from '@/components/TopBar';
 import { useT } from '@/i18n';
 import { colors, radius, shadows, spacing, typography } from '@/theme/tokens';
+
+type ColumnBound = { key: OrderStatus; x: number; y: number; width: number; height: number };
 
 function formatTime(iso: string): string {
   try {
@@ -85,6 +100,44 @@ export default function OrdersScreen() {
   const isTablet = width >= 1024;
   const [search, setSearch] = useState('');
   const t = useT();
+
+  const columnBoundsRef = useRef<ColumnBound[]>([]);
+
+  const moveMutation = useMutation({
+    mutationFn: ({ orderId, status }: { orderId: string; status: OrderStatus }) =>
+      updateOrderStatus(orderId, status),
+    onMutate: async ({ orderId, status }) => {
+      await queryClient.cancelQueries({ queryKey: ['orders-board'] });
+      const previous = queryClient.getQueryData(['orders-board']);
+      queryClient.setQueryData(['orders-board'], (old: unknown) => {
+        if (!old || typeof old !== 'object' || !('results' in old)) return old;
+        const cast = old as { results: OrderListRow[] };
+        return {
+          ...old,
+          results: cast.results.map(r => (r.id === orderId ? { ...r, status } : r)),
+        };
+      });
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData(['orders-board'], ctx.previous);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['orders-board'] }),
+  });
+
+  function registerBound(bound: ColumnBound) {
+    const idx = columnBoundsRef.current.findIndex(c => c.key === bound.key);
+    if (idx >= 0) columnBoundsRef.current[idx] = bound;
+    else columnBoundsRef.current.push(bound);
+  }
+
+  function handleDrop(orderId: string, currentStatus: OrderStatus, absX: number, absY: number) {
+    const target = columnBoundsRef.current.find(
+      c => absX >= c.x && absX <= c.x + c.width && absY >= c.y && absY <= c.y + c.height
+    );
+    if (!target || target.key === currentStatus) return;
+    moveMutation.mutate({ orderId, status: target.key });
+  }
   const COLUMNS: { key: OrderStatus; label: string }[] = [
     { key: 'pending', label: t.ordersScreen.columns.pending },
     { key: 'confirmed', label: t.ordersScreen.columns.confirmed },
@@ -155,6 +208,9 @@ export default function OrdersScreen() {
       </View>
 
       {isTablet ? (
+        <Text style={styles.dragHint}>{t.ordersScreen.dragHint}</Text>
+      ) : null}
+      {isTablet ? (
         <View style={styles.board}>
           {COLUMNS.map(col => (
             <Column
@@ -163,6 +219,8 @@ export default function OrdersScreen() {
               status={col.key}
               rows={grouped[col.key] ?? []}
               onOpen={id => router.push(`/orders/${id}`)}
+              onRegisterBound={registerBound}
+              onDrop={handleDrop}
             />
           ))}
         </View>
@@ -192,15 +250,32 @@ function Column({
   status,
   rows,
   onOpen,
+  onRegisterBound,
+  onDrop,
 }: {
   label: string;
   status: OrderStatus;
   rows: OrderListRow[];
   onOpen: (id: string) => void;
+  onRegisterBound?: (bound: ColumnBound) => void;
+  onDrop?: (orderId: string, currentStatus: OrderStatus, absX: number, absY: number) => void;
 }) {
   const tone = COLUMN_TONES[status];
+  const columnRef = useRef<View>(null);
+
+  function handleLayout() {
+    if (!onRegisterBound) return;
+    columnRef.current?.measureInWindow((x, y, width, height) => {
+      onRegisterBound({ key: status, x, y, width, height });
+    });
+  }
+
   return (
-    <View style={[styles.column, { backgroundColor: tone.bg, borderColor: tone.border }]}>
+    <View
+      ref={columnRef}
+      onLayout={handleLayout}
+      style={[styles.column, { backgroundColor: tone.bg, borderColor: tone.border }]}
+    >
       <View style={[styles.columnHeader, { borderBottomColor: tone.border }]}>
         <View style={[styles.columnDot, { backgroundColor: tone.accent }]} />
         <Text style={[styles.columnLabel, { color: tone.accent }]}>{label}</Text>
@@ -219,12 +294,72 @@ function Column({
           contentContainerStyle={{ padding: spacing.sm, paddingBottom: spacing.md }}
           ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
           renderItem={({ item }) => (
-            <OrderCard row={item} onPress={() => onOpen(item.id)} compact />
+            <DraggableOrderCard
+              row={item}
+              onPress={() => onOpen(item.id)}
+              onDrop={onDrop}
+              currentStatus={status}
+            />
           )}
           showsVerticalScrollIndicator={false}
         />
       )}
     </View>
+  );
+}
+
+function DraggableOrderCard({
+  row,
+  onPress,
+  onDrop,
+  currentStatus,
+}: {
+  row: OrderListRow;
+  onPress: () => void;
+  onDrop?: (orderId: string, currentStatus: OrderStatus, absX: number, absY: number) => void;
+  currentStatus: OrderStatus;
+}) {
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const scale = useSharedValue(1);
+  const z = useSharedValue(0);
+
+  const drop = onDrop ?? (() => {});
+
+  const pan = Gesture.Pan()
+    .activateAfterLongPress(250)
+    .onStart(() => {
+      scale.value = withSpring(1.04);
+      z.value = 100;
+    })
+    .onUpdate(e => {
+      translateX.value = e.translationX;
+      translateY.value = e.translationY;
+    })
+    .onEnd(e => {
+      runOnJS(drop)(row.id, currentStatus, e.absoluteX, e.absoluteY);
+      translateX.value = withSpring(0);
+      translateY.value = withSpring(0);
+      scale.value = withSpring(1);
+      z.value = 0;
+    });
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { scale: scale.value },
+    ],
+    zIndex: z.value,
+    elevation: z.value,
+  }));
+
+  return (
+    <GestureDetector gesture={pan}>
+      <Animated.View style={animStyle}>
+        <OrderCard row={row} onPress={onPress} compact />
+      </Animated.View>
+    </GestureDetector>
   );
 }
 
@@ -285,6 +420,12 @@ const styles = StyleSheet.create({
     color: colors.foreground,
     minHeight: 44,
   },
+  dragHint: {
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.sm,
+    fontSize: typography.sizes.xs,
+    color: colors.muted,
+  },
   board: {
     flex: 1,
     flexDirection: 'row',
@@ -297,7 +438,6 @@ const styles = StyleSheet.create({
     minWidth: 200,
     borderRadius: radius.lg,
     borderWidth: 1,
-    overflow: 'hidden',
   },
   columnHeader: {
     flexDirection: 'row',
