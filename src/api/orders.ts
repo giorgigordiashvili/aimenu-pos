@@ -46,6 +46,8 @@ export interface Order extends OrderListRow {
   subtotal?: string;
   tax_amount?: string;
   service_charge?: string;
+  tip_amount?: string;
+  server?: string | null;
   discount_amount?: string;
   customer_phone?: string;
   customer_email?: string;

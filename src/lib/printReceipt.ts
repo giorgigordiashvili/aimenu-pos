@@ -56,6 +56,7 @@ export function buildReceiptHtml(order: Order, restaurantSlug: string | null): s
   const items = (order.items ?? []).map(renderItemRow).join('');
   const hasTax = order.tax_amount && parseFloat(order.tax_amount) > 0;
   const hasService = order.service_charge && parseFloat(order.service_charge) > 0;
+  const hasTip = order.tip_amount && parseFloat(order.tip_amount) > 0;
 
   return `<!DOCTYPE html>
 <html>
@@ -114,6 +115,7 @@ export function buildReceiptHtml(order: Order, restaurantSlug: string | null): s
     </tr>
     ${hasTax ? `<tr><td class="label">Tax</td><td class="val">${formatCurrency(order.tax_amount)}</td></tr>` : ''}
     ${hasService ? `<tr><td class="label">Service</td><td class="val">${formatCurrency(order.service_charge)}</td></tr>` : ''}
+    ${hasTip ? `<tr><td class="label">Tip</td><td class="val">${formatCurrency(order.tip_amount)}</td></tr>` : ''}
     <tr class="grand">
       <td>Total</td>
       <td class="val">${formatCurrency(order.total)}</td>

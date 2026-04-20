@@ -168,6 +168,9 @@ export default function OrderDetailScreen() {
           {order.service_charge && parseFloat(order.service_charge) > 0 ? (
             <Row label={t.orderDetail.serviceCharge} value={formatCurrency(order.service_charge)} />
           ) : null}
+          {order.tip_amount && parseFloat(order.tip_amount) > 0 ? (
+            <Row label={t.orderDetail.tip} value={formatCurrency(order.tip_amount)} />
+          ) : null}
           <Row label={t.orderDetail.total} value={formatCurrency(order.total)} emphasised />
         </View>
 
