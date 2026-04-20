@@ -209,16 +209,6 @@ export default function OrdersScreen() {
     return byStatus;
   }, [filtered]);
 
-  if (isLoading && !data) {
-    return (
-      <SafeAreaView style={styles.root}>
-        <View style={styles.loading}>
-          <ActivityIndicator size='large' color={colors.primary} />
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   const historyRows = history.data?.results ?? [];
   const filteredHistory = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -230,6 +220,16 @@ export default function OrdersScreen() {
         r.table_number?.toLowerCase().includes(q)
     );
   }, [historyRows, search]);
+
+  if (isLoading && !data && topTab === 'active') {
+    return (
+      <SafeAreaView style={styles.root}>
+        <View style={styles.loading}>
+          <ActivityIndicator size='large' color={colors.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.root}>
