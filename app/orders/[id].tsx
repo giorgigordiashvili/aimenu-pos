@@ -47,22 +47,28 @@ export default function OrderDetailScreen() {
     queryKey: ['order', id],
     queryFn: () => getOrder(id!),
     enabled: !!id,
-    refetchInterval: 15_000,
+    refetchInterval: 10_000,
+    refetchIntervalInBackground: false,
   });
+
+  const invalidateOnOrderChange = () => {
+    queryClient.invalidateQueries({ queryKey: ['order', id] });
+    queryClient.invalidateQueries({ queryKey: ['orders-board'] });
+    queryClient.invalidateQueries({ queryKey: ['orders-history'] });
+    // pre_order_summary on reservation list cards is derived from Order.total.
+    queryClient.invalidateQueries({ queryKey: ['reservations-today'] });
+    queryClient.invalidateQueries({ queryKey: ['reservations-upcoming'] });
+  };
 
   const advance = useMutation({
     mutationFn: (next: OrderStatus) => updateOrderStatus(id!, next),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['order', id] });
-      queryClient.invalidateQueries({ queryKey: ['orders-board'] });
-    },
+    onSuccess: invalidateOnOrderChange,
   });
 
   const cancel = useMutation({
     mutationFn: () => updateOrderStatus(id!, 'cancelled'),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['order', id] });
-      queryClient.invalidateQueries({ queryKey: ['orders-board'] });
+      invalidateOnOrderChange();
       router.back();
     },
   });
@@ -77,11 +83,7 @@ export default function OrderDetailScreen() {
       }
       return updateOrderStatus(id!, 'completed');
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['order', id] });
-      queryClient.invalidateQueries({ queryKey: ['orders-board'] });
-      queryClient.invalidateQueries({ queryKey: ['orders-history'] });
-    },
+    onSuccess: invalidateOnOrderChange,
   });
 
   const reprint = useMutation({

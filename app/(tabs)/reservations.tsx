@@ -39,12 +39,14 @@ export default function ReservationsScreen() {
   const today = useQuery({
     queryKey: ['reservations-today'],
     queryFn: () => listTodayReservations(),
-    refetchInterval: 30_000,
+    refetchInterval: 10_000,
+    refetchIntervalInBackground: false,
   });
   const upcoming = useQuery({
     queryKey: ['reservations-upcoming'],
     queryFn: () => listUpcomingReservations(),
-    refetchInterval: 60_000,
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
   });
 
   const todayRows = today.data?.results ?? [];
@@ -84,6 +86,9 @@ export default function ReservationsScreen() {
       qc.invalidateQueries({ queryKey: ['reservations-today'] });
       qc.invalidateQueries({ queryKey: ['reservations-upcoming'] });
       qc.invalidateQueries({ queryKey: ['reservation'] });
+      // Reservation status gates which orders kitchen can see
+      // (backend filter hides orders whose reservation is still pending).
+      qc.invalidateQueries({ queryKey: ['orders-board'] });
     },
   });
 

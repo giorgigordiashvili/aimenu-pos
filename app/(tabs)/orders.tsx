@@ -188,7 +188,12 @@ export default function OrdersScreen() {
     onError: (_err, _vars, ctx) => {
       if (ctx?.previous) queryClient.setQueryData(['orders-board'], ctx.previous);
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['orders-board'] }),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders-board'] });
+      queryClient.invalidateQueries({ queryKey: ['orders-history'] });
+      queryClient.invalidateQueries({ queryKey: ['reservations-today'] });
+      queryClient.invalidateQueries({ queryKey: ['reservations-upcoming'] });
+    },
   });
 
   function handleDragEnd(result: DropResult) {
@@ -214,7 +219,8 @@ export default function OrdersScreen() {
   const { data, isLoading, isRefetching, refetch } = useQuery({
     queryKey: ['orders-board'],
     queryFn: () => listOrders({ pageSize: 200 }),
-    refetchInterval: 10_000,
+    refetchInterval: 5_000,
+    refetchIntervalInBackground: false,
     enabled: topTab === 'active',
   });
 
@@ -226,6 +232,8 @@ export default function OrdersScreen() {
         pageSize: 100,
         includePendingReservations: true,
       }),
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
     enabled: topTab === 'history',
   });
 
@@ -242,6 +250,8 @@ export default function OrdersScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders-board'] });
       queryClient.invalidateQueries({ queryKey: ['orders-history'] });
+      queryClient.invalidateQueries({ queryKey: ['reservations-today'] });
+      queryClient.invalidateQueries({ queryKey: ['reservations-upcoming'] });
     },
   });
 

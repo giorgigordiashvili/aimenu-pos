@@ -76,32 +76,33 @@ export default function ReservationDetailScreen() {
     queryKey: ['reservation', id],
     queryFn: () => getReservation(id!),
     enabled: !!id,
+    refetchInterval: 15_000,
+    refetchIntervalInBackground: false,
   });
+
+  const invalidateLists = () => {
+    qc.invalidateQueries({ queryKey: ['reservation', id] });
+    qc.invalidateQueries({ queryKey: ['reservations-today'] });
+    qc.invalidateQueries({ queryKey: ['reservations-upcoming'] });
+    qc.invalidateQueries({ queryKey: ['orders-board'] });
+  };
 
   const advance = useMutation({
     mutationFn: (next: ReservationStatus) => setReservationStatus(id!, next),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['reservation', id] });
-      qc.invalidateQueries({ queryKey: ['reservations-today'] });
-      qc.invalidateQueries({ queryKey: ['reservations-upcoming'] });
-    },
+    onSuccess: invalidateLists,
   });
 
   const cancel = useMutation({
     mutationFn: () => setReservationStatus(id!, 'cancelled'),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['reservations-today'] });
-      qc.invalidateQueries({ queryKey: ['reservations-upcoming'] });
+      invalidateLists();
       router.back();
     },
   });
 
   const noShow = useMutation({
     mutationFn: () => setReservationStatus(id!, 'no_show'),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['reservation', id] });
-      qc.invalidateQueries({ queryKey: ['reservations-today'] });
-    },
+    onSuccess: invalidateLists,
   });
 
   if (isLoading || !data) {

@@ -1,8 +1,15 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  AppState,
+  type AppStateStatus,
+  Platform,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -15,10 +22,22 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       staleTime: 5_000,
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: 'always',
+      refetchOnReconnect: 'always',
+      refetchOnMount: 'always',
     },
   },
 });
+
+// Bridge React Native's AppState into TanStack's focusManager so the iPad
+// native app refetches when the user switches back to the POS. Web uses
+// the default `window.focus` event.
+if (Platform.OS !== 'web') {
+  const onAppStateChange = (status: AppStateStatus) => {
+    focusManager.setFocused(status === 'active');
+  };
+  AppState.addEventListener('change', onAppStateChange);
+}
 
 function AuthGate() {
   const { isAuthenticated, isLoading } = useAuth();
