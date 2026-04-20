@@ -73,6 +73,7 @@ export async function listOrders(params?: {
   page?: number;
   pageSize?: number;
   search?: string;
+  includePendingReservations?: boolean;
 }): Promise<Paginated<OrderListRow>> {
   const response = await api.get<Paginated<OrderListRow>>('/api/v1/dashboard/orders/', {
     params: {
@@ -81,6 +82,7 @@ export async function listOrders(params?: {
       page: params?.page,
       page_size: params?.pageSize ?? 50,
       search: params?.search,
+      include_pending_reservations: params?.includePendingReservations ? 'true' : undefined,
     },
   });
   return response.data;

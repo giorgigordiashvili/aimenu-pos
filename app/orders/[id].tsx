@@ -18,7 +18,9 @@ import {
 } from '@/api/orders';
 import Button from '@/components/Button';
 import StatusBadge from '@/components/StatusBadge';
+import { useAuth } from '@/context/AuthContext';
 import { useT } from '@/i18n';
+import { printReceipt } from '@/lib/printReceipt';
 import { colors, radius, shadows, spacing, typography } from '@/theme/tokens';
 
 function formatCurrency(raw: string | undefined | null): string {
@@ -32,6 +34,7 @@ export default function OrderDetailScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const t = useT();
+  const { restaurantSlug } = useAuth();
   const ADVANCE: Partial<Record<OrderStatus, { next: OrderStatus; label: string }>> = {
     pending: { next: 'confirmed', label: t.orderDetail.actions.accept },
     confirmed: { next: 'preparing', label: t.orderDetail.actions.startPrep },
@@ -61,6 +64,30 @@ export default function OrderDetailScreen() {
       queryClient.invalidateQueries({ queryKey: ['order', id] });
       queryClient.invalidateQueries({ queryKey: ['orders-board'] });
       router.back();
+    },
+  });
+
+  const finish = useMutation({
+    mutationFn: async () => {
+      const fresh = await getOrder(id!);
+      try {
+        await printReceipt(fresh, restaurantSlug);
+      } catch {
+        // printing failure shouldn't block the status transition
+      }
+      return updateOrderStatus(id!, 'completed');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['order', id] });
+      queryClient.invalidateQueries({ queryKey: ['orders-board'] });
+      queryClient.invalidateQueries({ queryKey: ['orders-history'] });
+    },
+  });
+
+  const reprint = useMutation({
+    mutationFn: async () => {
+      const fresh = await getOrder(id!);
+      await printReceipt(fresh, restaurantSlug);
     },
   });
 
@@ -144,7 +171,16 @@ export default function OrderDetailScreen() {
 
         {!isTerminal && (
           <View style={styles.actions}>
-            {next ? (
+            {status === 'served' ? (
+              <Button
+                title={t.ordersScreen.finish}
+                variant='primary'
+                size='lg'
+                fullWidth
+                loading={finish.isPending}
+                onPress={() => finish.mutate()}
+              />
+            ) : next ? (
               <Button
                 title={next.label}
                 variant='success'
@@ -164,6 +200,19 @@ export default function OrderDetailScreen() {
             />
           </View>
         )}
+
+        {status === 'completed' ? (
+          <View style={styles.actions}>
+            <Button
+              title={t.ordersScreen.printReceipt}
+              variant='outline'
+              size='lg'
+              fullWidth
+              loading={reprint.isPending}
+              onPress={() => reprint.mutate()}
+            />
+          </View>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );

@@ -27,11 +27,11 @@ import TopBar from '@/components/TopBar';
 import { useLocale } from '@/i18n';
 import { colors, radius, shadows, spacing, typography } from '@/theme/tokens';
 
-type Tab = 'all' | 'pending' | 'confirmed';
+type Tab = 'pending' | 'history';
 
 export default function ReservationsScreen() {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>('all');
+  const [tab, setTab] = useState<Tab>('pending');
   const { t, locale } = useLocale();
   const { width } = useWindowDimensions();
   const qc = useQueryClient();
@@ -71,11 +71,10 @@ export default function ReservationsScreen() {
     if (tab === 'pending') {
       return unique.filter(r => resolveReservationStatus(r.status) === 'pending');
     }
-    if (tab === 'confirmed') {
-      return unique.filter(r => resolveReservationStatus(r.status) === 'confirmed');
-    }
-    const terminal: ReservationStatus[] = ['cancelled', 'no_show', 'completed'];
-    return unique.filter(r => !terminal.includes(resolveReservationStatus(r.status)));
+    // history tab: anything accepted / seated / completed / cancelled / no-show.
+    return unique
+      .filter(r => resolveReservationStatus(r.status) !== 'pending')
+      .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
   }, [todayRows, upcomingRows, tab]);
 
   const mutate = useMutation({
@@ -92,14 +91,16 @@ export default function ReservationsScreen() {
   const cardWidth = columns === 1 ? '100%' : `${100 / columns - 1}%`;
 
   function counts() {
-    const all = filtered.length;
-    const pending = [...todayRows, ...upcomingRows].filter(
-      r => resolveReservationStatus(r.status) === 'pending'
-    ).length;
-    const confirmed = [...todayRows, ...upcomingRows].filter(
-      r => resolveReservationStatus(r.status) === 'confirmed'
-    ).length;
-    return { all, pending, confirmed };
+    const base = [...todayRows, ...upcomingRows];
+    const seen = new Set<string>();
+    const unique = base.filter(r => {
+      if (seen.has(r.id)) return false;
+      seen.add(r.id);
+      return true;
+    });
+    const pending = unique.filter(r => resolveReservationStatus(r.status) === 'pending').length;
+    const history = unique.filter(r => resolveReservationStatus(r.status) !== 'pending').length;
+    return { pending, history };
   }
   const c = counts();
 
@@ -130,19 +131,14 @@ export default function ReservationsScreen() {
         />
         <View style={styles.tabs}>
           <TabButton
-            active={tab === 'all'}
-            label={`${t.dashboard.tabs.allActive} (${c.all})`}
-            onPress={() => setTab('all')}
-          />
-          <TabButton
             active={tab === 'pending'}
             label={`${t.dashboard.tabs.pending} (${c.pending})`}
             onPress={() => setTab('pending')}
           />
           <TabButton
-            active={tab === 'confirmed'}
-            label={`${t.dashboard.tabs.confirmed} (${c.confirmed})`}
-            onPress={() => setTab('confirmed')}
+            active={tab === 'history'}
+            label={`${t.dashboard.tabs.history} (${c.history})`}
+            onPress={() => setTab('history')}
           />
         </View>
 
@@ -152,7 +148,9 @@ export default function ReservationsScreen() {
           </View>
         ) : filtered.length === 0 ? (
           <View style={styles.empty}>
-            <Text style={styles.emptyText}>{t.dashboard.empty}</Text>
+            <Text style={styles.emptyText}>
+              {tab === 'history' ? t.dashboard.emptyHistory : t.dashboard.empty}
+            </Text>
           </View>
         ) : (
           <View style={styles.grid}>

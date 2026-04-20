@@ -22,6 +22,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import {
+  getOrder,
   listOrders,
   resolveOrderStatus,
   updateOrderStatus,
@@ -31,7 +32,9 @@ import {
 import Button from '@/components/Button';
 import StatusBadge from '@/components/StatusBadge';
 import TopBar from '@/components/TopBar';
+import { useAuth } from '@/context/AuthContext';
 import { useT } from '@/i18n';
+import { printReceipt } from '@/lib/printReceipt';
 import { colors, radius, shadows, spacing, typography } from '@/theme/tokens';
 
 type ColumnBound = { key: OrderStatus; x: number; y: number; width: number; height: number };
@@ -93,12 +96,16 @@ const COLUMN_TONES: Record<OrderStatus, { bg: string; border: string; accent: st
   },
 };
 
+type TopTab = 'active' | 'history';
+
 export default function OrdersScreen() {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const { restaurantSlug } = useAuth();
   const { width } = useWindowDimensions();
   const isTablet = width >= 1024;
   const [search, setSearch] = useState('');
+  const [topTab, setTopTab] = useState<TopTab>('active');
   const t = useT();
 
   const columnBoundsRef = useRef<ColumnBound[]>([]);
@@ -150,6 +157,34 @@ export default function OrdersScreen() {
     queryKey: ['orders-board'],
     queryFn: () => listOrders({ pageSize: 200 }),
     refetchInterval: 10_000,
+    enabled: topTab === 'active',
+  });
+
+  const history = useQuery({
+    queryKey: ['orders-history'],
+    queryFn: () =>
+      listOrders({
+        status: 'completed',
+        pageSize: 100,
+        includePendingReservations: true,
+      }),
+    enabled: topTab === 'history',
+  });
+
+  const finishMutation = useMutation({
+    mutationFn: async (orderId: string) => {
+      const fullOrder = await getOrder(orderId);
+      try {
+        await printReceipt(fullOrder, restaurantSlug);
+      } catch {
+        // print failure shouldn't block the status transition
+      }
+      return updateOrderStatus(orderId, 'completed');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders-board'] });
+      queryClient.invalidateQueries({ queryKey: ['orders-history'] });
+    },
   });
 
   const rows = data?.results ?? [];
@@ -184,10 +219,41 @@ export default function OrdersScreen() {
     );
   }
 
+  const historyRows = history.data?.results ?? [];
+  const filteredHistory = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return historyRows;
+    return historyRows.filter(
+      r =>
+        r.order_number?.toLowerCase().includes(q) ||
+        r.customer_name?.toLowerCase().includes(q) ||
+        r.table_number?.toLowerCase().includes(q)
+    );
+  }, [historyRows, search]);
+
   return (
     <SafeAreaView style={styles.root}>
-      <TopBar title={t.ordersScreen.title} subtitle={`${filtered.length} · auto-refresh 10s`} />
+      <TopBar
+        title={t.ordersScreen.title}
+        subtitle={
+          topTab === 'active'
+            ? `${filtered.length} · auto-refresh 10s`
+            : `${filteredHistory.length}`
+        }
+      />
       <View style={styles.headerActions}>
+        <View style={styles.topTabs}>
+          <TopTabButton
+            active={topTab === 'active'}
+            label={t.ordersScreen.active}
+            onPress={() => setTopTab('active')}
+          />
+          <TopTabButton
+            active={topTab === 'history'}
+            label={t.ordersScreen.history}
+            onPress={() => setTopTab('history')}
+          />
+        </View>
         <View style={styles.searchWrap}>
           <TextInput
             placeholder={t.ordersScreen.search}
@@ -202,28 +268,57 @@ export default function OrdersScreen() {
         <Button
           title='↻'
           variant='outline'
-          onPress={() => queryClient.invalidateQueries({ queryKey: ['orders-board'] })}
+          onPress={() =>
+            queryClient.invalidateQueries({
+              queryKey: [topTab === 'active' ? 'orders-board' : 'orders-history'],
+            })
+          }
           size='md'
         />
       </View>
 
-      {isTablet ? (
-        <Text style={styles.dragHint}>{t.ordersScreen.dragHint}</Text>
-      ) : null}
-      {isTablet ? (
-        <View style={styles.board}>
-          {COLUMNS.map(col => (
-            <Column
-              key={col.key}
-              label={col.label}
-              status={col.key}
-              rows={grouped[col.key] ?? []}
-              onOpen={id => router.push(`/orders/${id}`)}
-              onRegisterBound={registerBound}
-              onDrop={handleDrop}
-            />
-          ))}
-        </View>
+      {topTab === 'history' ? (
+        <FlatList
+          data={filteredHistory}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl refreshing={history.isRefetching} onRefresh={() => history.refetch()} />
+          }
+          renderItem={({ item }) => (
+            <OrderCard row={item} onPress={() => router.push(`/orders/${item.id}`)} />
+          )}
+          ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Text style={styles.emptyText}>{t.ordersScreen.emptyHistory}</Text>
+            </View>
+          }
+        />
+      ) : isTablet ? (
+        <>
+          <Text style={styles.dragHint}>{t.ordersScreen.dragHint}</Text>
+          <View style={styles.board}>
+            {COLUMNS.map(col => (
+              <Column
+                key={col.key}
+                label={col.label}
+                status={col.key}
+                rows={grouped[col.key] ?? []}
+                onOpen={id => router.push(`/orders/${id}`)}
+                onRegisterBound={registerBound}
+                onDrop={handleDrop}
+                onFinish={
+                  col.key === 'served'
+                    ? id => finishMutation.mutate(id)
+                    : undefined
+                }
+                finishLabel={t.ordersScreen.finishShort}
+                isFinishing={finishMutation.isPending}
+              />
+            ))}
+          </View>
+        </>
       ) : (
         <FlatList
           data={filtered}
@@ -231,7 +326,17 @@ export default function OrdersScreen() {
           contentContainerStyle={styles.listContent}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
           renderItem={({ item }) => (
-            <OrderCard row={item} onPress={() => router.push(`/orders/${item.id}`)} />
+            <OrderCard
+              row={item}
+              onPress={() => router.push(`/orders/${item.id}`)}
+              onFinish={
+                resolveOrderStatus(item.status) === 'served'
+                  ? () => finishMutation.mutate(item.id)
+                  : undefined
+              }
+              finishLabel={t.ordersScreen.finishShort}
+              isFinishing={finishMutation.isPending}
+            />
           )}
           ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
           ListEmptyComponent={
@@ -245,6 +350,25 @@ export default function OrdersScreen() {
   );
 }
 
+function TopTabButton({
+  active,
+  label,
+  onPress,
+}: {
+  active: boolean;
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[styles.topTabBtn, active && styles.topTabBtnActive]}
+    >
+      <Text style={[styles.topTabBtnText, active && styles.topTabBtnTextActive]}>{label}</Text>
+    </Pressable>
+  );
+}
+
 function Column({
   label,
   status,
@@ -252,6 +376,9 @@ function Column({
   onOpen,
   onRegisterBound,
   onDrop,
+  onFinish,
+  finishLabel,
+  isFinishing,
 }: {
   label: string;
   status: OrderStatus;
@@ -259,6 +386,9 @@ function Column({
   onOpen: (id: string) => void;
   onRegisterBound?: (bound: ColumnBound) => void;
   onDrop?: (orderId: string, currentStatus: OrderStatus, absX: number, absY: number) => void;
+  onFinish?: (orderId: string) => void;
+  finishLabel?: string;
+  isFinishing?: boolean;
 }) {
   const tone = COLUMN_TONES[status];
   const columnRef = useRef<View>(null);
@@ -299,6 +429,9 @@ function Column({
               onPress={() => onOpen(item.id)}
               onDrop={onDrop}
               currentStatus={status}
+              onFinish={onFinish ? () => onFinish(item.id) : undefined}
+              finishLabel={finishLabel}
+              isFinishing={isFinishing}
             />
           )}
           showsVerticalScrollIndicator={false}
@@ -313,11 +446,17 @@ function DraggableOrderCard({
   onPress,
   onDrop,
   currentStatus,
+  onFinish,
+  finishLabel,
+  isFinishing,
 }: {
   row: OrderListRow;
   onPress: () => void;
   onDrop?: (orderId: string, currentStatus: OrderStatus, absX: number, absY: number) => void;
   currentStatus: OrderStatus;
+  onFinish?: () => void;
+  finishLabel?: string;
+  isFinishing?: boolean;
 }) {
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -357,7 +496,14 @@ function DraggableOrderCard({
   return (
     <GestureDetector gesture={pan}>
       <Animated.View style={animStyle}>
-        <OrderCard row={row} onPress={onPress} compact />
+        <OrderCard
+          row={row}
+          onPress={onPress}
+          compact
+          onFinish={onFinish}
+          finishLabel={finishLabel}
+          isFinishing={isFinishing}
+        />
       </Animated.View>
     </GestureDetector>
   );
@@ -367,10 +513,16 @@ function OrderCard({
   row,
   onPress,
   compact = false,
+  onFinish,
+  finishLabel,
+  isFinishing,
 }: {
   row: OrderListRow;
   onPress: () => void;
   compact?: boolean;
+  onFinish?: () => void;
+  finishLabel?: string;
+  isFinishing?: boolean;
 }) {
   const status = resolveOrderStatus(row.status);
   return (
@@ -392,6 +544,16 @@ function OrderCard({
         </Text>
         <Text style={styles.cardTotal}>{formatCurrency(row.total)}</Text>
       </View>
+      {onFinish ? (
+        <Button
+          title={finishLabel ?? 'Finish'}
+          variant='primary'
+          size='sm'
+          fullWidth
+          loading={isFinishing}
+          onPress={onFinish}
+        />
+      ) : null}
     </Pressable>
   );
 }
@@ -405,6 +567,32 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.lg,
+    flexWrap: 'wrap',
+  },
+  topTabs: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    backgroundColor: colors.slate100,
+    borderRadius: radius.pill,
+    padding: 4,
+  },
+  topTabBtn: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.pill,
+  },
+  topTabBtnActive: {
+    backgroundColor: colors.white,
+    ...shadows.sm,
+  },
+  topTabBtnText: {
+    fontSize: typography.sizes.sm,
+    color: colors.mutedStrong,
+    fontWeight: typography.weights.medium,
+  },
+  topTabBtnTextActive: {
+    color: colors.foreground,
+    fontWeight: typography.weights.semibold,
   },
   searchWrap: {
     minWidth: 260,
