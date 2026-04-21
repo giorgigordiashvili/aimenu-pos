@@ -22,6 +22,7 @@ import { AxiosError } from 'axios';
 import {
   closeTableSession,
   listActiveTableSessions,
+  markTableSessionCashPaid,
   type TableSessionRow,
 } from '@/api/sessions';
 import Button from '@/components/Button';
@@ -60,6 +61,33 @@ export default function TablesScreen() {
       qc.invalidateQueries({ queryKey: ['orders-board'] });
     },
   });
+
+  const cashMutation = useMutation({
+    mutationFn: (id: string) => markTableSessionCashPaid(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['active-sessions'] });
+      qc.invalidateQueries({ queryKey: ['orders-board'] });
+    },
+  });
+
+  function confirmCashPaid(session: TableSessionRow) {
+    const summary = session.orders_summary;
+    const title = t.tablesScreen.cashConfirmTitle;
+    const body = t.tablesScreen.cashConfirmBody
+      .replace('{count}', String(summary.unpaid_count))
+      .replace('{total}', summary.unpaid_total);
+    const run = () => cashMutation.mutate(session.id);
+    if (Platform.OS === 'web') {
+      if (typeof globalThis.confirm === 'function' && globalThis.confirm(`${title}\n\n${body}`)) {
+        run();
+      }
+      return;
+    }
+    Alert.alert(title, body, [
+      { text: t.tablesScreen.closeCancel, style: 'cancel' },
+      { text: t.tablesScreen.cashConfirmAction, style: 'default', onPress: run },
+    ]);
+  }
 
   function promptUnpaid(session: TableSessionRow, unpaidCount: number, unpaidTotal: string) {
     const title = t.tablesScreen.unpaidWarningTitle;
@@ -146,8 +174,12 @@ export default function TablesScreen() {
                   t={t}
                   onClose={() => confirmClose(session)}
                   onShowPayQr={() => setPayQrSession(session)}
+                  onMarkCash={() => confirmCashPaid(session)}
                   isClosing={
                     closeMutation.isPending && closeMutation.variables?.id === session.id
+                  }
+                  isMarkingCash={
+                    cashMutation.isPending && cashMutation.variables === session.id
                   }
                 />
               </View>
@@ -214,10 +246,20 @@ interface CardProps {
   t: ReturnType<typeof useT>;
   onClose: () => void;
   onShowPayQr: () => void;
+  onMarkCash: () => void;
   isClosing: boolean;
+  isMarkingCash: boolean;
 }
 
-function SessionCard({ row, t, onClose, onShowPayQr, isClosing }: CardProps) {
+function SessionCard({
+  row,
+  t,
+  onClose,
+  onShowPayQr,
+  onMarkCash,
+  isClosing,
+  isMarkingCash,
+}: CardProps) {
   const summary = row.orders_summary;
   const hasUnpaid = (summary.unpaid_count ?? 0) > 0;
   const canClose = summary.all_terminal && !hasUnpaid;
@@ -273,12 +315,22 @@ function SessionCard({ row, t, onClose, onShowPayQr, isClosing }: CardProps) {
       </View>
 
       {hasUnpaid ? (
-        <Button
-          title={t.tablesScreen.payQrButton}
-          variant='primary'
-          fullWidth
-          onPress={onShowPayQr}
-        />
+        <>
+          <Button
+            title={t.tablesScreen.payQrButton}
+            variant='primary'
+            fullWidth
+            onPress={onShowPayQr}
+          />
+          <Button
+            title={t.tablesScreen.markCashButton}
+            variant='success'
+            fullWidth
+            loading={isMarkingCash}
+            disabled={isMarkingCash}
+            onPress={onMarkCash}
+          />
+        </>
       ) : null}
 
       <Button

@@ -45,3 +45,26 @@ export async function listActiveTableSessions(): Promise<Paginated<TableSessionR
 export async function closeTableSession(id: string, force = false): Promise<void> {
   await api.post(`/api/v1/dashboard/tables/sessions/${id}/close/`, force ? { force: true } : {});
 }
+
+export interface MarkCashPaidResponse {
+  success: boolean;
+  data?: {
+    transaction_id: string;
+    amount: string;
+    covered_order_numbers: string[];
+  };
+}
+
+/**
+ * Record a cash payment covering every unpaid order on the session. The
+ * backend creates a `cash_settle` BogTransaction whose completed status
+ * satisfies the close-session guard, so the table can then be closed
+ * cleanly through the normal flow.
+ */
+export async function markTableSessionCashPaid(id: string): Promise<MarkCashPaidResponse> {
+  const res = await api.post<MarkCashPaidResponse>(
+    `/api/v1/dashboard/tables/sessions/${id}/mark-cash-paid/`,
+    {}
+  );
+  return res.data;
+}

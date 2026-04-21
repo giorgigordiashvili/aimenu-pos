@@ -51,6 +51,11 @@ export const dictionaries = {
       payQrSubtitle:
         'მაგიდა {table} — გადასახდელი {total} ₾. სთხოვე სტუმარს QR ტელეფონით დასკანოს.',
       payQrDone: 'დახურვა',
+      markCashButton: 'ნაღდად გადახდა',
+      cashConfirmTitle: 'ნაღდად მიიღე გადახდა?',
+      cashConfirmBody:
+        '{count} შეკვეთა ({total} ₾) ჩაითვლება გადახდილად. დარწმუნდი, რომ ფული ხელშია.',
+      cashConfirmAction: 'დადასტურება',
     },
     dashboard: {
       title: 'რესტორნის პანელი',
@@ -227,6 +232,11 @@ export const dictionaries = {
       payQrSubtitle:
         'Table {table} — {total} ₾ to pay. Ask the guest to scan this with their phone to settle.',
       payQrDone: 'Close',
+      markCashButton: 'Paid in cash',
+      cashConfirmTitle: 'Mark as paid in cash?',
+      cashConfirmBody:
+        '{count} order(s) totaling {total} ₾ will be marked as paid. Confirm only after you have the cash in hand.',
+      cashConfirmAction: 'Confirm',
       unpaidForceAction: 'Close anyway',
     },
     dashboard: {
