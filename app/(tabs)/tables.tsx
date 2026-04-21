@@ -1,9 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   Platform,
+  Pressable,
   RefreshControl,
   SafeAreaView,
   ScrollView,
@@ -12,6 +15,7 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import QRCode from 'react-native-qrcode-svg';
 
 import { AxiosError } from 'axios';
 
@@ -25,10 +29,21 @@ import TopBar from '@/components/TopBar';
 import { useT } from '@/i18n';
 import { colors, radius, shadows, spacing, typography } from '@/theme/tokens';
 
+// Customer-site root — used to build the QR / deep link for self-serve
+// payment. Override at build time with EXPO_PUBLIC_CUSTOMER_URL if the
+// POS ever targets a different environment.
+const CUSTOMER_SITE =
+  (process.env.EXPO_PUBLIC_CUSTOMER_URL as string | undefined) ?? 'https://aimenu.ge';
+
 export default function TablesScreen() {
   const t = useT();
   const qc = useQueryClient();
   const { width } = useWindowDimensions();
+  // When set, the big pay-QR overlay is visible. Staff points a customer
+  // at the screen (or hands over the iPad) to let them settle with their
+  // own phone. The session id is enough for /table/settle to load —
+  // TableContext seeds itself from the URL param.
+  const [payQrSession, setPayQrSession] = useState<TableSessionRow | null>(null);
 
   const { data, isLoading, isRefetching, refetch } = useQuery({
     queryKey: ['active-sessions'],
@@ -130,6 +145,7 @@ export default function TablesScreen() {
                   row={session}
                   t={t}
                   onClose={() => confirmClose(session)}
+                  onShowPayQr={() => setPayQrSession(session)}
                   isClosing={
                     closeMutation.isPending && closeMutation.variables?.id === session.id
                   }
@@ -139,7 +155,57 @@ export default function TablesScreen() {
           </View>
         )}
       </ScrollView>
+
+      <PayQrModal
+        session={payQrSession}
+        t={t}
+        onClose={() => setPayQrSession(null)}
+      />
     </SafeAreaView>
+  );
+}
+
+// ── Pay-QR modal ──────────────────────────────────────────────────────────────
+
+interface PayQrModalProps {
+  session: TableSessionRow | null;
+  t: ReturnType<typeof useT>;
+  onClose: () => void;
+}
+
+function PayQrModal({ session, t, onClose }: PayQrModalProps) {
+  if (!session) return null;
+  const url = `${CUSTOMER_SITE}/table/settle?session=${session.id}`;
+  return (
+    <Modal
+      visible
+      animationType='fade'
+      transparent
+      onRequestClose={onClose}
+    >
+      <Pressable style={styles.qrOverlay} onPress={onClose}>
+        <Pressable style={styles.qrPanel} onPress={() => undefined}>
+          <Text style={styles.qrTitle}>{t.tablesScreen.payQrTitle}</Text>
+          <Text style={styles.qrSubtitle}>
+            {t.tablesScreen.payQrSubtitle
+              .replace('{table}', session.table_number)
+              .replace('{total}', session.orders_summary.unpaid_total)}
+          </Text>
+          <View style={styles.qrWrap}>
+            <QRCode value={url} size={240} />
+          </View>
+          <Text style={styles.qrUrl} selectable>
+            {url}
+          </Text>
+          <Button
+            title={t.tablesScreen.payQrDone}
+            variant='primary'
+            fullWidth
+            onPress={onClose}
+          />
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 }
 
@@ -147,10 +213,11 @@ interface CardProps {
   row: TableSessionRow;
   t: ReturnType<typeof useT>;
   onClose: () => void;
+  onShowPayQr: () => void;
   isClosing: boolean;
 }
 
-function SessionCard({ row, t, onClose, isClosing }: CardProps) {
+function SessionCard({ row, t, onClose, onShowPayQr, isClosing }: CardProps) {
   const summary = row.orders_summary;
   const hasUnpaid = (summary.unpaid_count ?? 0) > 0;
   const canClose = summary.all_terminal && !hasUnpaid;
@@ -180,9 +247,14 @@ function SessionCard({ row, t, onClose, isClosing }: CardProps) {
       {hasUnpaid ? (
         <View style={styles.unpaidBanner}>
           <Ionicons name='warning' size={16} color={colors.danger} />
-          <Text style={styles.unpaidText}>
-            {t.tablesScreen.unpaidBadge}: {summary.unpaid_count} · {summary.unpaid_total} ₾
-          </Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.unpaidText}>
+              {t.tablesScreen.unpaidBadge}: {summary.unpaid_count} · {summary.unpaid_total} ₾
+            </Text>
+            {summary.unpaid_order_numbers.length > 0 ? (
+              <Text style={styles.unpaidOrders}>{summary.unpaid_order_numbers.join(', ')}</Text>
+            ) : null}
+          </View>
         </View>
       ) : null}
 
@@ -200,9 +272,18 @@ function SessionCard({ row, t, onClose, isClosing }: CardProps) {
         <StatusChip n={summary.counts.completed} color={colors.successDark} label='done' />
       </View>
 
+      {hasUnpaid ? (
+        <Button
+          title={t.tablesScreen.payQrButton}
+          variant='primary'
+          fullWidth
+          onPress={onShowPayQr}
+        />
+      ) : null}
+
       <Button
         title={closeLabel}
-        variant={canClose ? 'danger' : hasUnpaid ? 'outline' : 'outline'}
+        variant={canClose ? 'danger' : 'outline'}
         fullWidth
         disabled={(!canClose && !hasUnpaid) || isClosing}
         loading={isClosing}
@@ -293,7 +374,12 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.sm,
     color: colors.danger,
     fontWeight: typography.weights.semibold,
-    flex: 1,
+  },
+  unpaidOrders: {
+    fontSize: typography.sizes.xs,
+    color: colors.danger,
+    marginTop: 2,
+    opacity: 0.9,
   },
   statusRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: {
@@ -308,5 +394,46 @@ const styles = StyleSheet.create({
   chipText: {
     fontSize: typography.sizes.xs,
     fontWeight: typography.weights.semibold,
+  },
+  qrOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 43, 0.72)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.lg,
+  },
+  qrPanel: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.xl,
+    maxWidth: 360,
+    width: '100%',
+    gap: spacing.md,
+    alignItems: 'center',
+  },
+  qrTitle: {
+    fontSize: typography.sizes.xl,
+    fontWeight: typography.weights.bold,
+    color: colors.foreground,
+    textAlign: 'center',
+  },
+  qrSubtitle: {
+    fontSize: typography.sizes.sm,
+    color: colors.muted,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  qrWrap: {
+    backgroundColor: colors.white,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+  },
+  qrUrl: {
+    fontSize: typography.sizes.xs,
+    color: colors.muted,
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
 });

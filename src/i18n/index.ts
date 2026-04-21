@@ -46,6 +46,11 @@ export const dictionaries = {
       unpaidWarningBody:
         '{count} შეკვეთა გადახდილი არ არის (სულ {total} ₾). გააგრძელო ძალით დახურვა? ფული დაიკარგება.',
       unpaidForceAction: 'დახურვა მაინც',
+      payQrButton: 'სტუმრის გადახდის QR',
+      payQrTitle: 'გადახდის QR კოდი',
+      payQrSubtitle:
+        'მაგიდა {table} — გადასახდელი {total} ₾. სთხოვე სტუმარს QR ტელეფონით დასკანოს.',
+      payQrDone: 'დახურვა',
     },
     dashboard: {
       title: 'რესტორნის პანელი',
@@ -217,6 +222,11 @@ export const dictionaries = {
       unpaidWarningTitle: 'Money is unpaid',
       unpaidWarningBody:
         '{count} order(s) totaling {total} ₾ have not been paid. Force-close anyway? The money will be lost.',
+      payQrButton: 'Show customer pay QR',
+      payQrTitle: 'Customer payment',
+      payQrSubtitle:
+        'Table {table} — {total} ₾ to pay. Ask the guest to scan this with their phone to settle.',
+      payQrDone: 'Close',
       unpaidForceAction: 'Close anyway',
     },
     dashboard: {
