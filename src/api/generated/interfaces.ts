@@ -46,6 +46,53 @@ export interface AuditLogList {
   created_at: string;
 }
 
+export interface CashMovement {
+  id: string;
+  kind: Kind7e2enum;
+  amount: string;
+  reason: string;
+  created_by: string;
+  created_by_name: string;
+  created_at: string;
+}
+
+export interface CashMovementCreateRequest {
+  kind: Kind7e2enum;
+  amount: string;
+  reason: string;
+}
+
+export interface CashPaymentRequest {
+  order_id: string;
+  amount: string;
+  tip_amount?: string;
+  amount_received: string;
+  notes?: string;
+}
+
+export interface CashShift {
+  id: string;
+  number: number;
+  register: string;
+  status: CashShiftStatusEnum;
+  opened_by: string;
+  opened_by_name: string;
+  opened_at: string;
+  closed_by: string;
+  closed_by_name: string;
+  closed_at: string;
+  opening_float: string;
+  counted_cash: string;
+  expected_cash: string;
+  difference: string;
+  report: any;
+  notes: string;
+}
+
+export interface CashShiftStatusEnum {
+  [key: string]: any;
+}
+
 export interface ChangePassword {
   old_password: string;
   new_password: string;
@@ -56,6 +103,11 @@ export interface ChangePasswordRequest {
   old_password: string;
   new_password: string;
   new_password_confirm: string;
+}
+
+export interface CloseShiftRequest {
+  counted_cash: string;
+  notes?: string;
 }
 
 export interface ContactMessageCreate {
@@ -152,6 +204,10 @@ export interface FavoriteRestaurantCreateRequest {
 }
 
 export interface Kind34bEnum {
+  [key: string]: any;
+}
+
+export interface Kind7e2enum {
   [key: string]: any;
 }
 
@@ -360,7 +416,15 @@ export interface MenuItemUpdateRequest {
   modifier_group_ids?: string[];
 }
 
+export interface Method5ffEnum {
+  [key: string]: any;
+}
+
 export interface MethodTypeEnum {
+  [key: string]: any;
+}
+
+export interface ModeEnum {
   [key: string]: any;
 }
 
@@ -439,6 +503,7 @@ export interface MyRestaurant {
   venue: Record<string, any>;
   warehouse_enabled: boolean;
   modules: Record<string, any>;
+  permissions: Record<string, any>;
 }
 
 export interface NameEnum {
@@ -449,6 +514,12 @@ export interface NullEnum {
   [key: string]: any;
 }
 
+export interface OpenShiftRequest {
+  opening_float?: string;
+  register?: string;
+  notes?: string;
+}
+
 export interface Order {
   id: string;
   order_number: string;
@@ -456,6 +527,7 @@ export interface Order {
   status?: Status3f5enum;
   table?: string;
   table_number: string;
+  table_session?: string;
   customer_name?: string;
   customer_phone?: string;
   customer_email?: string | string;
@@ -464,10 +536,16 @@ export interface Order {
   subtotal: string;
   tax_amount: string;
   service_charge: string;
-  discount_amount?: string;
+  discount_amount: string;
+  discounts: OrderDiscount[];
+  wallet_applied: string;
   tip_amount?: string;
   server?: string;
   total: string;
+  paid_amount: string;
+  balance: string;
+  is_paid: string;
+  payments: string;
   estimated_ready_at?: string;
   confirmed_at: string;
   completed_at: string;
@@ -478,6 +556,28 @@ export interface Order {
   updated_at: string;
 }
 
+export interface OrderDiscount {
+  id: string;
+  kind: OrderDiscountKindEnum;
+  mode: ModeEnum;
+  value: string;
+  amount: string;
+  label: string;
+  applied_by: string;
+  created_at: string;
+}
+
+export interface OrderDiscountCreateRequest {
+  reason_id?: string;
+  reason_text?: string;
+  mode?: ModeEnum;
+  value: string;
+}
+
+export interface OrderDiscountKindEnum {
+  [key: string]: any;
+}
+
 export interface OrderItem {
   id: string;
   menu_item?: string;
@@ -486,16 +586,35 @@ export interface OrderItem {
   unit_price: string;
   quantity?: number;
   total_price: string;
+  discount_amount: string;
+  net_price: string;
+  is_comped: boolean;
+  discount_reason_label: string;
   status?: OrderItemStatusEnum;
+  voided_at: string;
+  void_reason_label: string;
+  was_sent_to_kitchen: boolean;
   preparation_station?: PreparationStationEnum;
   special_instructions?: string;
   modifiers: OrderItemModifier[];
+}
+
+export interface OrderItemDiscountRequest {
+  reason_id?: string;
+  reason_text?: string;
+  mode?: ModeEnum;
+  value: string;
 }
 
 export interface OrderItemModifier {
   id: string;
   modifier_name: string;
   price_adjustment?: string;
+}
+
+export interface OrderItemReasonRequest {
+  reason_id?: string;
+  reason_text?: string;
 }
 
 export interface OrderItemStatusEnum {
@@ -507,13 +626,27 @@ export interface OrderList {
   order_number: string;
   order_type?: OrderTypeEnum;
   status?: Status3f5enum;
+  table?: string;
   table_number: string;
+  table_session?: string;
   customer_name?: string;
+  subtotal?: string;
+  discount_amount?: string;
   total?: string;
   tip_amount?: string;
   server?: string;
   items_count: string;
   created_at: string;
+}
+
+export interface OrderMoveRequest {
+  table_id: string;
+}
+
+export interface OrderSplitRequest {
+  item_ids: string[];
+  table_id?: string;
+  session_id?: string;
 }
 
 export interface OrderStatusHistory {
@@ -535,6 +668,13 @@ export interface PaginatedAuditLogListList {
   next?: string;
   previous?: string;
   results: AuditLogList[];
+}
+
+export interface PaginatedCashShiftList {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: CashShift[];
 }
 
 export interface PaginatedEligibleOrderList {
@@ -910,25 +1050,56 @@ export interface Payment {
   id: string;
   order: string;
   order_number: string;
+  session: string;
+  shift: string;
   amount: string;
-  tip_amount?: string;
+  tip_amount: string;
   total_amount: string;
-  payment_method?: PaymentMethodEnum;
-  status?: StatusCd5enum;
-  currency?: string;
+  tendered: string;
+  change_given: string;
+  payment_method: PaymentMethodEnum;
+  status: StatusCd5enum;
+  currency: string;
   receipt_number: string;
-  external_payment_id?: string;
+  external_payment_id: string;
+  processed_by: string;
+  processed_by_name: string;
+  refunded_amount: string;
+  allocations: PaymentAllocation[];
+  notes: string;
   completed_at: string;
   created_at: string;
 }
 
+export interface PaymentAllocation {
+  order: string;
+  order_number: string;
+  amount: string;
+}
+
+export interface PaymentCreateRequest {
+  order_id: string;
+  amount: string;
+  tip_amount?: string;
+  payment_method?: PaymentMethodEnum;
+  payment_method_id?: string;
+  notes?: string;
+}
+
 export interface PaymentList {
   id: string;
+  order?: string;
   order_number: string;
+  session?: string;
+  shift?: string;
+  amount: string;
+  tip_amount?: string;
   total_amount: string;
+  change_given?: string;
   payment_method?: PaymentMethodEnum;
   status?: StatusCd5enum;
   receipt_number?: string;
+  completed_at?: string;
   created_at: string;
 }
 
@@ -951,6 +1122,15 @@ export interface PaymentMethodEnum {
 
 export interface PaymentModeEnum {
   [key: string]: any;
+}
+
+export interface PaymentRefundRequest {
+  amount: string;
+  method?: Method5ffEnum;
+  reason?: ReasonE43enum;
+  reason_id?: string;
+  reason_details?: string;
+  order_id?: string;
 }
 
 export interface PreferredLanguageEnum {
@@ -979,6 +1159,40 @@ export interface QrresolveResponse {
   data: QrresolveData;
 }
 
+export interface ReasonE43enum {
+  [key: string]: any;
+}
+
+export interface ReasonOption {
+  id: string;
+  label: string;
+  kind: string;
+  requires_manager: boolean;
+}
+
+export interface RecordPaymentMethodEnum {
+  [key: string]: any;
+}
+
+export interface RecordPaymentRequest {
+  method: RecordPaymentMethodEnum;
+  amount: string;
+  tip_amount?: string;
+  tendered?: string;
+  order_id?: string;
+  order_ids?: string[];
+  session_id?: string;
+  notes?: string;
+}
+
+export interface RecordPaymentResponse {
+  payment: Payment;
+  change: string;
+  receipt_number: string;
+  balance: string;
+  paid_order_numbers: string[];
+}
+
 export interface ReferredUser {
   id: string;
   email: string;
@@ -990,17 +1204,26 @@ export interface ReferredUser {
 export interface Refund {
   id: string;
   payment: string;
+  receipt_number: string;
+  order?: string;
+  shift?: string;
   amount: string;
-  reason?: RefundReasonEnum;
+  method?: Method5ffEnum;
+  reason?: ReasonE43enum;
+  reason_code?: string;
   reason_details?: string;
   status?: RefundStatusEnum;
   external_refund_id: string;
+  processed_by?: string;
   completed_at: string;
   created_at: string;
 }
 
-export interface RefundReasonEnum {
-  [key: string]: any;
+export interface RefundCreateRequest {
+  payment_id: string;
+  amount: string;
+  reason: ReasonE43enum;
+  reason_details?: string;
 }
 
 export interface RefundStatusEnum {
@@ -1311,6 +1534,7 @@ export interface RestaurantDetail {
   kitchen_enabled?: boolean;
   loyalty_enabled?: boolean;
   reviews_enabled?: boolean;
+  cash_enabled?: boolean;
   modules: string;
   average_rating: string;
   total_reviews: number;
@@ -1453,6 +1677,19 @@ export interface SocialLoginRequest {
 
 export interface SourceEnum {
   [key: string]: any;
+}
+
+export interface SplitEvenRequest {
+  order_id?: string;
+  session_id?: string;
+  amount?: string;
+  ways: number;
+}
+
+export interface SplitEvenResponse {
+  total: string;
+  ways: number;
+  shares: string[];
 }
 
 export interface StaffInvitation {
