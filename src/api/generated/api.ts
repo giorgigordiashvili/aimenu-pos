@@ -969,6 +969,25 @@ export async function dashboardPaymentsStatsRetrieve(): Promise<any> {
   return response.data;
 }
 
+export async function dashboardReportsRetrieve(
+  key: string,
+  from?: string,
+  range?: string,
+  to?: string,
+): Promise<any> {
+  const response = await axios.get(
+    `/api/v1/dashboard/reports/${key}/${(() => {
+      const parts = [
+        from ? 'from=' + encodeURIComponent(from) : null,
+        range ? 'range=' + encodeURIComponent(range) : null,
+        to ? 'to=' + encodeURIComponent(to) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
+  return response.data;
+}
+
 export async function dashboardReservationsList(
   ordering?: string,
   page?: number,
