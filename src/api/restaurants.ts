@@ -15,6 +15,7 @@ export type ModuleCode =
   | "printing"
   | "fiscal"
   | "delivery"
+  | "notifications"
   | "payments";
 
 export type Resource =

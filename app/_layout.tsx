@@ -19,6 +19,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { LocaleProvider } from "@/i18n/LocaleProvider";
+import { listenForPushTaps, registerPush } from "@/lib/pushRegistration";
 import { firstTabFor } from "@/lib/roleTabs";
 import { colors } from "@/theme/tokens";
 
@@ -54,6 +55,18 @@ function AuthGate() {
   } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+
+  // Native: register this device for push once signed in; open the right
+  // screen when a push is tapped.
+  useEffect(() => {
+    if (!isAuthenticated || !restaurantSlug) return;
+    registerPush();
+    let dispose = () => {};
+    listenForPushTaps((path) => router.push(path as never)).then((d) => {
+      dispose = d;
+    });
+    return () => dispose();
+  }, [isAuthenticated, restaurantSlug, router]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -106,6 +119,10 @@ function AuthGate() {
       />
       <Stack.Screen name="loyalty/redeem" options={{ presentation: "modal" }} />
       <Stack.Screen name="cash/index" options={{ presentation: "card" }} />
+      <Stack.Screen
+        name="notifications/index"
+        options={{ presentation: "card" }}
+      />
       <Stack.Screen name="cash/shift/[id]" options={{ presentation: "card" }} />
       <Stack.Screen
         name="restaurants/select"

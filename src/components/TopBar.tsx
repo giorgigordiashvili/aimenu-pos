@@ -2,7 +2,10 @@ import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { useRouter, type Href } from "expo-router";
+
 import { useLocale } from "@/i18n";
+import { useNotifications } from "@/lib/useNotifications";
 import { colors, radius, shadows, spacing, typography } from "@/theme/tokens";
 
 interface Props {
@@ -25,6 +28,8 @@ function formatToday(locale: string): string {
 
 export default function TopBar({ title, subtitle }: Props) {
   const { locale, setLocale } = useLocale();
+  const router = useRouter();
+  const notifications = useNotifications();
   return (
     <View style={styles.root}>
       <View style={styles.left}>
@@ -37,6 +42,28 @@ export default function TopBar({ title, subtitle }: Props) {
         </View>
       </View>
       <View style={styles.right}>
+        {notifications.enabled ? (
+          <Pressable
+            onPress={() => router.push("/notifications" as Href)}
+            style={styles.bell}
+            testID="notifications-bell"
+          >
+            <Ionicons
+              name={
+                notifications.unread ? "notifications" : "notifications-outline"
+              }
+              size={18}
+              color={colors.slate600}
+            />
+            {notifications.unread ? (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>
+                  {notifications.unread > 99 ? "99+" : notifications.unread}
+                </Text>
+              </View>
+            ) : null}
+          </Pressable>
+        ) : null}
         <Pressable
           onPress={() => setLocale(locale === "ka" ? "en" : "ka")}
           style={styles.locale}
@@ -57,6 +84,29 @@ export default function TopBar({ title, subtitle }: Props) {
 }
 
 const styles = StyleSheet.create({
+  bell: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: colors.borderSoft,
+    backgroundColor: colors.surface,
+  },
+  badge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    borderRadius: 9,
+    backgroundColor: colors.danger,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  badgeText: { color: "#fff", fontSize: 11, fontWeight: "700" },
   root: {
     flexDirection: "row",
     alignItems: "center",

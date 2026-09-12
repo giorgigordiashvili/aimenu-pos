@@ -19,6 +19,14 @@ import { money } from "@/lib/money";
 import { useShift } from "@/lib/useShift";
 import { usePrinters } from "@/lib/usePrinters";
 import { useDeliveryPlatforms } from "@/lib/useDeliveryPlatforms";
+import { useNotifications } from "@/lib/useNotifications";
+import {
+  getPrefs,
+  sendTestPush,
+  updatePrefs,
+  type NotificationPrefs,
+} from "@/api/notifications";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { testPrinter } from "@/api/printing";
 import {
   pausePlatform,
@@ -35,6 +43,26 @@ export default function SettingsScreen() {
   const shift = useShift();
   const printers = usePrinters();
   const delivery = useDeliveryPlatforms();
+  const notifications = useNotifications();
+  const qc = useQueryClient();
+  const prefsQuery = useQuery({
+    queryKey: ["notification-prefs"],
+    queryFn: getPrefs,
+    enabled: notifications.enabled,
+  });
+  const [testNote, setTestNote] = useState("");
+  const savePrefs = async (patch: Partial<NotificationPrefs>) => {
+    const next = await updatePrefs(patch);
+    qc.setQueryData(["notification-prefs"], next);
+  };
+  const toggleMute = (code: string) => {
+    const prefs = prefsQuery.data;
+    if (!prefs) return;
+    const muted = prefs.muted_events.includes(code)
+      ? prefs.muted_events.filter((c) => c !== code)
+      : [...prefs.muted_events, code];
+    savePrefs({ muted_events: muted }).catch(() => {});
+  };
   const [platformBusy, setPlatformBusy] = useState<PlatformCode | null>(null);
   const [platformNote, setPlatformNote] = useState<string>("");
   const runPlatform = async (
@@ -114,6 +142,86 @@ export default function SettingsScreen() {
               fullWidth
               onPress={() => router.push("/cash" as Href)}
             />
+          </View>
+        ) : null}
+
+        {notifications.enabled ? (
+          <View style={styles.card} testID="notifications-card">
+            <Text style={styles.cardTitle}>
+              {t.notifications.settingsTitle}
+            </Text>
+            <Text style={styles.cardBody}>{t.notifications.webHint}</Text>
+            {prefsQuery.data ? (
+              <>
+                <Pressable
+                  onPress={() =>
+                    savePrefs({ push: !prefsQuery.data?.push }).catch(() => {})
+                  }
+                  style={styles.printerRow}
+                  testID="toggle-push"
+                >
+                  <View
+                    style={[
+                      styles.printerDot,
+                      {
+                        backgroundColor: prefsQuery.data.push
+                          ? colors.success
+                          : colors.border,
+                      },
+                    ]}
+                  />
+                  <Text style={styles.printerName}>{t.notifications.push}</Text>
+                </Pressable>
+                <Text style={[styles.cardBody, { marginTop: 8 }]}>
+                  {t.notifications.mute}
+                </Text>
+                {prefsQuery.data.events.map((e) => (
+                  <Pressable
+                    key={e.code}
+                    onPress={() => toggleMute(e.code)}
+                    style={styles.printerRow}
+                    testID={`mute-${e.code}`}
+                  >
+                    <View
+                      style={[
+                        styles.printerDot,
+                        {
+                          backgroundColor: e.muted
+                            ? colors.border
+                            : colors.success,
+                        },
+                      ]}
+                    />
+                    <Text style={styles.printerName}>
+                      {e.title}
+                      <Text style={{ color: colors.muted }}>
+                        {" · "}
+                        {e.description}
+                      </Text>
+                    </Text>
+                  </Pressable>
+                ))}
+              </>
+            ) : null}
+            <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
+              <Pressable
+                onPress={() =>
+                  sendTestPush()
+                    .then(() => {
+                      setTestNote(t.notifications.testSent);
+                      notifications.refetch();
+                    })
+                    .catch(() => setTestNote(t.delivery.failed))
+                }
+                style={styles.printerTest}
+                testID="send-test-push"
+              >
+                <Text style={styles.printerTestText}>
+                  {t.notifications.sendTest}
+                </Text>
+              </Pressable>
+            </View>
+            {testNote ? <Text style={styles.cardBody}>{testNote}</Text> : null}
           </View>
         ) : null}
 

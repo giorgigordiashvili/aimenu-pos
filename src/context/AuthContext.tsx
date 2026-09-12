@@ -7,6 +7,7 @@ import React, {
   useState,
 } from "react";
 
+import { unregisterPush } from "@/lib/pushRegistration";
 import { login as loginRequest, logout as logoutRequest } from "@/api/auth";
 import { restaurantStore, tokenStore } from "@/api/client";
 import { listMyRestaurants, type MyRestaurantInfo } from "@/api/restaurants";
@@ -104,6 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const signOut = useCallback(async () => {
+    await unregisterPush();
     await logoutRequest();
     setIsAuthenticated(false);
     setRestaurantSlugState(null);

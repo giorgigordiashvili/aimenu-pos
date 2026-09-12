@@ -249,6 +249,21 @@ export const dictionaries = {
         unavailable: "მიუწვდომელი",
       },
     },
+    notifications: {
+      title: "შეტყობინებები",
+      empty: "შეტყობინებები არ არის",
+      markAllRead: "ყველას წაკითხულად მონიშვნა",
+      minutesAgo: "{n} წთ წინ",
+      hoursAgo: "{n} სთ წინ",
+      settingsTitle: "შეტყობინებები",
+      push: "Push შეტყობინებები ამ მოწყობილობაზე",
+      mute: "რაზე გავჩუმდე",
+      sendTest: "ტესტის გაგზავნა",
+      testSent: "ტესტი გაიგზავნა — შეამოწმეთ ზარი",
+      registered: "მოწყობილობა რეგისტრირებულია",
+      webHint:
+        "ბრაუზერში ზარი ჩნდება ზედა ზოლში; ტელეფონზე push მუშაობს აპიდან",
+    },
     delivery: {
       platforms: "მიწოდების პლატფორმები",
       online: "იღებს შეკვეთებს",
@@ -643,6 +658,21 @@ export const dictionaries = {
         reserved: "Reserved",
         unavailable: "Unavailable",
       },
+    },
+    notifications: {
+      title: "Notifications",
+      empty: "Nothing here yet",
+      markAllRead: "Mark all read",
+      minutesAgo: "{n} min ago",
+      hoursAgo: "{n} h ago",
+      settingsTitle: "Notifications",
+      push: "Push notifications on this device",
+      mute: "Mute",
+      sendTest: "Send a test",
+      testSent: "Test sent — check the bell",
+      registered: "Device registered",
+      webHint:
+        "In the browser the bell in the top bar shows new alerts; on a phone the app gets push.",
     },
     delivery: {
       platforms: "Delivery platforms",

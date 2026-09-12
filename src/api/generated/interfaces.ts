@@ -166,6 +166,31 @@ export interface DestinationEnum {
   [key: string]: any;
 }
 
+export interface Device {
+  id: string;
+  kind: DeviceKindEnum;
+  platform: string;
+  app_version: string;
+  is_active: boolean;
+  last_seen_at: string;
+  last_error: string;
+}
+
+export interface DeviceKindEnum {
+  [key: string]: any;
+}
+
+export interface DeviceRegisterKindEnum {
+  [key: string]: any;
+}
+
+export interface DeviceRegisterRequest {
+  token: string;
+  kind?: DeviceRegisterKindEnum;
+  platform?: string;
+  app_version?: string;
+}
+
 export interface EligibleOrder {
   id: string;
   order_number: string;
@@ -334,6 +359,10 @@ export interface LoyaltyProgramWriteRequest {
   starts_at?: string;
   ends_at?: string;
   code_ttl_seconds?: number;
+}
+
+export interface MarkReadRequest {
+  ids?: string[];
 }
 
 export interface MenuCategory {
@@ -603,6 +632,17 @@ export interface NameEnum {
   [key: string]: any;
 }
 
+export interface Notification {
+  id: string;
+  event: string;
+  title: string;
+  body: string;
+  data: any;
+  url: string;
+  read_at: string;
+  created_at: string;
+}
+
 export interface NullEnum {
   [key: string]: any;
 }
@@ -760,6 +800,31 @@ export interface OrderTypeEnum {
   [key: string]: any;
 }
 
+export interface OutboundMessage {
+  id: string;
+  channel: OutboundMessageChannelEnum;
+  to: string;
+  subject: string;
+  kind: OutboundMessageKindEnum;
+  status: OutboundMessageStatusEnum;
+  provider: string;
+  error: string;
+  sent_at: string;
+  created_at: string;
+}
+
+export interface OutboundMessageChannelEnum {
+  [key: string]: any;
+}
+
+export interface OutboundMessageKindEnum {
+  [key: string]: any;
+}
+
+export interface OutboundMessageStatusEnum {
+  [key: string]: any;
+}
+
 export interface PaginatedAuditLogListList {
   count: number;
   next?: string;
@@ -835,6 +900,13 @@ export interface PaginatedModifierGroupDashboardList {
   next?: string;
   previous?: string;
   results: ModifierGroupDashboard[];
+}
+
+export interface PaginatedNotificationList {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: Notification[];
 }
 
 export interface PaginatedOrderList {
@@ -1301,6 +1373,23 @@ export interface PlatformStatus {
 
 export interface PreferredLanguageEnum {
   [key: string]: any;
+}
+
+export interface Prefs {
+  push?: boolean;
+  email?: boolean;
+  quiet_from?: string;
+  quiet_to?: string;
+  muted_events?: string[];
+  events: string;
+}
+
+export interface PrefsRequest {
+  push?: boolean;
+  email?: boolean;
+  quiet_from?: string;
+  quiet_to?: string;
+  muted_events?: string[];
 }
 
 export interface PreparationStationEnum {
@@ -2250,6 +2339,15 @@ export interface TableStatusEnum {
   [key: string]: any;
 }
 
+export interface TestMessageChannelEnum {
+  [key: string]: any;
+}
+
+export interface TestMessageRequest {
+  channel: TestMessageChannelEnum;
+  to: string;
+}
+
 export interface TimezoneEnum {
   [key: string]: any;
 }
@@ -2261,6 +2359,11 @@ export interface TokenRefresh {
 
 export interface TokenRefreshRequest {
   refresh: string;
+}
+
+export interface UnreadCount {
+  unread: number;
+  latest_id: string;
 }
 
 export interface User {

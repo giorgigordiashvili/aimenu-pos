@@ -53,6 +53,16 @@ import type {
   ModifierGroupDashboard,
   ModifierGroupDashboardRequest,
   PatchedModifierGroupDashboardRequest,
+  PaginatedNotificationList,
+  Device,
+  DeviceRegisterRequest,
+  Prefs,
+  PrefsRequest,
+  MarkReadRequest,
+  UnreadCount,
+  Notification,
+  TestMessageRequest,
+  OutboundMessage,
   PaginatedOrderListList,
   Order,
   OrderDiscountCreateRequest,
@@ -711,6 +721,97 @@ export async function dashboardMenuModifierGroupsDestroy(
 ): Promise<any> {
   const response = await axios.delete(
     `/api/v1/dashboard/menu/modifier-groups/${id}/`,
+  );
+  return response.data;
+}
+
+export async function dashboardNotificationsList(
+  ordering?: string,
+  page?: number,
+  pageSize?: number,
+  search?: string,
+): Promise<PaginatedNotificationList> {
+  const response = await axios.get(
+    `/api/v1/dashboard/notifications/${(() => {
+      const parts = [
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
+  return response.data;
+}
+
+export async function dashboardNotificationsDevicesRetrieve(): Promise<Device> {
+  const response = await axios.get(`/api/v1/dashboard/notifications/devices/`);
+  return response.data;
+}
+
+export async function dashboardNotificationsDevicesCreate(
+  data: DeviceRegisterRequest,
+): Promise<Device> {
+  const response = await axios.post(
+    `/api/v1/dashboard/notifications/devices/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardNotificationsDevicesDestroy(): Promise<any> {
+  const response = await axios.delete(
+    `/api/v1/dashboard/notifications/devices/`,
+  );
+  return response.data;
+}
+
+export async function dashboardNotificationsPrefsRetrieve(): Promise<Prefs> {
+  const response = await axios.get(`/api/v1/dashboard/notifications/prefs/`);
+  return response.data;
+}
+
+export async function dashboardNotificationsPrefsUpdate(
+  data: PrefsRequest,
+): Promise<Prefs> {
+  const response = await axios.put(
+    `/api/v1/dashboard/notifications/prefs/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardNotificationsReadCreate(
+  data: MarkReadRequest,
+): Promise<UnreadCount> {
+  const response = await axios.post(
+    `/api/v1/dashboard/notifications/read/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardNotificationsTestCreate(): Promise<
+  Notification[]
+> {
+  const response = await axios.post(`/api/v1/dashboard/notifications/test/`);
+  return response.data;
+}
+
+export async function dashboardNotificationsTestMessageCreate(
+  data: TestMessageRequest,
+): Promise<OutboundMessage> {
+  const response = await axios.post(
+    `/api/v1/dashboard/notifications/test-message/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardNotificationsUnreadCountRetrieve(): Promise<UnreadCount> {
+  const response = await axios.get(
+    `/api/v1/dashboard/notifications/unread-count/`,
   );
   return response.data;
 }
