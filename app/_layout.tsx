@@ -40,19 +40,23 @@ if (Platform.OS !== 'web') {
 }
 
 function AuthGate() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, restaurantSlug } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
     if (isLoading) return;
     const inAuthStack = segments[0] === 'login';
+    const inPicker = segments[0] === 'restaurants';
     if (!isAuthenticated && !inAuthStack) {
       router.replace('/login');
+    } else if (isAuthenticated && !restaurantSlug && !inPicker) {
+      // Signed in but no restaurant chosen yet (several memberships).
+      router.replace('/restaurants/select');
     } else if (isAuthenticated && inAuthStack) {
-      router.replace('/(tabs)/reservations');
+      router.replace(restaurantSlug ? '/(tabs)/reservations' : '/restaurants/select');
     }
-  }, [isAuthenticated, isLoading, segments, router]);
+  }, [isAuthenticated, isLoading, restaurantSlug, segments, router]);
 
   if (isLoading) {
     return (
@@ -69,6 +73,7 @@ function AuthGate() {
       <Stack.Screen name='orders/[id]' options={{ presentation: 'card' }} />
       <Stack.Screen name='reservations/[id]' options={{ presentation: 'card' }} />
       <Stack.Screen name='loyalty/redeem' options={{ presentation: 'modal' }} />
+      <Stack.Screen name='restaurants/select' options={{ presentation: 'modal' }} />
     </Stack>
   );
 }

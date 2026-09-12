@@ -1,6 +1,4 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import {
   Alert,
   Platform,
@@ -9,7 +7,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 
@@ -20,11 +17,9 @@ import { useLocale } from '@/i18n';
 import { colors, radius, spacing, typography } from '@/theme/tokens';
 
 export default function SettingsScreen() {
-  const { signOut, restaurantSlug, setRestaurantSlug } = useAuth();
+  const { signOut, restaurantSlug, currentRestaurant, restaurants } = useAuth();
   const router = useRouter();
   const { t, locale, setLocale } = useLocale();
-  const qc = useQueryClient();
-  const [slugDraft, setSlugDraft] = useState(restaurantSlug ?? '');
 
   function handleSignOut() {
     const run = async () => {
@@ -44,34 +39,23 @@ export default function SettingsScreen() {
     ]);
   }
 
-  async function handleSaveSlug() {
-    const next = slugDraft.trim().toLowerCase();
-    if (!next) return;
-    await setRestaurantSlug(next);
-    qc.invalidateQueries();
-  }
-
   return (
     <SafeAreaView style={styles.root}>
       <TopBar title={t.settings.title} />
       <ScrollView contentContainerStyle={styles.body}>
         <View style={styles.card}>
           <Text style={styles.cardTitle}>{t.settings.restaurant}</Text>
-          <TextInput
-            value={slugDraft}
-            onChangeText={setSlugDraft}
-            autoCapitalize='none'
-            autoCorrect={false}
-            placeholder={t.settings.restaurantHint}
-            placeholderTextColor={colors.slate400}
-            style={styles.input}
-          />
+          <Text style={styles.currentName}>{currentRestaurant?.name ?? restaurantSlug ?? '—'}</Text>
+          <Text style={styles.cardBody}>
+            {currentRestaurant?.venue
+              ? `${t.restaurantPicker.venue}: ${currentRestaurant.venue.name}`
+              : t.settings.restaurantHint}
+          </Text>
           <Button
-            title={t.settings.save}
-            variant='primary'
+            title={restaurants.length > 1 ? t.settings.switchRestaurant : t.settings.changeRestaurant}
+            variant='outline'
             fullWidth
-            onPress={handleSaveSlug}
-            disabled={!slugDraft.trim() || slugDraft.trim().toLowerCase() === restaurantSlug}
+            onPress={() => router.push('/restaurants/select')}
           />
         </View>
 
@@ -162,16 +146,7 @@ const styles = StyleSheet.create({
     color: colors.foreground,
   },
   cardBody: { fontSize: typography.sizes.md, color: colors.muted, lineHeight: 22 },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    fontSize: typography.sizes.md,
-    color: colors.foreground,
-    backgroundColor: colors.white,
-  },
+  currentName: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.foreground },
   localeRow: { flexDirection: 'row', gap: spacing.sm },
   localeBtn: {
     flex: 1,
