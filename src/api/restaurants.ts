@@ -29,7 +29,7 @@ export type Action = "create" | "read" | "update" | "delete";
 
 export interface MyRestaurantInfo extends Omit<
   MyRestaurant,
-  "venue" | "logo" | "modules"
+  "venue" | "logo" | "modules" | "permissions"
 > {
   logo: string | null;
   venue: { slug: string; name: string } | null;
