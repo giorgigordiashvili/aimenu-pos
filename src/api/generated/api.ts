@@ -16,8 +16,12 @@ import type {
   PasswordResetConfirm,
   UserRegistrationRequest,
   UserRegistration,
+  SocialLoginRequest,
+  SocialLogin,
   TokenRefreshRequest,
   TokenRefresh,
+  ContactMessageCreateRequest,
+  ContactMessageCreate,
   PaginatedLoyaltyProgramList,
   LoyaltyProgramWriteRequest,
   LoyaltyProgramWrite,
@@ -34,12 +38,12 @@ import type {
   MenuItemUpdateRequest,
   MenuItemUpdate,
   PatchedMenuItemUpdateRequest,
-  PaginatedModifierGroupList,
+  PaginatedModifierGroupDashboardList,
   ModifierGroupCreateRequest,
   ModifierGroupCreate,
-  ModifierGroup,
-  ModifierGroupRequest,
-  PatchedModifierGroupRequest,
+  ModifierGroupDashboard,
+  ModifierGroupDashboardRequest,
+  PatchedModifierGroupDashboardRequest,
   PaginatedOrderListList,
   Order,
   PaginatedOrderStatusHistoryList,
@@ -86,6 +90,17 @@ import type {
   TableSection,
   PatchedTableSectionRequest,
   PaginatedTableSessionList,
+  VenueStateResponse,
+  VenueLeaveRequest,
+  VenueShareRequestCreateRequest,
+  VenueShareRequest,
+  VenueShareRequestAcceptRequest,
+  VenueSectionDashboard,
+  VenueSectionWriteRequest,
+  PatchedVenueSectionWriteRequest,
+  VenueTableDashboard,
+  VenueTableWriteRequest,
+  PatchedVenueTableWriteRequest,
   PaginatedFavoriteMenuItemList,
   FavoriteMenuItemCreateRequest,
   FavoriteMenuItemCreate,
@@ -94,18 +109,35 @@ import type {
   FavoriteRestaurantCreate,
   PaginatedOrderList,
   PaginatedPaymentMethodList,
+  PaginatedWalletTransactionList,
+  ReferredUser,
   ReservationCreateRequest,
   ReservationCreate,
   PaginatedRestaurantListList,
   RestaurantDetail,
+  Amenity,
+  RestaurantCategory,
   RestaurantCreateRequest,
   RestaurantCreate,
+  ReviewCreateRequest,
+  ReviewCreate,
+  Review,
+  ReviewMedia,
+  ReviewReportCreateRequest,
+  PaginatedEligibleOrderList,
+  PaginatedReviewList,
+  RestaurantList,
+  ReviewStats,
   TableSessionDetail,
   PaginatedTableSessionGuestList,
   User,
   UserUpdateRequest,
   UserUpdate,
   PatchedUserUpdateRequest,
+  MyRestaurant,
+  VenueDetailResponse,
+  VenueMenuResponse,
+  VenueValidateResponse,
 } from './interfaces';
 
 export async function adminAuditList(
@@ -176,10 +208,31 @@ export async function authRegisterCreate(
   return response.data;
 }
 
+export async function authSocialFacebookCreate(
+  data: SocialLoginRequest,
+): Promise<SocialLogin> {
+  const response = await axios.post(`/api/v1/auth/social/facebook/`, data);
+  return response.data;
+}
+
+export async function authSocialGoogleCreate(
+  data: SocialLoginRequest,
+): Promise<SocialLogin> {
+  const response = await axios.post(`/api/v1/auth/social/google/`, data);
+  return response.data;
+}
+
 export async function authTokenRefreshCreate(
   data: TokenRefreshRequest,
 ): Promise<TokenRefresh> {
   const response = await axios.post(`/api/v1/auth/token/refresh/`, data);
+  return response.data;
+}
+
+export async function contactCreate(
+  data: ContactMessageCreateRequest,
+): Promise<ContactMessageCreate> {
+  const response = await axios.post(`/api/v1/contact/`, data);
   return response.data;
 }
 
@@ -447,7 +500,7 @@ export async function dashboardMenuModifierGroupsList(
   page?: number,
   pageSize?: number,
   search?: string,
-): Promise<PaginatedModifierGroupList> {
+): Promise<PaginatedModifierGroupDashboardList> {
   const response = await axios.get(
     `/api/v1/dashboard/menu/modifier-groups/${(() => {
       const parts = [
@@ -474,7 +527,7 @@ export async function dashboardMenuModifierGroupsCreate(
 
 export async function dashboardMenuModifierGroupsRetrieve(
   id: string,
-): Promise<ModifierGroup> {
+): Promise<ModifierGroupDashboard> {
   const response = await axios.get(
     `/api/v1/dashboard/menu/modifier-groups/${id}/`,
   );
@@ -483,8 +536,8 @@ export async function dashboardMenuModifierGroupsRetrieve(
 
 export async function dashboardMenuModifierGroupsUpdate(
   id: string,
-  data: ModifierGroupRequest,
-): Promise<ModifierGroup> {
+  data: ModifierGroupDashboardRequest,
+): Promise<ModifierGroupDashboard> {
   const response = await axios.put(
     `/api/v1/dashboard/menu/modifier-groups/${id}/`,
     data,
@@ -494,8 +547,8 @@ export async function dashboardMenuModifierGroupsUpdate(
 
 export async function dashboardMenuModifierGroupsPartialUpdate(
   id: string,
-  data: PatchedModifierGroupRequest,
-): Promise<ModifierGroup> {
+  data: PatchedModifierGroupDashboardRequest,
+): Promise<ModifierGroupDashboard> {
   const response = await axios.patch(
     `/api/v1/dashboard/menu/modifier-groups/${id}/`,
     data,
@@ -1297,8 +1350,124 @@ export async function dashboardTablesSessionsCloseCreate(
   return response.data;
 }
 
+export async function dashboardTablesSessionsMarkCashPaidCreate(
+  id: string,
+): Promise<any> {
+  const response = await axios.post(
+    `/api/v1/dashboard/tables/sessions/${id}/mark-cash-paid/`,
+  );
+  return response.data;
+}
+
 export async function dashboardTablesSessionsStartCreate(): Promise<any> {
   const response = await axios.post(`/api/v1/dashboard/tables/sessions/start/`);
+  return response.data;
+}
+
+export async function dashboardVenueRetrieve(): Promise<VenueStateResponse> {
+  const response = await axios.get(`/api/v1/dashboard/venue/`);
+  return response.data;
+}
+
+export async function dashboardVenueLeaveCreate(
+  data: VenueLeaveRequest,
+): Promise<VenueStateResponse> {
+  const response = await axios.post(`/api/v1/dashboard/venue/leave/`, data);
+  return response.data;
+}
+
+export async function dashboardVenueRequestsCreate(
+  data: VenueShareRequestCreateRequest,
+): Promise<VenueShareRequest> {
+  const response = await axios.post(`/api/v1/dashboard/venue/requests/`, data);
+  return response.data;
+}
+
+export async function dashboardVenueRequestsAcceptCreate(
+  id: string,
+  data: VenueShareRequestAcceptRequest,
+): Promise<VenueStateResponse> {
+  const response = await axios.post(
+    `/api/v1/dashboard/venue/requests/${id}/accept/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardVenueRequestsCancelCreate(
+  id: string,
+): Promise<VenueShareRequest> {
+  const response = await axios.post(
+    `/api/v1/dashboard/venue/requests/${id}/cancel/`,
+  );
+  return response.data;
+}
+
+export async function dashboardVenueRequestsDeclineCreate(
+  id: string,
+): Promise<VenueShareRequest> {
+  const response = await axios.post(
+    `/api/v1/dashboard/venue/requests/${id}/decline/`,
+  );
+  return response.data;
+}
+
+export async function dashboardVenueSectionsList(): Promise<
+  VenueSectionDashboard[]
+> {
+  const response = await axios.get(`/api/v1/dashboard/venue/sections/`);
+  return response.data;
+}
+
+export async function dashboardVenueSectionsCreate(
+  data: VenueSectionWriteRequest,
+): Promise<VenueSectionDashboard> {
+  const response = await axios.post(`/api/v1/dashboard/venue/sections/`, data);
+  return response.data;
+}
+
+export async function dashboardVenueSectionsPartialUpdate(
+  id: string,
+  data: PatchedVenueSectionWriteRequest,
+): Promise<VenueSectionDashboard> {
+  const response = await axios.patch(
+    `/api/v1/dashboard/venue/sections/${id}/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardVenueTablesList(): Promise<
+  VenueTableDashboard[]
+> {
+  const response = await axios.get(`/api/v1/dashboard/venue/tables/`);
+  return response.data;
+}
+
+export async function dashboardVenueTablesCreate(
+  data: VenueTableWriteRequest,
+): Promise<VenueTableDashboard> {
+  const response = await axios.post(`/api/v1/dashboard/venue/tables/`, data);
+  return response.data;
+}
+
+export async function dashboardVenueTablesPartialUpdate(
+  id: string,
+  data: PatchedVenueTableWriteRequest,
+): Promise<VenueTableDashboard> {
+  const response = await axios.patch(
+    `/api/v1/dashboard/venue/tables/${id}/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardVenueTablesDeactivateCreate(
+  id: string,
+): Promise<any> {
+  const response = await axios.post(
+    `/api/v1/dashboard/venue/tables/${id}/deactivate/`,
+  );
   return response.data;
 }
 
@@ -1449,6 +1618,11 @@ export async function loyaltyMyRedeemCreate(): Promise<any> {
   return response.data;
 }
 
+export async function loyaltyPlatformStatusRetrieve(): Promise<any> {
+  const response = await axios.get(`/api/v1/loyalty/platform/status/`);
+  return response.data;
+}
+
 export async function menuRetrieve(slug: string): Promise<any> {
   const response = await axios.get(`/api/v1/menu/${slug}/`);
   return response.data;
@@ -1516,6 +1690,25 @@ export async function paymentsBogWebhookCreate(): Promise<any> {
   return response.data;
 }
 
+export async function paymentsFlittInitiateCreate(): Promise<any> {
+  const response = await axios.post(`/api/v1/payments/flitt/initiate/`);
+  return response.data;
+}
+
+export async function paymentsFlittStatusRetrieve(
+  flittOrderId: string,
+): Promise<any> {
+  const response = await axios.get(
+    `/api/v1/payments/flitt/status/${flittOrderId}/`,
+  );
+  return response.data;
+}
+
+export async function paymentsFlittWebhookCreate(): Promise<any> {
+  const response = await axios.post(`/api/v1/payments/flitt/webhook/`);
+  return response.data;
+}
+
 export async function paymentsHistoryList(
   ordering?: string,
   page?: number,
@@ -1576,6 +1769,36 @@ export async function readyRetrieve(): Promise<any> {
   return response.data;
 }
 
+export async function referralsHistoryList(
+  ordering?: string,
+  page?: number,
+  pageSize?: number,
+  search?: string,
+): Promise<PaginatedWalletTransactionList> {
+  const response = await axios.get(
+    `/api/v1/referrals/history/${(() => {
+      const parts = [
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
+  return response.data;
+}
+
+export async function referralsMeRetrieve(): Promise<any> {
+  const response = await axios.get(`/api/v1/referrals/me/`);
+  return response.data;
+}
+
+export async function referralsReferredList(): Promise<ReferredUser[]> {
+  const response = await axios.get(`/api/v1/referrals/referred/`);
+  return response.data;
+}
+
 export async function reservationsAvailabilityRetrieve(): Promise<any> {
   const response = await axios.get(`/api/v1/reservations/availability/`);
   return response.data;
@@ -1590,6 +1813,11 @@ export async function reservationsCreateCreate(
   data: ReservationCreateRequest,
 ): Promise<ReservationCreate> {
   const response = await axios.post(`/api/v1/reservations/create/`, data);
+  return response.data;
+}
+
+export async function reservationsInviteRetrieve(code: string): Promise<any> {
+  const response = await axios.get(`/api/v1/reservations/invite/${code}/`);
   return response.data;
 }
 
@@ -1636,6 +1864,7 @@ export async function reservationsSettingsRetrieve(): Promise<any> {
 }
 
 export async function restaurantsList(
+  acceptsPlatformLoyalty?: boolean,
   acceptsRemoteOrders?: boolean,
   acceptsReservations?: boolean,
   acceptsTakeaway?: boolean,
@@ -1651,6 +1880,10 @@ export async function restaurantsList(
   const response = await axios.get(
     `/api/v1/restaurants/${(() => {
       const parts = [
+        acceptsPlatformLoyalty
+          ? 'accepts_platform_loyalty=' +
+            encodeURIComponent(acceptsPlatformLoyalty)
+          : null,
         acceptsRemoteOrders
           ? 'accepts_remote_orders=' + encodeURIComponent(acceptsRemoteOrders)
           : null,
@@ -1744,6 +1977,38 @@ export async function restaurantsMenuItemsRetrieve(
   return response.data;
 }
 
+export async function restaurantsAmenitiesList(
+  ordering?: string,
+  search?: string,
+): Promise<Amenity[]> {
+  const response = await axios.get(
+    `/api/v1/restaurants/amenities/${(() => {
+      const parts = [
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
+  return response.data;
+}
+
+export async function restaurantsCategoriesList(
+  ordering?: string,
+  search?: string,
+): Promise<RestaurantCategory[]> {
+  const response = await axios.get(
+    `/api/v1/restaurants/categories/${(() => {
+      const parts = [
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
+  return response.data;
+}
+
 export async function restaurantsCitiesRetrieve(): Promise<any> {
   const response = await axios.get(`/api/v1/restaurants/cities/`);
   return response.data;
@@ -1775,6 +2040,130 @@ export async function restaurantsSearchRetrieve(
       return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
+  return response.data;
+}
+
+export async function reviewsCreate(
+  data: ReviewCreateRequest,
+): Promise<ReviewCreate> {
+  const response = await axios.post(`/api/v1/reviews/`, data);
+  return response.data;
+}
+
+export async function reviewsRetrieve(id: string): Promise<Review> {
+  const response = await axios.get(`/api/v1/reviews/${id}/`);
+  return response.data;
+}
+
+export async function reviewsUpdate(id: string): Promise<Review> {
+  const response = await axios.put(`/api/v1/reviews/${id}/`);
+  return response.data;
+}
+
+export async function reviewsPartialUpdate(id: string): Promise<Review> {
+  const response = await axios.patch(`/api/v1/reviews/${id}/`);
+  return response.data;
+}
+
+export async function reviewsDestroy(id: string): Promise<any> {
+  const response = await axios.delete(`/api/v1/reviews/${id}/`);
+  return response.data;
+}
+
+export async function reviewsMediaCreate(
+  reviewId: string,
+  data: FormData,
+): Promise<ReviewMedia> {
+  const response = await axios.post(`/api/v1/reviews/${reviewId}/media/`, data);
+  return response.data;
+}
+
+export async function reviewsMediaDestroy(
+  mediaId: string,
+  reviewId: string,
+): Promise<any> {
+  const response = await axios.delete(
+    `/api/v1/reviews/${reviewId}/media/${mediaId}/`,
+  );
+  return response.data;
+}
+
+export async function reviewsReportCreate(
+  reviewId: string,
+  data: ReviewReportCreateRequest,
+): Promise<Record<string, any>> {
+  const response = await axios.post(
+    `/api/v1/reviews/${reviewId}/report/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function reviewsEligibleOrdersList(
+  ordering?: string,
+  page?: number,
+  pageSize?: number,
+  search?: string,
+): Promise<PaginatedEligibleOrderList> {
+  const response = await axios.get(
+    `/api/v1/reviews/eligible-orders/${(() => {
+      const parts = [
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
+  return response.data;
+}
+
+export async function reviewsMineList(
+  ordering?: string,
+  page?: number,
+  pageSize?: number,
+  search?: string,
+): Promise<PaginatedReviewList> {
+  const response = await axios.get(
+    `/api/v1/reviews/mine/${(() => {
+      const parts = [
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
+  return response.data;
+}
+
+export async function reviewsRestaurantList(
+  slug: string,
+  ordering?: string,
+  page?: number,
+  pageSize?: number,
+  search?: string,
+): Promise<PaginatedReviewList> {
+  const response = await axios.get(
+    `/api/v1/reviews/restaurant/${slug}/${(() => {
+      const parts = [
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
+  return response.data;
+}
+
+export async function reviewsRestaurantStatsRetrieve(
+  slug: string,
+): Promise<ReviewStats> {
+  const response = await axios.get(`/api/v1/reviews/restaurant/${slug}/stats/`);
   return response.data;
 }
 
@@ -1910,5 +2299,39 @@ export async function usersMePartialUpdate(
 
 export async function usersMeDeleteDestroy(): Promise<any> {
   const response = await axios.delete(`/api/v1/users/me/delete/`);
+  return response.data;
+}
+
+export async function usersMeRestaurantsList(): Promise<MyRestaurant[]> {
+  const response = await axios.get(`/api/v1/users/me/restaurants/`);
+  return response.data;
+}
+
+export async function venuesRetrieve(
+  slug: string,
+): Promise<VenueDetailResponse> {
+  const response = await axios.get(`/api/v1/venues/${slug}/`);
+  return response.data;
+}
+
+export async function venuesMenuRetrieve(
+  slug: string,
+  restaurants?: string,
+): Promise<VenueMenuResponse> {
+  const response = await axios.get(
+    `/api/v1/venues/${slug}/menu/${restaurants ? '?restaurants=' + encodeURIComponent(restaurants) : ''}`,
+  );
+  return response.data;
+}
+
+export async function venuesValidateRetrieve(
+  code: string,
+): Promise<VenueValidateResponse> {
+  const response = await axios.get(`/api/v1/venues/validate/${code}/`);
+  return response.data;
+}
+
+export async function dataDeletionCreate(): Promise<any> {
+  const response = await axios.post(`/data-deletion/`);
   return response.data;
 }
