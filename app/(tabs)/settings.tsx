@@ -16,6 +16,8 @@ import { useAuth } from "@/context/AuthContext";
 import { useLocale } from "@/i18n";
 import { money } from "@/lib/money";
 import { useShift } from "@/lib/useShift";
+import { usePrinters } from "@/lib/usePrinters";
+import { testPrinter } from "@/api/printing";
 import { colors, radius, spacing, typography } from "@/theme/tokens";
 
 export default function SettingsScreen() {
@@ -23,6 +25,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { t, locale, setLocale } = useLocale();
   const shift = useShift();
+  const printers = usePrinters();
 
   function handleSignOut() {
     const run = async () => {
@@ -85,6 +88,53 @@ export default function SettingsScreen() {
               fullWidth
               onPress={() => router.push("/cash" as Href)}
             />
+          </View>
+        ) : null}
+
+        {printers.enabled ? (
+          <View style={styles.card} testID="printers-card">
+            <Text style={styles.cardTitle}>{t.printing.printers}</Text>
+            {printers.printers.length === 0 ? (
+              <Text style={styles.cardBody}>{t.printing.noPrinter}</Text>
+            ) : (
+              printers.printers.map((p) => (
+                <View key={p.id} style={styles.printerRow}>
+                  <View
+                    style={[
+                      styles.printerDot,
+                      {
+                        backgroundColor:
+                          p.connection !== "bridge" || p.is_online
+                            ? colors.success
+                            : colors.danger,
+                      },
+                    ]}
+                  />
+                  <Text style={styles.printerName}>
+                    {p.name} · {p.kind} · {p.paper}mm ·{" "}
+                    {p.connection !== "bridge" || p.is_online
+                      ? t.printing.online
+                      : t.printing.offline}
+                    {p.queued_jobs
+                      ? ` · ${p.queued_jobs} ${t.printing.queued}`
+                      : ""}
+                    {p.last_error ? ` · ${p.last_error}` : ""}
+                  </Text>
+                  {printers.canManage && p.connection === "bridge" ? (
+                    <Pressable
+                      onPress={() =>
+                        testPrinter(p.id).then(() => printers.refetch())
+                      }
+                      style={styles.printerTest}
+                    >
+                      <Text style={styles.printerTestText}>
+                        {t.printing.testPage}
+                      </Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+              ))
+            )}
           </View>
         ) : null}
 
@@ -162,6 +212,26 @@ function LocaleButton({
 }
 
 const styles = StyleSheet.create({
+  printerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 6,
+  },
+  printerDot: { width: 10, height: 10, borderRadius: 5 },
+  printerName: { flex: 1, fontSize: 13, color: colors.foreground },
+  printerTest: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  printerTestText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: colors.foreground,
+  },
   root: { flex: 1, backgroundColor: colors.background },
   body: {
     padding: spacing.xl,

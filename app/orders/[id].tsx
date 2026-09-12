@@ -39,7 +39,8 @@ import StatusBadge from "@/components/StatusBadge";
 import { useAuth } from "@/context/AuthContext";
 import { useT } from "@/i18n";
 import { money, num } from "@/lib/money";
-import { printReceipt } from "@/lib/printReceipt";
+import { printReceiptAnywhere } from "@/lib/receipt";
+import { usePrinters } from "@/lib/usePrinters";
 import { useShift } from "@/lib/useShift";
 import { colors, radius, shadows, spacing, typography } from "@/theme/tokens";
 
@@ -55,6 +56,7 @@ export default function OrderDetailScreen() {
   const t = useT();
   const { restaurantSlug, currentRestaurant } = useAuth();
   const { canPay, canDiscount, enabled: cashOn } = useShift();
+  const { receiptPrinters } = usePrinters();
   const manager = can(currentRestaurant, "cash", "update");
   const canSplit = can(currentRestaurant, "orders", "update");
   const [payTarget, setPayTarget] = useState<PaymentTarget | null>(null);
@@ -121,7 +123,10 @@ export default function OrderDetailScreen() {
     mutationFn: async () => {
       const fresh = await getOrder(id!);
       try {
-        await printReceipt(fresh, restaurantSlug, {
+        await printReceiptAnywhere({
+          order: fresh,
+          receiptPrinters,
+          restaurantSlug,
           restaurantName: currentRestaurant?.name ?? null,
         });
       } catch {
@@ -135,7 +140,10 @@ export default function OrderDetailScreen() {
   const reprint = useMutation({
     mutationFn: async () => {
       const fresh = await getOrder(id!);
-      await printReceipt(fresh, restaurantSlug, {
+      await printReceiptAnywhere({
+        order: fresh,
+        receiptPrinters,
+        restaurantSlug,
         restaurantName: currentRestaurant?.name ?? null,
       });
     },
@@ -202,9 +210,11 @@ export default function OrderDetailScreen() {
   async function printLast(result: RecordPaymentResult) {
     try {
       const fresh = await getOrder(id!);
-      await printReceipt(fresh, restaurantSlug, {
+      await printReceiptAnywhere({
+        order: fresh,
         payment: result.payment,
-        cashier: result.payment.processed_by_name,
+        receiptPrinters,
+        restaurantSlug,
         restaurantName: currentRestaurant?.name ?? null,
       });
     } catch {

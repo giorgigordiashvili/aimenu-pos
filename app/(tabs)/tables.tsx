@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -21,21 +21,38 @@ import { AxiosError } from "axios";
 
 import { getOrder } from "@/api/orders";
 import type { RecordPaymentResult } from "@/api/payments";
+import { can } from "@/api/restaurants";
 import {
   closeTableSession,
   listActiveTableSessions,
   markTableSessionCashPaid,
   type TableSessionRow,
 } from "@/api/sessions";
+import {
+  createTable,
+  listFloorTables,
+  listSections,
+  saveLayout,
+  startSession,
+  type FloorTable,
+} from "@/api/tables";
 import BillModal from "@/components/BillModal";
 import Button from "@/components/Button";
+import FloorPlan, {
+  initialDrafts,
+  toLayoutItems,
+  type Drafts,
+} from "@/components/FloorPlan";
 import PaymentSheet, { type PaymentTarget } from "@/components/PaymentSheet";
 import ShiftBanner from "@/components/ShiftBanner";
+import TableSheet from "@/components/TableSheet";
 import TopBar from "@/components/TopBar";
 import { useAuth } from "@/context/AuthContext";
 import { useT } from "@/i18n";
 import { money } from "@/lib/money";
-import { printReceipt } from "@/lib/printReceipt";
+import { printReceiptAnywhere } from "@/lib/receipt";
+import { useNow } from "@/lib/useNow";
+import { usePrinters } from "@/lib/usePrinters";
 import { useShift } from "@/lib/useShift";
 import { colors, radius, shadows, spacing, typography } from "@/theme/tokens";
 
@@ -46,21 +63,28 @@ const CUSTOMER_SITE =
   (process.env.EXPO_PUBLIC_CUSTOMER_URL as string | undefined) ??
   "https://aimenu.ge";
 
+type ViewMode = "floor" | "sessions";
+
 export default function TablesScreen() {
   const t = useT();
   const qc = useQueryClient();
   const { width } = useWindowDimensions();
   const { restaurantSlug, currentRestaurant } = useAuth();
   const { canPay } = useShift();
-  // When set, the big pay-QR overlay is visible. Staff points a customer
-  // at the screen (or hands over the iPad) to let them settle with their
-  // own phone. The session id is enough for /table/settle to load —
-  // TableContext seeds itself from the URL param.
+  const { receiptPrinters } = usePrinters();
+  const now = useNow(30_000);
+  const canEditLayout = can(currentRestaurant, "tables", "create");
+  const [view, setView] = useState<ViewMode>("floor");
+  const [editing, setEditing] = useState(false);
+  const [drafts, setDrafts] = useState<Drafts>({});
+  const [dirty, setDirty] = useState(false);
   const [payQrSession, setPayQrSession] = useState<TableSessionRow | null>(
     null,
   );
   const [billSession, setBillSession] = useState<TableSessionRow | null>(null);
   const [payTarget, setPayTarget] = useState<PaymentTarget | null>(null);
+  const [sheetTable, setSheetTable] = useState<FloorTable | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const { data, isLoading, isRefetching, refetch } = useQuery({
     queryKey: ["active-sessions"],
@@ -68,9 +92,36 @@ export default function TablesScreen() {
     refetchInterval: 10_000,
     refetchIntervalInBackground: false,
   });
+  const sections = useQuery({
+    queryKey: ["sections"],
+    queryFn: listSections,
+    staleTime: 60_000,
+  });
+  const tables = useQuery({
+    queryKey: ["floor-tables"],
+    queryFn: listFloorTables,
+    refetchInterval: editing ? false : 15_000,
+    refetchIntervalInBackground: false,
+  });
+
+  // Drafts follow the server until the manager starts editing.
+  useEffect(() => {
+    if (!editing && tables.data) {
+      setDrafts(initialDrafts(tables.data));
+      setDirty(false);
+    }
+  }, [tables.data, editing]);
+
+  const rows = data?.results ?? [];
+  const sessionsByTable = useMemo(() => {
+    const out: Record<string, TableSessionRow> = {};
+    for (const s of rows) out[s.table] = s;
+    return out;
+  }, [rows]);
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["active-sessions"] });
+    qc.invalidateQueries({ queryKey: ["floor-tables"] });
     qc.invalidateQueries({ queryKey: ["orders-board"] });
     qc.invalidateQueries({ queryKey: ["session-bill"] });
     qc.invalidateQueries({ queryKey: ["cash-shift"] });
@@ -79,7 +130,10 @@ export default function TablesScreen() {
   const closeMutation = useMutation({
     mutationFn: ({ id, force }: { id: string; force?: boolean }) =>
       closeTableSession(id, force),
-    onSuccess: invalidate,
+    onSuccess: () => {
+      invalidate();
+      setSheetTable(null);
+    },
   });
 
   // Fallback for restaurants without the Cash module: one tap records the
@@ -87,6 +141,36 @@ export default function TablesScreen() {
   const cashMutation = useMutation({
     mutationFn: (id: string) => markTableSessionCashPaid(id),
     onSuccess: invalidate,
+  });
+
+  const startMutation = useMutation({
+    mutationFn: ({ table, guests }: { table: FloorTable; guests: number }) =>
+      startSession(table.id, guests),
+    onSuccess: () => {
+      invalidate();
+      setSheetTable(null);
+    },
+    onError: (err) => {
+      const msg = (err as AxiosError<{ error?: { message?: string } }>).response
+        ?.data?.error?.message;
+      setNotice(msg ?? t.cash.errors.generic);
+    },
+  });
+
+  const layoutMutation = useMutation({
+    mutationFn: () =>
+      saveLayout(
+        toLayoutItems(
+          drafts,
+          (tables.data ?? []).map((x) => x.id),
+        ),
+      ),
+    onSuccess: () => {
+      setDirty(false);
+      setEditing(false);
+      qc.invalidateQueries({ queryKey: ["floor-tables"] });
+    },
+    onError: () => setNotice(t.cash.errors.generic),
   });
 
   function confirmCashPaid(session: TableSessionRow) {
@@ -194,6 +278,7 @@ export default function TablesScreen() {
   }
 
   function payTable(session: TableSessionRow, balance?: string) {
+    setSheetTable(null);
     setPayTarget({
       kind: "session",
       sessionId: session.id,
@@ -210,9 +295,11 @@ export default function TablesScreen() {
     if (!orderId) return;
     try {
       const order = await getOrder(orderId);
-      await printReceipt(order, restaurantSlug, {
+      await printReceiptAnywhere({
+        order,
         payment: result.payment,
-        cashier: result.payment.processed_by_name,
+        receiptPrinters,
+        restaurantSlug,
         restaurantName: currentRestaurant?.name ?? null,
       });
     } catch {
@@ -220,25 +307,133 @@ export default function TablesScreen() {
     }
   }
 
-  const rows = data?.results ?? [];
   const columns = width >= 1280 ? 3 : width >= 900 ? 2 : 1;
   const cardWidth =
     columns === 1 ? "100%" : (`${100 / columns - 1}%` as unknown as number);
+  const hasFloor =
+    (sections.data?.length ?? 0) > 0 || (tables.data?.length ?? 0) > 0;
 
   return (
     <SafeAreaView style={styles.root}>
       <TopBar title={t.tablesScreen.title} subtitle={t.tablesScreen.subtitle} />
       <ShiftBanner />
+      <View style={styles.toolbar}>
+        <View style={styles.segment}>
+          {(["floor", "sessions"] as ViewMode[]).map((m) => (
+            <Pressable
+              key={m}
+              onPress={() => setView(m)}
+              style={[styles.segmentBtn, view === m && styles.segmentBtnActive]}
+              testID={`view-${m}`}
+            >
+              <Ionicons
+                name={m === "floor" ? "grid-outline" : "list-outline"}
+                size={16}
+                color={view === m ? colors.white : colors.foreground}
+              />
+              <Text
+                style={[
+                  styles.segmentText,
+                  view === m && styles.segmentTextActive,
+                ]}
+              >
+                {m === "floor" ? t.floor.floorView : t.floor.sessionsView}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+        {view === "floor" && canEditLayout ? (
+          editing ? (
+            <View style={styles.editActions}>
+              {dirty ? (
+                <Text style={styles.unsaved}>{t.floor.unsaved}</Text>
+              ) : null}
+              <Button
+                title={t.floor.discard}
+                variant="outline"
+                size="sm"
+                onPress={() => {
+                  setEditing(false);
+                  if (tables.data) setDrafts(initialDrafts(tables.data));
+                  setDirty(false);
+                }}
+              />
+              <Button
+                title={t.floor.save}
+                variant="primary"
+                size="sm"
+                loading={layoutMutation.isPending}
+                disabled={!dirty || layoutMutation.isPending}
+                onPress={() => layoutMutation.mutate()}
+                testID="save-layout"
+              />
+            </View>
+          ) : (
+            <Button
+              title={t.floor.editLayout}
+              variant="outline"
+              size="sm"
+              onPress={() => setEditing(true)}
+              testID="edit-layout"
+            />
+          )
+        ) : null}
+      </View>
+      {notice ? (
+        <Pressable onPress={() => setNotice(null)} style={styles.notice}>
+          <Text style={styles.noticeText}>{notice}</Text>
+        </Pressable>
+      ) : null}
+
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
-            onRefresh={() => refetch()}
+            onRefresh={() => {
+              refetch();
+              tables.refetch();
+            }}
           />
         }
       >
-        {isLoading && !data ? (
+        {view === "floor" ? (
+          tables.isLoading || sections.isLoading ? (
+            <View style={styles.loading}>
+              <ActivityIndicator color={colors.primary} size="large" />
+            </View>
+          ) : !hasFloor ? (
+            <View style={styles.empty}>
+              <Text style={styles.emptyText}>{t.floor.noSections}</Text>
+            </View>
+          ) : (
+            <FloorPlan
+              sections={sections.data ?? []}
+              tables={tables.data ?? []}
+              sessionsByTable={sessionsByTable}
+              editing={editing}
+              drafts={drafts}
+              onDraftsChange={(next) => {
+                setDrafts(next);
+                setDirty(true);
+              }}
+              onPressTable={(table) => setSheetTable(table)}
+              onAddTable={
+                canEditLayout
+                  ? async (body) => {
+                      await createTable({
+                        ...body,
+                        position_x: 40,
+                        position_y: 40,
+                      });
+                      await tables.refetch();
+                    }
+                  : undefined
+              }
+              now={now}
+            />
+          )
+        ) : isLoading && !data ? (
           <View style={styles.loading}>
             <ActivityIndicator color={colors.primary} size="large" />
           </View>
@@ -277,6 +472,29 @@ export default function TablesScreen() {
           </View>
         )}
       </ScrollView>
+
+      <TableSheet
+        table={sheetTable}
+        session={sheetTable ? (sessionsByTable[sheetTable.id] ?? null) : null}
+        canPay={canPay}
+        busy={startMutation.isPending || closeMutation.isPending}
+        onClose={() => setSheetTable(null)}
+        onStartSession={(table, guests) =>
+          startMutation.mutate({ table, guests })
+        }
+        onBill={(session) => {
+          setSheetTable(null);
+          setBillSession(session);
+        }}
+        onPay={(session) =>
+          canPay ? payTable(session) : confirmCashPaid(session)
+        }
+        onPayQr={(session) => {
+          setSheetTable(null);
+          setPayQrSession(session);
+        }}
+        onCloseSession={(session) => confirmClose(session)}
+      />
 
       <PayQrModal
         session={payQrSession}
@@ -544,10 +762,59 @@ function StatusChip({
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
+  toolbar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+  },
+  segment: {
+    flexDirection: "row",
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    overflow: "hidden",
+  },
+  segmentBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
+  segmentBtnActive: { backgroundColor: colors.slate900 },
+  segmentText: {
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
+    color: colors.foreground,
+  },
+  segmentTextActive: { color: colors.white },
+  editActions: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  unsaved: {
+    fontSize: typography.sizes.xs,
+    color: colors.warningDark,
+    fontWeight: typography.weights.semibold,
+  },
+  notice: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.sm,
+    backgroundColor: colors.dangerTint,
+    borderRadius: radius.md,
+    padding: spacing.md,
+  },
+  noticeText: { color: colors.danger, fontWeight: typography.weights.semibold },
   content: { padding: spacing.lg, paddingBottom: spacing.xxxl },
   loading: { paddingVertical: spacing.xxxl, alignItems: "center" },
   empty: { paddingVertical: spacing.xxxl, alignItems: "center" },
-  emptyText: { fontSize: typography.sizes.md, color: colors.muted },
+  emptyText: {
+    fontSize: typography.sizes.md,
+    color: colors.muted,
+    textAlign: "center",
+  },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md },
   gridItem: { minWidth: 280 },
   card: {

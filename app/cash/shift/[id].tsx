@@ -15,7 +15,9 @@ import Button from "@/components/Button";
 import { useAuth } from "@/context/AuthContext";
 import { useT } from "@/i18n";
 import { money } from "@/lib/money";
+import { printShiftReport } from "@/api/printing";
 import { buildZReportHtml, printHtml } from "@/lib/printReceipt";
+import { usePrinters } from "@/lib/usePrinters";
 import { colors, radius, shadows, spacing, typography } from "@/theme/tokens";
 
 /** One shift: the frozen Z report, or the live X report while it is open. */
@@ -24,6 +26,7 @@ export default function ShiftDetailScreen() {
   const router = useRouter();
   const t = useT();
   const { currentRestaurant } = useAuth();
+  const { receiptPrinters } = usePrinters();
   const shift = useQuery({
     queryKey: ["shift", id],
     queryFn: () => getShift(id!),
@@ -161,9 +164,11 @@ export default function ShiftDetailScreen() {
           size="lg"
           fullWidth
           onPress={() =>
-            printHtml(
-              buildZReportHtml(s, report, currentRestaurant?.name ?? null),
-            )
+            receiptPrinters.length > 0
+              ? printShiftReport(s.id)
+              : printHtml(
+                  buildZReportHtml(s, report, currentRestaurant?.name ?? null),
+                )
           }
         />
       </ScrollView>

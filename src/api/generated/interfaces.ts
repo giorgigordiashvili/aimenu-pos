@@ -46,6 +46,18 @@ export interface AuditLogList {
   created_at: string;
 }
 
+export interface BridgeFailRequest {
+  error?: string;
+}
+
+export interface BridgeJob {
+  id: string;
+  kind: string;
+  title: string;
+  copies: number;
+  escpos_b64: string;
+}
+
 export interface CashMovement {
   id: string;
   kind: Kind7e2enum;
@@ -108,6 +120,10 @@ export interface ChangePasswordRequest {
 export interface CloseShiftRequest {
   counted_cash: string;
   notes?: string;
+}
+
+export interface ConnectionEnum {
+  [key: string]: any;
 }
 
 export interface ContactMessageCreate {
@@ -201,6 +217,10 @@ export interface FavoriteRestaurantCreate {
 
 export interface FavoriteRestaurantCreateRequest {
   restaurant: string;
+}
+
+export interface Kind0ffEnum {
+  [key: string]: any;
 }
 
 export interface Kind34bEnum {
@@ -768,6 +788,20 @@ export interface PaginatedPaymentMethodList {
   results: PaymentMethod[];
 }
 
+export interface PaginatedPrintJobList {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: PrintJob[];
+}
+
+export interface PaginatedPrinterList {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: Printer[];
+}
+
 export interface PaginatedRefundList {
   count: number;
   next?: string;
@@ -866,6 +900,10 @@ export interface PaginatedWalletTransactionList {
   results: WalletTransaction[];
 }
 
+export interface PaperEnum {
+  [key: string]: any;
+}
+
 export interface PasswordResetConfirm {
   token: string;
   new_password: string;
@@ -939,6 +977,18 @@ export interface PatchedModifierGroupDashboardRequest {
   internal_name?: string;
 }
 
+export interface PatchedPrinterRequest {
+  name?: string;
+  kind?: Kind0ffEnum;
+  stations?: StationsEnum;
+  paper?: PaperEnum;
+  connection?: ConnectionEnum;
+  copies?: number;
+  auto_print?: boolean;
+  open_drawer?: boolean;
+  is_active?: boolean;
+}
+
 export interface PatchedReservationBlockedTimeRequest {
   start_datetime?: string;
   end_datetime?: string;
@@ -993,6 +1043,10 @@ export interface PatchedStaffRoleRequest {
   description?: string;
 }
 
+export interface PatchedTableLayoutRequest {
+  tables?: TableLayoutItemRequest[];
+}
+
 export interface PatchedTableQrcodeRequest {
   name?: string;
   is_active?: boolean;
@@ -1010,6 +1064,9 @@ export interface PatchedTableRequest {
   section?: string;
   position_x?: number;
   position_y?: number;
+  rotation?: number;
+  width?: number;
+  height?: number;
   shape?: Shape01eEnum;
 }
 
@@ -1018,6 +1075,9 @@ export interface PatchedTableSectionRequest {
   description?: string;
   display_order?: number;
   is_active?: boolean;
+  floor_width?: number;
+  floor_height?: number;
+  background_note?: string;
 }
 
 export interface PatchedUserUpdateRequest {
@@ -1139,6 +1199,106 @@ export interface PreferredLanguageEnum {
 
 export interface PreparationStationEnum {
   [key: string]: any;
+}
+
+export interface PrintJob {
+  id: string;
+  printer: string;
+  printer_name: string;
+  kind: PrintJobKindEnum;
+  title: string;
+  order: string;
+  order_number: string;
+  payment: string;
+  status: PrintJobStatusEnum;
+  attempts: number;
+  error: string;
+  requested_by: string;
+  claimed_at: string;
+  printed_at: string;
+  created_at: string;
+}
+
+export interface PrintJobCreateKindEnum {
+  [key: string]: any;
+}
+
+export interface PrintJobCreateRequest {
+  kind: PrintJobCreateKindEnum;
+  order_id?: string;
+  payment_id?: string;
+  shift_id?: string;
+  printer_id?: string;
+  station?: StationEnum;
+}
+
+export interface PrintJobKindEnum {
+  [key: string]: any;
+}
+
+export interface PrintJobStatusEnum {
+  [key: string]: any;
+}
+
+export interface Printer {
+  id: string;
+  name: string;
+  kind?: Kind0ffEnum;
+  stations?: StationsEnum;
+  paper?: PaperEnum;
+  connection?: ConnectionEnum;
+  copies?: number;
+  auto_print?: boolean;
+  open_drawer?: boolean;
+  is_active?: boolean;
+  is_online: boolean;
+  last_seen_at: string;
+  last_error: string;
+  queued_jobs: string;
+  created_at: string;
+}
+
+export interface PrinterRequest {
+  name: string;
+  kind?: Kind0ffEnum;
+  stations?: StationsEnum;
+  paper?: PaperEnum;
+  connection?: ConnectionEnum;
+  copies?: number;
+  auto_print?: boolean;
+  open_drawer?: boolean;
+  is_active?: boolean;
+}
+
+export interface PrinterSetup {
+  id: string;
+  name: string;
+  kind?: Kind0ffEnum;
+  stations?: StationsEnum;
+  paper?: PaperEnum;
+  connection?: ConnectionEnum;
+  copies?: number;
+  auto_print?: boolean;
+  open_drawer?: boolean;
+  is_active?: boolean;
+  is_online: boolean;
+  last_seen_at: string;
+  last_error: string;
+  queued_jobs: string;
+  created_at: string;
+  bridge_key: string;
+}
+
+export interface PrinterSetupRequest {
+  name: string;
+  kind?: Kind0ffEnum;
+  stations?: StationsEnum;
+  paper?: PaperEnum;
+  connection?: ConnectionEnum;
+  copies?: number;
+  auto_print?: boolean;
+  open_drawer?: boolean;
+  is_active?: boolean;
 }
 
 export interface QrresolveData {
@@ -1768,6 +1928,14 @@ export interface StaffRoleRequest {
   description?: string;
 }
 
+export interface StationEnum {
+  [key: string]: any;
+}
+
+export interface StationsEnum {
+  [key: string]: any;
+}
+
 export interface Status3f5enum {
   [key: string]: any;
 }
@@ -1797,6 +1965,9 @@ export interface Table {
   section_name: string;
   position_x?: number;
   position_y?: number;
+  rotation?: number;
+  width?: number;
+  height?: number;
   shape?: Shape01eEnum;
   qr_codes: TableQrcode[];
   is_shared: boolean;
@@ -1811,6 +1982,9 @@ export interface TableCreate {
   section?: string;
   position_x?: number;
   position_y?: number;
+  rotation?: number;
+  width?: number;
+  height?: number;
   shape?: Shape01eEnum;
 }
 
@@ -1822,8 +1996,20 @@ export interface TableCreateRequest {
   section?: string;
   position_x?: number;
   position_y?: number;
+  rotation?: number;
+  width?: number;
+  height?: number;
   shape?: Shape01eEnum;
   generate_qr?: boolean;
+}
+
+export interface TableLayoutItemRequest {
+  id: string;
+  position_x: number;
+  position_y: number;
+  rotation?: number;
+  width?: number;
+  height?: number;
 }
 
 export interface TableQrcode {
@@ -1860,6 +2046,9 @@ export interface TableRequest {
   section?: string;
   position_x?: number;
   position_y?: number;
+  rotation?: number;
+  width?: number;
+  height?: number;
   shape?: Shape01eEnum;
 }
 
@@ -1869,6 +2058,9 @@ export interface TableSection {
   description?: string;
   display_order?: number;
   is_active?: boolean;
+  floor_width?: number;
+  floor_height?: number;
+  background_note?: string;
   tables_count: string;
   is_shared: boolean;
 }
@@ -1878,6 +2070,9 @@ export interface TableSectionRequest {
   description?: string;
   display_order?: number;
   is_active?: boolean;
+  floor_width?: number;
+  floor_height?: number;
+  background_note?: string;
 }
 
 export interface TableSession {

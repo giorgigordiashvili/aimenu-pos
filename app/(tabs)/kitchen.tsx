@@ -36,7 +36,9 @@ import {
   saveSoundPref,
   unlockAudio,
 } from "@/lib/kitchenSound";
+import { printTicket } from "@/api/printing";
 import { useNewTicketAlert } from "@/lib/useNewTicketAlert";
+import { usePrinters } from "@/lib/usePrinters";
 import { useKeepScreenAwake } from "@/lib/useKeepScreenAwake";
 import { useNow } from "@/lib/useNow";
 import { colors, radius, shadows, spacing, typography } from "@/theme/tokens";
@@ -199,6 +201,13 @@ export default function KitchenScreen() {
   }
 
   const hideError = useCallback(() => setError(null), []);
+  const { kitchenPrinters } = usePrinters();
+  const [printed, setPrinted] = useState<string | null>(null);
+  const print = useMutation({
+    mutationFn: (orderId: string) => printTicket(orderId),
+    onSuccess: () => setPrinted(t.printing.printed),
+    onError: (err) => setError(apiMessage(err) ?? t.printing.noPrinter),
+  });
 
   const renderLane = (key: KitchenLane, withRefresh: boolean) => {
     const tone = LANE_TONES[key];
@@ -253,6 +262,11 @@ export default function KitchenScreen() {
                 onAdvance={() => advance(item)}
                 onCancel={
                   key === "ready" ? undefined : () => setCancelTarget(item)
+                }
+                onPrint={
+                  kitchenPrinters.length > 0
+                    ? () => print.mutate(item.id)
+                    : undefined
                 }
               />
             )}
@@ -338,6 +352,12 @@ export default function KitchenScreen() {
       </View>
 
       <InlineBanner message={error} onHide={hideError} />
+      <InlineBanner
+        message={printed}
+        tone="success"
+        autoHideMs={2500}
+        onHide={() => setPrinted(null)}
+      />
 
       {isLoading && !data ? (
         <View style={styles.loading}>

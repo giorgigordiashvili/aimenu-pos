@@ -12,6 +12,7 @@ export type ModuleCode =
   | "loyalty"
   | "reviews"
   | "cash"
+  | "printing"
   | "payments";
 
 export type Resource =
@@ -62,7 +63,12 @@ export function moduleOn(
   // Missing key (older backend) counts as on, except for opt-in modules.
   const value = r?.modules?.[code];
   if (value === undefined)
-    return code !== "warehouse" && code !== "payments" && code !== "cash";
+    return (
+      code !== "warehouse" &&
+      code !== "payments" &&
+      code !== "cash" &&
+      code !== "printing"
+    );
   return value;
 }
 

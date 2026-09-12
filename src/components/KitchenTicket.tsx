@@ -28,6 +28,7 @@ interface Props {
   labels: Dict["kitchen"];
   onAdvance: () => void;
   onCancel?: () => void;
+  onPrint?: () => void;
 }
 
 export function startedAt(row: KitchenOrderRow): number {
@@ -113,6 +114,7 @@ function KitchenTicketInner({
   labels,
   onAdvance,
   onCancel,
+  onPrint,
 }: Props) {
   const minutes = Math.max(Math.floor((now - startedAt(row)) / 60_000), 0);
   const tone = elapsedTone(minutes);
@@ -199,17 +201,31 @@ function KitchenTicketInner({
         textStyle={styles.actionText}
         accessibilityLabel={`${labels[action.key]} ${row.order_number}`}
       />
-      {onCancel ? (
-        <Pressable
-          onPress={onCancel}
-          disabled={busy}
-          style={styles.cancel}
-          hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}
-          accessibilityRole="button"
-        >
-          <Text style={styles.cancelText}>{labels.cantMake}</Text>
-        </Pressable>
-      ) : null}
+      <View style={styles.secondary}>
+        {onPrint ? (
+          <Pressable
+            onPress={onPrint}
+            disabled={busy}
+            style={styles.print}
+            hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}
+            accessibilityRole="button"
+            testID={`print-${row.order_number}`}
+          >
+            <Text style={styles.printText}>🖨 {labels.print}</Text>
+          </Pressable>
+        ) : null}
+        {onCancel ? (
+          <Pressable
+            onPress={onCancel}
+            disabled={busy}
+            style={styles.cancel}
+            hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}
+            accessibilityRole="button"
+          >
+            <Text style={styles.cancelText}>{labels.cantMake}</Text>
+          </Pressable>
+        ) : null}
+      </View>
     </Animated.View>
   );
 }
@@ -331,6 +347,20 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: SIZE.button,
     fontWeight: typography.weights.bold,
+  },
+  secondary: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    flexWrap: "wrap",
+  },
+  print: {
+    paddingVertical: 8,
+  },
+  printText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.slate600,
   },
   cancel: {
     minHeight: 44,
