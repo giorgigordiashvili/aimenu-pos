@@ -229,6 +229,25 @@ export async function applyOrderDiscount(
   return response.data;
 }
 
+/** Promo code on an open order (Promotions module). */
+export async function applyPromoCode(
+  orderId: string,
+  code: string,
+): Promise<Order> {
+  const response = await api.post<Order>(
+    `/api/v1/dashboard/promotions/orders/${orderId}/promo-code/`,
+    { code },
+  );
+  return response.data;
+}
+
+export async function removePromoCode(orderId: string): Promise<Order> {
+  const response = await api.delete<Order>(
+    `/api/v1/dashboard/promotions/orders/${orderId}/promo-code/`,
+  );
+  return response.data;
+}
+
 export async function removeOrderDiscount(
   orderId: string,
   discountId?: string,

@@ -14,6 +14,10 @@ export interface Amenity {
   icon?: string;
 }
 
+export interface AppliesToEnum {
+  [key: string]: any;
+}
+
 export interface AuditLogDetail {
   id: string;
   user?: string;
@@ -199,7 +203,7 @@ export interface EligibleOrder {
   restaurant_name: string;
   restaurant_logo: string;
   total: string;
-  status: Status3f5enum;
+  status: StatusD10enum;
   completed_at: string;
   created_at: string;
 }
@@ -275,6 +279,15 @@ export interface FiscalDocumentStatusEnum {
   [key: string]: any;
 }
 
+export interface ItemAvailability {
+  id: string;
+  name: string;
+  available_now: boolean;
+  available_from: string;
+  unavailable_until: string;
+  is_available: boolean;
+}
+
 export interface Kind0ffEnum {
   [key: string]: any;
 }
@@ -291,8 +304,8 @@ export interface KitchenOrder {
   id: string;
   order_number: string;
   order_type?: OrderTypeEnum;
-  status?: Status3f5enum;
-  source?: Source6f3enum;
+  status?: StatusD10enum;
+  source?: SourceF68enum;
   external_id?: string;
   platform_order_code: string;
   pickup_eta: string;
@@ -366,6 +379,7 @@ export interface MarkReadRequest {
 }
 
 export interface MenuCategory {
+  schedule_label: string;
   id: string;
   translations: string;
   image?: string;
@@ -414,6 +428,14 @@ export interface MenuItem {
   translations: string;
   category: MenuCategoryList;
   price: string;
+  available_now: string;
+  available_from: string;
+  promo_price: string;
+  promo_label: string;
+  is_combo?: boolean;
+  combo_components: string;
+  schedule?: string;
+  unavailable_until: string;
   image?: string;
   image_blurhash: string;
   is_available?: boolean;
@@ -538,7 +560,7 @@ export interface MenuSyncRequestRequest {
   kind?: MenuSyncRequestKindEnum;
 }
 
-export interface Method5ffEnum {
+export interface Method2d9enum {
   [key: string]: any;
 }
 
@@ -546,7 +568,7 @@ export interface MethodTypeEnum {
   [key: string]: any;
 }
 
-export interface ModeEnum {
+export interface ModeC24enum {
   [key: string]: any;
 }
 
@@ -657,7 +679,7 @@ export interface Order {
   id: string;
   order_number: string;
   order_type?: OrderTypeEnum;
-  status?: Status3f5enum;
+  status?: StatusD10enum;
   table?: string;
   table_number: string;
   table_session?: string;
@@ -684,7 +706,7 @@ export interface Order {
   completed_at: string;
   cancelled_at: string;
   cancellation_reason?: string;
-  source: Source6f3enum;
+  source: SourceF68enum;
   external_id: string;
   platform_data: any;
   items: OrderItem[];
@@ -695,7 +717,7 @@ export interface Order {
 export interface OrderDiscount {
   id: string;
   kind: OrderDiscountKindEnum;
-  mode: ModeEnum;
+  mode: ModeC24enum;
   value: string;
   amount: string;
   label: string;
@@ -706,7 +728,7 @@ export interface OrderDiscount {
 export interface OrderDiscountCreateRequest {
   reason_id?: string;
   reason_text?: string;
-  mode?: ModeEnum;
+  mode?: ModeC24enum;
   value: string;
 }
 
@@ -738,7 +760,7 @@ export interface OrderItem {
 export interface OrderItemDiscountRequest {
   reason_id?: string;
   reason_text?: string;
-  mode?: ModeEnum;
+  mode?: ModeC24enum;
   value: string;
 }
 
@@ -761,12 +783,12 @@ export interface OrderList {
   id: string;
   order_number: string;
   order_type?: OrderTypeEnum;
-  status?: Status3f5enum;
+  status?: StatusD10enum;
   table?: string;
   table_number: string;
   table_session?: string;
   customer_name?: string;
-  source?: Source6f3enum;
+  source?: SourceF68enum;
   subtotal?: string;
   discount_amount?: string;
   total?: string;
@@ -1223,7 +1245,7 @@ export interface PatchedTableRequest {
   rotation?: number;
   width?: number;
   height?: number;
-  shape?: Shape01eEnum;
+  shape?: Shape877enum;
 }
 
 export interface PatchedTableSectionRequest {
@@ -1278,7 +1300,7 @@ export interface Payment {
   tendered: string;
   change_given: string;
   payment_method: PaymentMethodEnum;
-  status: StatusCd5enum;
+  status: Status227enum;
   currency: string;
   receipt_number: string;
   external_payment_id: string;
@@ -1317,7 +1339,7 @@ export interface PaymentList {
   total_amount: string;
   change_given?: string;
   payment_method?: PaymentMethodEnum;
-  status?: StatusCd5enum;
+  status?: Status227enum;
   receipt_number?: string;
   completed_at?: string;
   created_at: string;
@@ -1346,8 +1368,8 @@ export interface PaymentModeEnum {
 
 export interface PaymentRefundRequest {
   amount: string;
-  method?: Method5ffEnum;
-  reason?: ReasonE43enum;
+  method?: Method2d9enum;
+  reason?: Reason4d1enum;
   reason_id?: string;
   reason_details?: string;
   order_id?: string;
@@ -1500,6 +1522,40 @@ export interface PrinterSetupRequest {
   is_active?: boolean;
 }
 
+export interface PromoCodeRequest {
+  code: string;
+}
+
+export interface Promotion {
+  id: string;
+  name: string;
+  description?: string;
+  kind?: PromotionKindEnum;
+  is_active?: boolean;
+  live_now: string;
+  mode?: PromotionModeEnum;
+  value: string;
+  applies_to?: AppliesToEnum;
+  code?: string;
+  starts_on?: string;
+  ends_on?: string;
+  min_order_amount?: string;
+  max_uses?: number;
+  max_uses_per_customer?: number;
+  uses_count?: number;
+  channels?: any;
+  stackable?: boolean;
+  schedule_label: string;
+}
+
+export interface PromotionKindEnum {
+  [key: string]: any;
+}
+
+export interface PromotionModeEnum {
+  [key: string]: any;
+}
+
 export interface QrresolveData {
   kind: QrresolveDataKindEnum;
   path: string;
@@ -1518,7 +1574,7 @@ export interface QrresolveResponse {
   data: QrresolveData;
 }
 
-export interface ReasonE43enum {
+export interface Reason4d1enum {
   [key: string]: any;
 }
 
@@ -1567,8 +1623,8 @@ export interface Refund {
   order?: string;
   shift?: string;
   amount: string;
-  method?: Method5ffEnum;
-  reason?: ReasonE43enum;
+  method?: Method2d9enum;
+  reason?: Reason4d1enum;
   reason_code?: string;
   reason_details?: string;
   status?: RefundStatusEnum;
@@ -1581,7 +1637,7 @@ export interface Refund {
 export interface RefundCreateRequest {
   payment_id: string;
   amount: string;
-  reason: ReasonE43enum;
+  reason: Reason4d1enum;
   reason_details?: string;
 }
 
@@ -1648,8 +1704,8 @@ export interface ReservationDashboardCreate {
   party_size: number;
   duration?: string;
   table?: string;
-  status?: StatusAe9enum;
-  source?: Source9b9enum;
+  status?: Status8bbEnum;
+  source?: SourceA45enum;
   special_requests?: string;
   internal_notes?: string;
 }
@@ -1664,8 +1720,8 @@ export interface ReservationDashboardCreateRequest {
   party_size: number;
   duration?: string;
   table?: string;
-  status?: StatusAe9enum;
-  source?: Source9b9enum;
+  status?: Status8bbEnum;
+  source?: SourceA45enum;
   special_requests?: string;
   internal_notes?: string;
 }
@@ -1692,9 +1748,9 @@ export interface ReservationDetail {
   duration?: string;
   table?: string;
   table_number: string;
-  status?: StatusAe9enum;
+  status?: Status8bbEnum;
   status_display: string;
-  source?: Source9b9enum;
+  source?: SourceA45enum;
   source_display: string;
   special_requests?: string;
   internal_notes?: string;
@@ -1734,9 +1790,9 @@ export interface ReservationList {
   reservation_date: string;
   reservation_time: string;
   party_size: number;
-  status: StatusAe9enum;
+  status: Status8bbEnum;
   status_display: string;
-  source: Source9b9enum;
+  source: SourceA45enum;
   source_display: string;
   table: string;
   table_number: string;
@@ -2016,7 +2072,11 @@ export interface SelectionTypeEnum {
   [key: string]: any;
 }
 
-export interface Shape01eEnum {
+export interface SetUnavailableRequest {
+  until?: UntilEnum;
+}
+
+export interface Shape877enum {
   [key: string]: any;
 }
 
@@ -2034,11 +2094,11 @@ export interface SocialLoginRequest {
   referral_code?: string;
 }
 
-export interface Source6f3enum {
+export interface SourceA45enum {
   [key: string]: any;
 }
 
-export interface Source9b9enum {
+export interface SourceF68enum {
   [key: string]: any;
 }
 
@@ -2139,19 +2199,19 @@ export interface StationsEnum {
   [key: string]: any;
 }
 
-export interface Status3f5enum {
+export interface Status227enum {
   [key: string]: any;
 }
 
-export interface StatusAe9enum {
+export interface Status8bbEnum {
   [key: string]: any;
 }
 
-export interface StatusB75enum {
+export interface StatusD10enum {
   [key: string]: any;
 }
 
-export interface StatusCd5enum {
+export interface StatusE8bEnum {
   [key: string]: any;
 }
 
@@ -2177,7 +2237,7 @@ export interface Table {
   rotation?: number;
   width?: number;
   height?: number;
-  shape?: Shape01eEnum;
+  shape?: Shape877enum;
   qr_codes: TableQrcode[];
   is_shared: boolean;
   venue_table: string;
@@ -2194,7 +2254,7 @@ export interface TableCreate {
   rotation?: number;
   width?: number;
   height?: number;
-  shape?: Shape01eEnum;
+  shape?: Shape877enum;
 }
 
 export interface TableCreateRequest {
@@ -2208,7 +2268,7 @@ export interface TableCreateRequest {
   rotation?: number;
   width?: number;
   height?: number;
-  shape?: Shape01eEnum;
+  shape?: Shape877enum;
   generate_qr?: boolean;
 }
 
@@ -2258,7 +2318,7 @@ export interface TableRequest {
   rotation?: number;
   width?: number;
   height?: number;
-  shape?: Shape01eEnum;
+  shape?: Shape877enum;
 }
 
 export interface TableSection {
@@ -2289,7 +2349,7 @@ export interface TableSession {
   table: string;
   table_number: string;
   guest_count?: number;
-  status?: StatusB75enum;
+  status?: StatusE8bEnum;
   payment_mode?: PaymentModeEnum;
   host: string;
   started_at: string;
@@ -2306,7 +2366,7 @@ export interface TableSessionDetail {
   host_email: string;
   invite_code: string;
   guest_count: number;
-  status: StatusB75enum;
+  status: StatusE8bEnum;
   payment_mode: PaymentModeEnum;
   started_at: string;
   closed_at: string;
@@ -2364,6 +2424,10 @@ export interface TokenRefreshRequest {
 export interface UnreadCount {
   unread: number;
   latest_id: string;
+}
+
+export interface UntilEnum {
+  [key: string]: any;
 }
 
 export interface User {
@@ -2434,6 +2498,28 @@ export interface UserUpdateRequest {
   avatar?: string;
   preferred_language?: PreferredLanguageEnum;
   profile?: UserProfileRequest;
+}
+
+export interface ValidateCodeChannelEnum {
+  [key: string]: any;
+}
+
+export interface ValidateCodeRequest {
+  code: string;
+  items?: Record<string, any>[];
+  phone?: string;
+  channel?: ValidateCodeChannelEnum;
+}
+
+export interface ValidateCodeResult {
+  valid: boolean;
+  code: string;
+  name: string;
+  mode: string;
+  value: string;
+  discount: string;
+  error: string;
+  error_code: string;
 }
 
 export interface VenueCard {
@@ -2582,7 +2668,7 @@ export interface VenueTableDashboard {
   name?: string;
   capacity?: number;
   min_capacity?: number;
-  shape?: Shape01eEnum;
+  shape?: Shape877enum;
   section?: string;
   section_name: string;
   is_active?: boolean;

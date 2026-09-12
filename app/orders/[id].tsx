@@ -14,6 +14,8 @@ import {
 
 import {
   applyOrderDiscount,
+  applyPromoCode,
+  removePromoCode,
   compOrderItem,
   discountOrderItem,
   getOrder,
@@ -31,6 +33,7 @@ import type { RecordPaymentResult } from "@/api/payments";
 import { can, moduleOn } from "@/api/restaurants";
 import Button from "@/components/Button";
 import DiscountSheet, { type DiscountInput } from "@/components/DiscountSheet";
+import PromoCodeSheet from "@/components/PromoCodeSheet";
 import MoveTableSheet from "@/components/MoveTableSheet";
 import PaymentSheet, { type PaymentTarget } from "@/components/PaymentSheet";
 import ReasonSheet from "@/components/ReasonSheet";
@@ -61,6 +64,9 @@ export default function OrderDetailScreen() {
   const canSplit = can(currentRestaurant, "orders", "update");
   const [payTarget, setPayTarget] = useState<PaymentTarget | null>(null);
   const [orderDiscount, setOrderDiscount] = useState(false);
+  const [promoOpen, setPromoOpen] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const promoOn = moduleOn(currentRestaurant, "promotions");
   const [splitOpen, setSplitOpen] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
   const [itemAction, setItemAction] = useState<ItemAction>(null);
@@ -159,6 +165,24 @@ export default function OrderDetailScreen() {
       invalidateOnOrderChange();
     },
     onError: (err) => setError(errorText(err)),
+  });
+  const promo = useMutation({
+    mutationFn: (code: string) => applyPromoCode(id!, code),
+    onSuccess: () => {
+      setPromoOpen(false);
+      setPromoError(null);
+      invalidateOnOrderChange();
+    },
+    onError: (err: unknown) => {
+      const data = (
+        err as { response?: { data?: { error?: { message?: string } } } }
+      ).response?.data;
+      setPromoError(data?.error?.message ?? t.delivery.failed);
+    },
+  });
+  const clearPromo = useMutation({
+    mutationFn: () => removePromoCode(id!),
+    onSuccess: () => invalidateOnOrderChange(),
   });
   const clearDiscount = useMutation({
     mutationFn: (discountId?: string) => removeOrderDiscount(id!, discountId),
@@ -409,6 +433,18 @@ export default function OrderDetailScreen() {
                 }}
               >
                 <Text style={styles.totalValue}>−{money(d.amount)}</Text>
+                {d.kind === "promo" && promoOn && moneyOpen ? (
+                  <Pressable
+                    onPress={() => clearPromo.mutate()}
+                    accessibilityLabel={t.cash.removeDiscount}
+                  >
+                    <Ionicons
+                      name="close-circle"
+                      size={20}
+                      color={colors.danger}
+                    />
+                  </Pressable>
+                ) : null}
                 {d.kind === "manual" && cashOn && canDiscount && moneyOpen ? (
                   <Pressable
                     onPress={() => clearDiscount.mutate(d.id)}
@@ -496,6 +532,20 @@ export default function OrderDetailScreen() {
                   />
                 </View>
               ) : null}
+              {promoOn && moneyOpen ? (
+                <View style={{ flex: 1 }}>
+                  <Button
+                    title={t.cash.promoCode}
+                    variant="outline"
+                    fullWidth
+                    onPress={() => {
+                      setPromoError(null);
+                      setPromoOpen(true);
+                    }}
+                    testID="promo-code-button"
+                  />
+                </View>
+              ) : null}
               {cashOn &&
               canSplit &&
               moneyOpen &&
@@ -574,6 +624,14 @@ export default function OrderDetailScreen() {
         }}
         onPaid={() => invalidateOnOrderChange()}
         onPrint={printLast}
+      />
+      <PromoCodeSheet
+        visible={promoOpen}
+        subtitle={order.order_number}
+        loading={promo.isPending}
+        error={promoError}
+        onClose={() => setPromoOpen(false)}
+        onConfirm={(code) => promo.mutate(code)}
       />
       <DiscountSheet
         visible={orderDiscount}

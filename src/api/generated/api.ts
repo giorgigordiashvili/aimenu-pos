@@ -100,6 +100,10 @@ import type {
   Printer,
   PrinterRequest,
   PatchedPrinterRequest,
+  Promotion,
+  SetUnavailableRequest,
+  ItemAvailability,
+  PromoCodeRequest,
   PaginatedReservationListList,
   ReservationDetail,
   ReservationUpdateRequest,
@@ -161,6 +165,8 @@ import type {
   PaginatedPaymentMethodList,
   BridgeFailRequest,
   BridgeJob,
+  ValidateCodeRequest,
+  ValidateCodeResult,
   QrresolveResponse,
   PaginatedWalletTransactionList,
   ReferredUser,
@@ -1325,6 +1331,49 @@ export async function dashboardPrintingPrintersTestCreate(
   return response.data;
 }
 
+export async function dashboardPromotionsList(): Promise<Promotion[]> {
+  const response = await axios.get(`/api/v1/dashboard/promotions/`);
+  return response.data;
+}
+
+export async function dashboardPromotionsItems86Create(
+  itemId: string,
+  data: SetUnavailableRequest,
+): Promise<ItemAvailability> {
+  const response = await axios.post(
+    `/api/v1/dashboard/promotions/items/${itemId}/86/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardPromotionsOrdersPromoCodeCreate(
+  orderId: string,
+  data: PromoCodeRequest,
+): Promise<Order> {
+  const response = await axios.post(
+    `/api/v1/dashboard/promotions/orders/${orderId}/promo-code/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardPromotionsOrdersPromoCodeDestroy(
+  orderId: string,
+): Promise<any> {
+  const response = await axios.delete(
+    `/api/v1/dashboard/promotions/orders/${orderId}/promo-code/`,
+  );
+  return response.data;
+}
+
+export async function dashboardPromotionsUnavailableList(): Promise<
+  ItemAvailability[]
+> {
+  const response = await axios.get(`/api/v1/dashboard/promotions/unavailable/`);
+  return response.data;
+}
+
 export async function dashboardReportsRetrieve(
   key: string,
   from?: string,
@@ -2425,6 +2474,17 @@ export async function printBridgeJobsNextRetrieve(
 
 export async function printBridgePingRetrieve(): Promise<Record<string, any>> {
   const response = await axios.get(`/api/v1/print-bridge/ping/`);
+  return response.data;
+}
+
+export async function promotionsValidateCreate(
+  slug: string,
+  data: ValidateCodeRequest,
+): Promise<ValidateCodeResult> {
+  const response = await axios.post(
+    `/api/v1/promotions/${slug}/validate/`,
+    data,
+  );
   return response.data;
 }
 
