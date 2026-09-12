@@ -1,7 +1,11 @@
 import React, { useEffect, useRef } from "react";
 import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 
-import type { KitchenOrderRow, OrderItem } from "@/api/orders";
+import {
+  PLATFORM_SOURCES,
+  type KitchenOrderRow,
+  type OrderItem,
+} from "@/api/orders";
 import Button from "@/components/Button";
 import type { Dict } from "@/i18n";
 import { colors, radius, shadows, spacing, typography } from "@/theme/tokens";
@@ -142,6 +146,14 @@ function KitchenTicketInner({
   }, [flash, opacity]);
 
   const action = ACTION[lane];
+  const isPlatform = !!row.source && PLATFORM_SOURCES.includes(row.source);
+  const pickupIn = row.pickup_eta
+    ? Math.round((new Date(row.pickup_eta).getTime() - now) / 60_000)
+    : null;
+  const actionLabel =
+    isPlatform && action.key === "pickedUp"
+      ? labels.handedToCourier
+      : labels[action.key];
   const where = row.table_number
     ? `${labels.table} ${row.table_number}`
     : (labels.orderTypes[
@@ -161,6 +173,14 @@ function KitchenTicketInner({
     >
       <View style={styles.header}>
         <Text style={styles.orderNo}>{row.order_number}</Text>
+        {isPlatform ? (
+          <View style={styles.platformTag} testID="platform-badge">
+            <Text style={styles.platformText}>
+              {(row.source ?? "").toUpperCase()}
+              {row.platform_order_code ? ` #${row.platform_order_code}` : ""}
+            </Text>
+          </View>
+        ) : null}
         <View
           style={[styles.elapsed, { backgroundColor: ELAPSED_STYLE[tone].bg }]}
         >
@@ -169,6 +189,11 @@ function KitchenTicketInner({
           </Text>
         </View>
       </View>
+      {isPlatform && pickupIn !== null ? (
+        <Text style={[styles.meta, pickupIn < 0 && { color: colors.danger }]}>
+          {labels.pickupIn.replace("{min}", String(pickupIn))}
+        </Text>
+      ) : null}
       <Text style={styles.meta}>
         {where}
         {row.customer_name ? ` · ${row.customer_name}` : ""}
@@ -191,7 +216,7 @@ function KitchenTicketInner({
       ) : null}
 
       <Button
-        title={labels[action.key]}
+        title={actionLabel}
         variant={action.variant}
         size="lg"
         fullWidth
@@ -199,7 +224,7 @@ function KitchenTicketInner({
         onPress={onAdvance}
         style={styles.action}
         textStyle={styles.actionText}
-        accessibilityLabel={`${labels[action.key]} ${row.order_number}`}
+        accessibilityLabel={`${actionLabel} ${row.order_number}`}
       />
       <View style={styles.secondary}>
         {onPrint ? (
@@ -347,6 +372,19 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: SIZE.button,
     fontWeight: typography.weights.bold,
+  },
+  platformTag: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: "#FFEDD4",
+    borderWidth: 1,
+    borderColor: "#FF6900",
+  },
+  platformText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#7B3306",
   },
   secondary: {
     flexDirection: "row",

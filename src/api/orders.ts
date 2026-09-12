@@ -63,6 +63,7 @@ export interface OrderListRow {
   order_number: string;
   order_type?: string;
   status?: OrderStatus | { value: string };
+  source?: OrderSource;
   table?: string | null;
   table_number?: string;
   table_session?: string | null;
@@ -103,11 +104,18 @@ export interface Order extends OrderListRow {
 export type PreparationStation = "kitchen" | "bar" | "both";
 
 /** One ticket on the kitchen screen (GET /dashboard/orders/kitchen/). */
+export type OrderSource = "web" | "qr" | "pos" | "glovo" | "wolt" | "bolt_food";
+export const PLATFORM_SOURCES: OrderSource[] = ["glovo", "wolt", "bolt_food"];
+
 export interface KitchenOrderRow {
   id: string;
   order_number: string;
   order_type?: string;
   status: OrderStatus | { value: string };
+  source?: OrderSource;
+  external_id?: string;
+  platform_order_code?: string;
+  pickup_eta?: string | null;
   table_number?: string | null;
   customer_name?: string;
   customer_notes?: string;

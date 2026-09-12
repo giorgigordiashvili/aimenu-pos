@@ -267,6 +267,10 @@ export interface KitchenOrder {
   order_number: string;
   order_type?: OrderTypeEnum;
   status?: Status3f5enum;
+  source?: Source6f3enum;
+  external_id?: string;
+  platform_order_code: string;
+  pickup_eta: string;
   table_number: string;
   customer_name?: string;
   customer_notes?: string;
@@ -602,6 +606,9 @@ export interface Order {
   completed_at: string;
   cancelled_at: string;
   cancellation_reason?: string;
+  source: Source6f3enum;
+  external_id: string;
+  platform_data: any;
   items: OrderItem[];
   created_at: string;
   updated_at: string;
@@ -681,6 +688,7 @@ export interface OrderList {
   table_number: string;
   table_session?: string;
   customer_name?: string;
+  source?: Source6f3enum;
   subtotal?: string;
   discount_amount?: string;
   total?: string;
@@ -1488,7 +1496,7 @@ export interface ReservationDashboardCreate {
   duration?: string;
   table?: string;
   status?: StatusAe9enum;
-  source?: SourceEnum;
+  source?: Source9b9enum;
   special_requests?: string;
   internal_notes?: string;
 }
@@ -1504,7 +1512,7 @@ export interface ReservationDashboardCreateRequest {
   duration?: string;
   table?: string;
   status?: StatusAe9enum;
-  source?: SourceEnum;
+  source?: Source9b9enum;
   special_requests?: string;
   internal_notes?: string;
 }
@@ -1533,7 +1541,7 @@ export interface ReservationDetail {
   table_number: string;
   status?: StatusAe9enum;
   status_display: string;
-  source?: SourceEnum;
+  source?: Source9b9enum;
   source_display: string;
   special_requests?: string;
   internal_notes?: string;
@@ -1575,7 +1583,7 @@ export interface ReservationList {
   party_size: number;
   status: StatusAe9enum;
   status_display: string;
-  source: SourceEnum;
+  source: Source9b9enum;
   source_display: string;
   table: string;
   table_number: string;
@@ -1873,7 +1881,11 @@ export interface SocialLoginRequest {
   referral_code?: string;
 }
 
-export interface SourceEnum {
+export interface Source6f3enum {
+  [key: string]: any;
+}
+
+export interface Source9b9enum {
   [key: string]: any;
 }
 

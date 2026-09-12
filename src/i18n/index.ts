@@ -187,6 +187,8 @@ export const dictionaries = {
       pickedUp: "გატანილია",
       cantMake: "ვერ ვამზადებთ",
       print: "ბეჭდვა",
+      handedToCourier: "კურიერს გადაეცა",
+      pickupIn: "კურიერი {min} წთ-ში",
       cantMakeTitle: "რატომ ვერ მზადდება?",
       cancelReasons: {
         out_of_ingredients: "ინგრედიენტი არ არის",
@@ -569,6 +571,8 @@ export const dictionaries = {
       pickedUp: "Picked up",
       cantMake: "Can't make",
       print: "Print",
+      handedToCourier: "Handed to courier",
+      pickupIn: "Courier in {min} min",
       cantMakeTitle: "Why can't it be made?",
       cancelReasons: {
         out_of_ingredients: "Out of ingredients",
