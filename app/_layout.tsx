@@ -1,7 +1,11 @@
-import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Stack, useRouter, useSegments } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import {
+  focusManager,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
+import { Stack, useRouter, useSegments } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
 import {
   ActivityIndicator,
   AppState,
@@ -9,22 +13,23 @@ import {
   Platform,
   StyleSheet,
   View,
-} from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+} from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import { AuthProvider, useAuth } from '@/context/AuthContext';
-import { LocaleProvider } from '@/i18n/LocaleProvider';
-import { colors } from '@/theme/tokens';
+import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { LocaleProvider } from "@/i18n/LocaleProvider";
+import { firstTabFor } from "@/lib/roleTabs";
+import { colors } from "@/theme/tokens";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
       staleTime: 5_000,
-      refetchOnWindowFocus: 'always',
-      refetchOnReconnect: 'always',
-      refetchOnMount: 'always',
+      refetchOnWindowFocus: "always",
+      refetchOnReconnect: "always",
+      refetchOnMount: "always",
     },
   },
 });
@@ -32,48 +37,78 @@ const queryClient = new QueryClient({
 // Bridge React Native's AppState into TanStack's focusManager so the iPad
 // native app refetches when the user switches back to the POS. Web uses
 // the default `window.focus` event.
-if (Platform.OS !== 'web') {
+if (Platform.OS !== "web") {
   const onAppStateChange = (status: AppStateStatus) => {
-    focusManager.setFocused(status === 'active');
+    focusManager.setFocused(status === "active");
   };
-  AppState.addEventListener('change', onAppStateChange);
+  AppState.addEventListener("change", onAppStateChange);
 }
 
 function AuthGate() {
-  const { isAuthenticated, isLoading, restaurantSlug } = useAuth();
+  const {
+    isAuthenticated,
+    isLoading,
+    restaurantSlug,
+    currentRestaurant,
+    restaurantsLoaded,
+  } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
     if (isLoading) return;
-    const inAuthStack = segments[0] === 'login';
-    const inPicker = segments[0] === 'restaurants';
+    const inAuthStack = segments[0] === "login";
+    const inPicker = segments[0] === "restaurants";
     if (!isAuthenticated && !inAuthStack) {
-      router.replace('/login');
+      router.replace("/login");
     } else if (isAuthenticated && !restaurantSlug && !inPicker) {
       // Signed in but no restaurant chosen yet (several memberships).
-      router.replace('/restaurants/select');
+      router.replace("/restaurants/select");
     } else if (isAuthenticated && inAuthStack) {
-      router.replace(restaurantSlug ? '/(tabs)/reservations' : '/restaurants/select');
+      if (!restaurantSlug) {
+        router.replace("/restaurants/select");
+      } else if (restaurantsLoaded) {
+        // Wait for memberships so a kitchen user lands on Kitchen, not Settings.
+        router.replace(firstTabFor(currentRestaurant));
+      }
     }
-  }, [isAuthenticated, isLoading, restaurantSlug, segments, router]);
+  }, [
+    isAuthenticated,
+    isLoading,
+    restaurantSlug,
+    currentRestaurant,
+    restaurantsLoaded,
+    segments,
+    router,
+  ]);
 
   if (isLoading) {
     return (
       <View style={styles.splash}>
-        <ActivityIndicator size='large' color={colors.primary} />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
-      <Stack.Screen name='login' />
-      <Stack.Screen name='(tabs)' />
-      <Stack.Screen name='orders/[id]' options={{ presentation: 'card' }} />
-      <Stack.Screen name='reservations/[id]' options={{ presentation: 'card' }} />
-      <Stack.Screen name='loyalty/redeem' options={{ presentation: 'modal' }} />
-      <Stack.Screen name='restaurants/select' options={{ presentation: 'modal' }} />
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: colors.background },
+      }}
+    >
+      <Stack.Screen name="login" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="orders/[id]" options={{ presentation: "card" }} />
+      <Stack.Screen
+        name="reservations/[id]"
+        options={{ presentation: "card" }}
+      />
+      <Stack.Screen name="loyalty/redeem" options={{ presentation: "modal" }} />
+      <Stack.Screen
+        name="restaurants/select"
+        options={{ presentation: "modal" }}
+      />
     </Stack>
   );
 }
@@ -86,7 +121,7 @@ export default function RootLayout() {
           <LocaleProvider>
             <AuthProvider>
               <AuthGate />
-              <StatusBar style='dark' />
+              <StatusBar style="dark" />
             </AuthProvider>
           </LocaleProvider>
         </QueryClientProvider>
@@ -98,8 +133,8 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   splash: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: colors.background,
   },
 });

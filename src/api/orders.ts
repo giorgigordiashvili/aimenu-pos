@@ -1,14 +1,14 @@
-import { api } from './client';
+import { api } from "./client";
 
 export type OrderStatus =
-  | 'pending_payment'
-  | 'pending'
-  | 'confirmed'
-  | 'preparing'
-  | 'ready'
-  | 'served'
-  | 'completed'
-  | 'cancelled';
+  | "pending_payment"
+  | "pending"
+  | "confirmed"
+  | "preparing"
+  | "ready"
+  | "served"
+  | "completed"
+  | "cancelled";
 
 export interface OrderItemModifier {
   id: string;
@@ -62,7 +62,25 @@ export interface Order extends OrderListRow {
   updated_at?: string;
 }
 
-interface Paginated<T> {
+export type PreparationStation = "kitchen" | "bar" | "both";
+
+/** One ticket on the kitchen screen (GET /dashboard/orders/kitchen/). */
+export interface KitchenOrderRow {
+  id: string;
+  order_number: string;
+  order_type?: string;
+  status: OrderStatus | { value: string };
+  table_number?: string | null;
+  customer_name?: string;
+  customer_notes?: string;
+  items: OrderItem[];
+  elapsed_minutes: number;
+  confirmed_at?: string | null;
+  estimated_ready_at?: string | null;
+  created_at: string;
+}
+
+export interface Paginated<T> {
   count: number;
   next?: string | null;
   previous?: string | null;
@@ -77,31 +95,37 @@ export async function listOrders(params?: {
   search?: string;
   includePendingReservations?: boolean;
 }): Promise<Paginated<OrderListRow>> {
-  const response = await api.get<Paginated<OrderListRow>>('/api/v1/dashboard/orders/', {
-    params: {
-      status: params?.status,
-      ordering: params?.ordering ?? '-created_at',
-      page: params?.page,
-      page_size: params?.pageSize ?? 50,
-      search: params?.search,
-      include_pending_reservations: params?.includePendingReservations ? 'true' : undefined,
+  const response = await api.get<Paginated<OrderListRow>>(
+    "/api/v1/dashboard/orders/",
+    {
+      params: {
+        status: params?.status,
+        ordering: params?.ordering ?? "-created_at",
+        page: params?.page,
+        page_size: params?.pageSize ?? 50,
+        search: params?.search,
+        include_pending_reservations: params?.includePendingReservations
+          ? "true"
+          : undefined,
+      },
     },
-  });
+  );
   return response.data;
 }
 
 export async function listKitchenOrders(params?: {
-  ordering?: string;
-  page?: number;
   pageSize?: number;
-}): Promise<Paginated<OrderListRow>> {
-  const response = await api.get<Paginated<OrderListRow>>('/api/v1/dashboard/orders/kitchen/', {
-    params: {
-      ordering: params?.ordering ?? '-created_at',
-      page: params?.page,
-      page_size: params?.pageSize ?? 50,
+  statuses?: OrderStatus[];
+}): Promise<Paginated<KitchenOrderRow>> {
+  const response = await api.get<Paginated<KitchenOrderRow>>(
+    "/api/v1/dashboard/orders/kitchen/",
+    {
+      params: {
+        page_size: params?.pageSize ?? 100,
+        status: params?.statuses?.join(",") || undefined,
+      },
     },
-  });
+  );
   return response.data;
 }
 
@@ -113,31 +137,36 @@ export async function getOrder(id: string): Promise<Order> {
 export async function updateOrderStatus(
   id: string,
   status: OrderStatus,
-  options?: { notes?: string; cancellationReason?: string }
+  options?: { notes?: string; cancellationReason?: string },
 ): Promise<Order> {
   const body: Record<string, string> = { status };
   if (options?.notes) body.notes = options.notes;
-  if (status === 'cancelled') {
-    body.cancellation_reason = options?.cancellationReason ?? 'Cancelled by staff';
+  if (status === "cancelled") {
+    body.cancellation_reason =
+      options?.cancellationReason ?? "Cancelled by staff";
   }
-  const response = await api.patch<Order>(`/api/v1/dashboard/orders/${id}/status/`, body);
+  const response = await api.patch<Order>(
+    `/api/v1/dashboard/orders/${id}/status/`,
+    body,
+  );
   return response.data;
 }
 
 export async function updateOrderItemStatus(
   orderId: string,
   itemId: string,
-  status: string
+  status: string,
 ): Promise<unknown> {
   const response = await api.patch(
     `/api/v1/dashboard/orders/${orderId}/items/${itemId}/status/`,
-    { status }
+    { status },
   );
   return response.data;
 }
 
-export function resolveOrderStatus(raw: OrderListRow['status']): OrderStatus {
-  if (typeof raw === 'string') return raw as OrderStatus;
-  if (raw && typeof raw === 'object' && 'value' in raw) return raw.value as OrderStatus;
-  return 'pending';
+export function resolveOrderStatus(raw: OrderListRow["status"]): OrderStatus {
+  if (typeof raw === "string") return raw as OrderStatus;
+  if (raw && typeof raw === "object" && "value" in raw)
+    return raw.value as OrderStatus;
+  return "pending";
 }

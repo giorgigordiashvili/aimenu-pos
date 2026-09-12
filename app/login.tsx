@@ -1,5 +1,5 @@
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -9,20 +9,21 @@ import {
   Text,
   TextInput,
   View,
-} from 'react-native';
+} from "react-native";
 
-import Button from '@/components/Button';
-import { useAuth } from '@/context/AuthContext';
-import { useLocale, useT } from '@/i18n';
-import { colors, radius, spacing, typography } from '@/theme/tokens';
+import Button from "@/components/Button";
+import { useAuth } from "@/context/AuthContext";
+import { useLocale, useT } from "@/i18n";
+import { firstTabFor } from "@/lib/roleTabs";
+import { colors, radius, spacing, typography } from "@/theme/tokens";
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
   const router = useRouter();
   const t = useT();
   const { locale, setLocale } = useLocale();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,12 +34,14 @@ export default function LoginScreen() {
     setLoading(true);
     setError(null);
     try {
-      const { selected } = await signIn(email.trim(), password);
-      router.replace(selected ? '/(tabs)/reservations' : '/restaurants/select');
+      const { selected, restaurant } = await signIn(email.trim(), password);
+      router.replace(
+        selected ? firstTabFor(restaurant) : "/restaurants/select",
+      );
     } catch (err) {
       setError(
-        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
-          t.login.invalidCredentials
+        (err as { response?: { data?: { detail?: string } } })?.response?.data
+          ?.detail ?? t.login.invalidCredentials,
       );
     } finally {
       setLoading(false);
@@ -48,12 +51,12 @@ export default function LoginScreen() {
   return (
     <SafeAreaView style={styles.root}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
       >
         <ScrollView
           contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps='handled'
+          keyboardShouldPersistTaps="handled"
         >
           <View style={styles.card}>
             <View style={styles.brand}>
@@ -69,13 +72,13 @@ export default function LoginScreen() {
               <Text style={styles.label}>{t.login.email}</Text>
               <TextInput
                 style={styles.input}
-                autoCapitalize='none'
+                autoCapitalize="none"
                 autoCorrect={false}
-                keyboardType='email-address'
-                textContentType='username'
+                keyboardType="email-address"
+                textContentType="username"
                 value={email}
                 onChangeText={setEmail}
-                placeholder='you@restaurant.ge'
+                placeholder="you@restaurant.ge"
                 placeholderTextColor={colors.slate400}
               />
             </View>
@@ -85,16 +88,15 @@ export default function LoginScreen() {
               <TextInput
                 style={styles.input}
                 secureTextEntry
-                textContentType='password'
+                textContentType="password"
                 value={password}
                 onChangeText={setPassword}
-                placeholder='••••••••'
+                placeholder="••••••••"
                 placeholderTextColor={colors.slate400}
                 onSubmitEditing={handleSubmit}
-                returnKeyType='go'
+                returnKeyType="go"
               />
             </View>
-
 
             {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -103,15 +105,15 @@ export default function LoginScreen() {
               onPress={handleSubmit}
               loading={loading}
               disabled={!canSubmit}
-              size='lg'
+              size="lg"
               fullWidth
             />
 
             <Text
               style={styles.localeSwitch}
-              onPress={() => setLocale(locale === 'ka' ? 'en' : 'ka')}
+              onPress={() => setLocale(locale === "ka" ? "en" : "ka")}
             >
-              {locale === 'ka' ? 'English' : 'ქართული'}
+              {locale === "ka" ? "English" : "ქართული"}
             </Text>
           </View>
         </ScrollView>
@@ -124,31 +126,31 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   scroll: {
     flexGrow: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     padding: spacing.xl,
   },
   card: {
-    width: '100%',
+    width: "100%",
     maxWidth: 440,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.xxl,
     gap: spacing.lg,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.08,
     shadowRadius: 40,
     elevation: 6,
   },
-  brand: { alignItems: 'center', marginBottom: spacing.sm },
+  brand: { alignItems: "center", marginBottom: spacing.sm },
   brandBadge: {
     width: 60,
     height: 60,
     borderRadius: radius.lg,
     backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   brandBadgeText: {
     color: colors.white,
@@ -156,7 +158,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.bold,
   },
   localeSwitch: {
-    textAlign: 'center',
+    textAlign: "center",
     color: colors.muted,
     fontSize: typography.sizes.sm,
     fontWeight: typography.weights.medium,
@@ -177,7 +179,7 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.xs,
     fontWeight: typography.weights.bold,
     color: colors.slate500,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   input: {

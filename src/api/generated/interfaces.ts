@@ -161,9 +161,12 @@ export interface KitchenOrder {
   order_type?: OrderTypeEnum;
   status?: Status3f5enum;
   table_number: string;
+  customer_name?: string;
   customer_notes?: string;
   items: string;
   elapsed_minutes: string;
+  confirmed_at?: string;
+  estimated_ready_at?: string;
   created_at: string;
 }
 

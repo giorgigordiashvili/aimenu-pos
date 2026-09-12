@@ -1,7 +1,7 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { Ionicons } from "@expo/vector-icons";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -11,13 +11,14 @@ import {
   Text,
   TextInput,
   View,
-} from 'react-native';
+} from "react-native";
 
-import type { MyRestaurantInfo } from '@/api/restaurants';
-import Button from '@/components/Button';
-import { useAuth } from '@/context/AuthContext';
-import { useT } from '@/i18n';
-import { colors, radius, spacing, typography } from '@/theme/tokens';
+import type { MyRestaurantInfo } from "@/api/restaurants";
+import Button from "@/components/Button";
+import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/i18n";
+import { firstTabFor } from "@/lib/roleTabs";
+import { colors, radius, spacing, typography } from "@/theme/tokens";
 
 /**
  * Pick which restaurant this device works for. Shown after login when the
@@ -28,9 +29,14 @@ export default function SelectRestaurantScreen() {
   const router = useRouter();
   const t = useT();
   const qc = useQueryClient();
-  const { restaurants, restaurantsLoaded, restaurantSlug, setRestaurantSlug, refreshRestaurants } =
-    useAuth();
-  const [manual, setManual] = useState('');
+  const {
+    restaurants,
+    restaurantsLoaded,
+    restaurantSlug,
+    setRestaurantSlug,
+    refreshRestaurants,
+  } = useAuth();
+  const [manual, setManual] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
 
   async function choose(slug: string) {
@@ -38,7 +44,9 @@ export default function SelectRestaurantScreen() {
     try {
       await setRestaurantSlug(slug);
       qc.invalidateQueries();
-      router.replace('/(tabs)/reservations');
+      router.replace(
+        firstTabFor(restaurants.find((r) => r.slug === slug) ?? null),
+      );
     } finally {
       setBusy(null);
     }
@@ -54,19 +62,30 @@ export default function SelectRestaurantScreen() {
           <Text style={styles.subtitle}>{t.restaurantPicker.subtitle}</Text>
         </View>
         {canClose ? (
-          <Pressable onPress={() => router.back()} style={styles.closeBtn} accessibilityLabel='close'>
-            <Ionicons name='close' size={20} color={colors.slate700} />
+          <Pressable
+            onPress={() => router.back()}
+            style={styles.closeBtn}
+            accessibilityLabel="close"
+          >
+            <Ionicons name="close" size={20} color={colors.slate700} />
           </Pressable>
         ) : null}
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps='handled'>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
         {!restaurantsLoaded ? (
-          <ActivityIndicator size='large' color={colors.primary} style={{ marginTop: spacing.xxl }} />
+          <ActivityIndicator
+            size="large"
+            color={colors.primary}
+            style={{ marginTop: spacing.xxl }}
+          />
         ) : restaurants.length === 0 ? (
           <Text style={styles.empty}>{t.restaurantPicker.empty}</Text>
         ) : (
-          restaurants.map(r => (
+          restaurants.map((r) => (
             <RestaurantRow
               key={r.slug}
               restaurant={r}
@@ -80,26 +99,32 @@ export default function SelectRestaurantScreen() {
         )}
 
         <View style={styles.manualCard}>
-          <Text style={styles.manualLabel}>{t.restaurantPicker.manualLabel}</Text>
+          <Text style={styles.manualLabel}>
+            {t.restaurantPicker.manualLabel}
+          </Text>
           <TextInput
             style={styles.input}
-            autoCapitalize='none'
+            autoCapitalize="none"
             autoCorrect={false}
             value={manual}
             onChangeText={setManual}
             placeholder={t.restaurantPicker.manualHint}
             placeholderTextColor={colors.slate400}
             onSubmitEditing={() => manual.trim() && choose(manual)}
-            returnKeyType='go'
+            returnKeyType="go"
           />
           <View style={styles.manualActions}>
             <Button
               title={t.restaurantPicker.use}
-              variant='outline'
+              variant="outline"
               onPress={() => choose(manual)}
               disabled={!manual.trim() || !!busy}
             />
-            <Button title={t.restaurantPicker.refresh} variant='ghost' onPress={() => refreshRestaurants()} />
+            <Button
+              title={t.restaurantPicker.refresh}
+              variant="ghost"
+              onPress={() => refreshRestaurants()}
+            />
           </View>
         </View>
       </ScrollView>
@@ -122,12 +147,16 @@ function RestaurantRow({
   ownerLabel: string;
   venueLabel: string;
 }) {
-  const initial = restaurant.name.trim().charAt(0).toUpperCase() || '?';
+  const initial = restaurant.name.trim().charAt(0).toUpperCase() || "?";
   return (
     <Pressable
       onPress={onPress}
       disabled={busy}
-      style={({ pressed }) => [styles.row, active && styles.rowActive, pressed && { opacity: 0.96 }]}
+      style={({ pressed }) => [
+        styles.row,
+        active && styles.rowActive,
+        pressed && { opacity: 0.96 },
+      ]}
       testID={`restaurant-${restaurant.slug}`}
     >
       <View style={styles.avatar}>
@@ -137,14 +166,16 @@ function RestaurantRow({
         <Text style={styles.rowTitle}>{restaurant.name}</Text>
         <Text style={styles.rowMeta}>
           {restaurant.is_owner ? ownerLabel : restaurant.role}
-          {restaurant.venue ? `  ·  ${venueLabel}: ${restaurant.venue.name}` : ''}
+          {restaurant.venue
+            ? `  ·  ${venueLabel}: ${restaurant.venue.name}`
+            : ""}
         </Text>
       </View>
       {busy ? (
         <ActivityIndicator color={colors.primary} />
       ) : (
         <Ionicons
-          name={active ? 'checkmark-circle' : 'chevron-forward'}
+          name={active ? "checkmark-circle" : "chevron-forward"}
           size={22}
           color={active ? colors.primary : colors.slate400}
         />
@@ -156,20 +187,44 @@ function RestaurantRow({
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   topBar: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
     padding: spacing.xl,
     paddingBottom: spacing.md,
   },
-  title: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold, color: colors.foreground },
-  subtitle: { fontSize: typography.sizes.md, color: colors.muted, marginTop: spacing.xxs },
-  closeBtn: { padding: spacing.sm, borderRadius: radius.pill, backgroundColor: colors.surface },
-  content: { padding: spacing.xl, paddingTop: 0, gap: spacing.md, maxWidth: 640, width: '100%', alignSelf: 'center' },
-  empty: { color: colors.muted, textAlign: 'center', marginVertical: spacing.xl, fontSize: typography.sizes.md },
+  title: {
+    fontSize: typography.sizes.xxl,
+    fontWeight: typography.weights.bold,
+    color: colors.foreground,
+  },
+  subtitle: {
+    fontSize: typography.sizes.md,
+    color: colors.muted,
+    marginTop: spacing.xxs,
+  },
+  closeBtn: {
+    padding: spacing.sm,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+  },
+  content: {
+    padding: spacing.xl,
+    paddingTop: 0,
+    gap: spacing.md,
+    maxWidth: 640,
+    width: "100%",
+    alignSelf: "center",
+  },
+  empty: {
+    color: colors.muted,
+    textAlign: "center",
+    marginVertical: spacing.xl,
+    fontSize: typography.sizes.md,
+  },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.md,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
@@ -183,11 +238,19 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: radius.md,
     backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
-  avatarText: { color: colors.white, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  rowTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, color: colors.foreground },
+  avatarText: {
+    color: colors.white,
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
+  },
+  rowTitle: {
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
+    color: colors.foreground,
+  },
   rowMeta: { fontSize: typography.sizes.sm, color: colors.muted },
   manualCard: {
     marginTop: spacing.lg,
@@ -209,5 +272,5 @@ const styles = StyleSheet.create({
     color: colors.foreground,
     backgroundColor: colors.white,
   },
-  manualActions: { flexDirection: 'row', gap: spacing.sm },
+  manualActions: { flexDirection: "row", gap: spacing.sm },
 });

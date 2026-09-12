@@ -1,8 +1,15 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
-import { login as loginRequest, logout as logoutRequest } from '@/api/auth';
-import { restaurantStore, tokenStore } from '@/api/client';
-import { listMyRestaurants, type MyRestaurantInfo } from '@/api/restaurants';
+import { login as loginRequest, logout as logoutRequest } from "@/api/auth";
+import { restaurantStore, tokenStore } from "@/api/client";
+import { listMyRestaurants, type MyRestaurantInfo } from "@/api/restaurants";
 
 interface AuthContextValue {
   isAuthenticated: boolean;
@@ -13,7 +20,13 @@ interface AuthContextValue {
   restaurantsLoaded: boolean;
   currentRestaurant: MyRestaurantInfo | null;
   /** Logs in, then loads the user's restaurants. Auto-selects when there is exactly one. */
-  signIn: (email: string, password: string) => Promise<{ selected: string | null }>;
+  signIn: (
+    email: string,
+    password: string,
+  ) => Promise<{
+    selected: string | null;
+    restaurant: MyRestaurantInfo | null;
+  }>;
   signOut: () => Promise<void>;
   /** Switch the active restaurant (X-Restaurant header). Callers invalidate queries. */
   setRestaurantSlug: (slug: string) => Promise<void>;
@@ -25,7 +38,9 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [restaurantSlug, setRestaurantSlugState] = useState<string | null>(null);
+  const [restaurantSlug, setRestaurantSlugState] = useState<string | null>(
+    null,
+  );
   const [restaurants, setRestaurants] = useState<MyRestaurantInfo[]>([]);
   const [restaurantsLoaded, setRestaurantsLoaded] = useState(false);
 
@@ -43,7 +58,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     (async () => {
-      const [token, slug] = await Promise.all([tokenStore.get(), restaurantStore.get()]);
+      const [token, slug] = await Promise.all([
+        tokenStore.get(),
+        restaurantStore.get(),
+      ]);
       setIsAuthenticated(!!token);
       setRestaurantSlugState(slug);
       setIsLoading(false);
@@ -69,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         selected = rows[0].slug;
       } else if (rows.length > 1) {
         const previous = await restaurantStore.get();
-        selected = rows.some(r => r.slug === previous) ? previous : null;
+        selected = rows.some((r) => r.slug === previous) ? previous : null;
       }
       if (selected) {
         await setRestaurantSlug(selected);
@@ -77,9 +95,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await restaurantStore.clear();
         setRestaurantSlugState(null);
       }
-      return { selected };
+      return {
+        selected,
+        restaurant: rows.find((r) => r.slug === selected) ?? null,
+      };
     },
-    [refreshRestaurants, setRestaurantSlug]
+    [refreshRestaurants, setRestaurantSlug],
   );
 
   const signOut = useCallback(async () => {
@@ -91,8 +112,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const currentRestaurant = useMemo(
-    () => restaurants.find(r => r.slug === restaurantSlug) ?? null,
-    [restaurants, restaurantSlug]
+    () => restaurants.find((r) => r.slug === restaurantSlug) ?? null,
+    [restaurants, restaurantSlug],
   );
 
   const value = useMemo<AuthContextValue>(
@@ -119,7 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signOut,
       setRestaurantSlug,
       refreshRestaurants,
-    ]
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -127,6 +148,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 }

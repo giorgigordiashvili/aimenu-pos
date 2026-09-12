@@ -55,6 +55,7 @@ export default function OrderDetailScreen() {
     queryClient.invalidateQueries({ queryKey: ['order', id] });
     queryClient.invalidateQueries({ queryKey: ['orders-board'] });
     queryClient.invalidateQueries({ queryKey: ['orders-history'] });
+    queryClient.invalidateQueries({ queryKey: ['kitchen-board'] });
     // pre_order_summary on reservation list cards is derived from Order.total.
     queryClient.invalidateQueries({ queryKey: ['reservations-today'] });
     queryClient.invalidateQueries({ queryKey: ['reservations-upcoming'] });

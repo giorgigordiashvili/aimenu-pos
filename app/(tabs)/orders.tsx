@@ -191,6 +191,7 @@ export default function OrdersScreen() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['orders-board'] });
       queryClient.invalidateQueries({ queryKey: ['orders-history'] });
+      queryClient.invalidateQueries({ queryKey: ['kitchen-board'] });
       queryClient.invalidateQueries({ queryKey: ['reservations-today'] });
       queryClient.invalidateQueries({ queryKey: ['reservations-upcoming'] });
     },

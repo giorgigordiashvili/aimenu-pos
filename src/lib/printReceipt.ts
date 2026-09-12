@@ -1,22 +1,22 @@
-import { Platform } from 'react-native';
+import { Platform } from "react-native";
 
-import type { Order, OrderItem } from '@/api/orders';
+import type { Order, OrderItem } from "@/api/orders";
 
 function formatCurrency(raw: string | number | undefined | null): string {
-  if (raw === undefined || raw === null) return '—';
-  const n = typeof raw === 'number' ? raw : parseFloat(raw);
+  if (raw === undefined || raw === null) return "—";
+  const n = typeof raw === "number" ? raw : parseFloat(raw);
   if (Number.isNaN(n)) return String(raw);
   return `${n.toFixed(2)} ₾`;
 }
 
 function formatDateTime(iso: string): string {
   try {
-    return new Date(iso).toLocaleString('en-GB', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return new Date(iso).toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   } catch {
     return iso;
@@ -24,22 +24,22 @@ function formatDateTime(iso: string): string {
 }
 
 function escape(s: string | undefined | null): string {
-  if (!s) return '';
+  if (!s) return "";
   return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function renderItemRow(item: OrderItem): string {
   const modifiers =
     item.modifiers && item.modifiers.length > 0
-      ? `<div class="mods">${item.modifiers.map(m => escape(m.modifier_name)).join(', ')}</div>`
-      : '';
+      ? `<div class="mods">${item.modifiers.map((m) => escape(m.modifier_name)).join(", ")}</div>`
+      : "";
   const notes = item.special_instructions
     ? `<div class="mods">${escape(item.special_instructions)}</div>`
-    : '';
+    : "";
   return `
     <tr>
       <td class="qty">${item.quantity ?? 1}×</td>
@@ -52,10 +52,14 @@ function renderItemRow(item: OrderItem): string {
     </tr>`;
 }
 
-export function buildReceiptHtml(order: Order, restaurantSlug: string | null): string {
-  const items = (order.items ?? []).map(renderItemRow).join('');
+export function buildReceiptHtml(
+  order: Order,
+  restaurantSlug: string | null,
+): string {
+  const items = (order.items ?? []).map(renderItemRow).join("");
   const hasTax = order.tax_amount && parseFloat(order.tax_amount) > 0;
-  const hasService = order.service_charge && parseFloat(order.service_charge) > 0;
+  const hasService =
+    order.service_charge && parseFloat(order.service_charge) > 0;
   const hasTip = order.tip_amount && parseFloat(order.tip_amount) > 0;
 
   return `<!DOCTYPE html>
@@ -94,10 +98,10 @@ export function buildReceiptHtml(order: Order, restaurantSlug: string | null): s
   </style>
 </head>
 <body>
-  <h1>${escape(restaurantSlug?.toUpperCase() ?? 'AiMenu POS')}</h1>
+  <h1>${escape(restaurantSlug?.toUpperCase() ?? "AiMenu POS")}</h1>
   <div class="meta">
     Order ${escape(order.order_number)}<br/>
-    ${order.table_number ? `Table ${escape(order.table_number)} · ` : ''}${formatDateTime(order.created_at)}
+    ${order.table_number ? `Table ${escape(order.table_number)} · ` : ""}${formatDateTime(order.created_at)}
   </div>
 
   <div class="divider"></div>
@@ -113,9 +117,9 @@ export function buildReceiptHtml(order: Order, restaurantSlug: string | null): s
       <td class="label">Subtotal</td>
       <td class="val">${formatCurrency(order.subtotal)}</td>
     </tr>
-    ${hasTax ? `<tr><td class="label">Tax</td><td class="val">${formatCurrency(order.tax_amount)}</td></tr>` : ''}
-    ${hasService ? `<tr><td class="label">Service</td><td class="val">${formatCurrency(order.service_charge)}</td></tr>` : ''}
-    ${hasTip ? `<tr><td class="label">Tip</td><td class="val">${formatCurrency(order.tip_amount)}</td></tr>` : ''}
+    ${hasTax ? `<tr><td class="label">Tax</td><td class="val">${formatCurrency(order.tax_amount)}</td></tr>` : ""}
+    ${hasService ? `<tr><td class="label">Service</td><td class="val">${formatCurrency(order.service_charge)}</td></tr>` : ""}
+    ${hasTip ? `<tr><td class="label">Tip</td><td class="val">${formatCurrency(order.tip_amount)}</td></tr>` : ""}
     <tr class="grand">
       <td>Total</td>
       <td class="val">${formatCurrency(order.total)}</td>
@@ -123,28 +127,34 @@ export function buildReceiptHtml(order: Order, restaurantSlug: string | null): s
   </table>
 
   <div class="footer">
-    ${order.customer_name ? `${escape(order.customer_name)}<br/>` : ''}
+    ${order.customer_name ? `${escape(order.customer_name)}<br/>` : ""}
     Thank you!
   </div>
 </body>
 </html>`;
 }
 
-export async function printReceipt(order: Order, restaurantSlug: string | null): Promise<void> {
+export async function printReceipt(
+  order: Order,
+  restaurantSlug: string | null,
+): Promise<void> {
   const html = buildReceiptHtml(order, restaurantSlug);
 
-  if (Platform.OS === 'web') {
+  if (Platform.OS === "web") {
     printViaIframe(html);
     return;
   }
 
   // Native: lazy-import expo-print so the web bundle doesn't pull it.
   try {
-    const Print = await import('expo-print');
+    const Print = await import("expo-print");
     await Print.printAsync({ html });
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.warn('Native print failed (install expo-print to enable on iPad):', err);
+    console.warn(
+      "Native print failed (install expo-print to enable on iPad):",
+      err,
+    );
   }
 }
 
@@ -152,13 +162,13 @@ function printViaIframe(html: string): void {
   const doc = globalThis.document;
   if (!doc) return;
 
-  const iframe = doc.createElement('iframe');
-  iframe.style.position = 'fixed';
-  iframe.style.right = '0';
-  iframe.style.bottom = '0';
-  iframe.style.width = '0';
-  iframe.style.height = '0';
-  iframe.style.border = '0';
+  const iframe = doc.createElement("iframe");
+  iframe.style.position = "fixed";
+  iframe.style.right = "0";
+  iframe.style.bottom = "0";
+  iframe.style.width = "0";
+  iframe.style.height = "0";
+  iframe.style.border = "0";
   doc.body.appendChild(iframe);
 
   const cleanup = () => {

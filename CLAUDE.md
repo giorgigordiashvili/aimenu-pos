@@ -74,6 +74,7 @@ Per-screen intervals (`refetchIntervalInBackground: false` everywhere):
 | Screen | Interval |
 | --- | --- |
 | Orders board | 5 s |
+| Kitchen board (`['kitchen-board']`, also the tab badge at 15 s) | 5 s |
 | Orders history | 30 s |
 | Order detail | 10 s |
 | Reservations today / pending | 10 s |
@@ -81,6 +82,9 @@ Per-screen intervals (`refetchIntervalInBackground: false` everywhere):
 | Reservation detail | 15 s |
 
 Cross-invalidation the UI relies on:
+
+- Any order status change (orders board, order detail, kitchen) → invalidate
+  `['kitchen-board']` so the kitchen tab sees it within one poll.
 
 - Accept / reject / seat / no-show / cancel reservation → invalidate
   `['orders-board']` (backend hides orders whose reservation is still
@@ -140,3 +144,20 @@ TypeScript complains about the Dict type union.
   path is `Platform.OS === 'web'` → iframe; native → lazy import expo-print.
 - **Pigment CSS is not used here** (that's the customer frontend). POS uses
   `StyleSheet.create`.
+
+## Roles and tabs
+
+`src/lib/roleTabs.ts` decides which tabs a membership sees (from
+`currentRestaurant.role` / `is_owner` in `AuthContext`): owner/manager get all
+five, waiters no Kitchen, kitchen/bar only Kitchen + Settings, anything else
+Settings only. `app/(tabs)/_layout.tsx` hides tabs with `href: null` and bounces
+users off hidden routes; login / picker / index land on `firstTabFor(...)`.
+The backend's `StaffRole` permissions are the real gate -- the order endpoints
+use `HasStaffPermission`, so a kitchen login can read and move orders but not
+create them.
+
+The Kitchen tab is button-driven (Accept → Ready → Picked up, "Can't make"
+cancels with a reason); new tickets chime via WebAudio on web (needs the sound
+toggle tapped once per page load -- autoplay policy) and vibrate on native.
+`src/lib/useKeepScreenAwake.ts` wraps expo-keep-awake because its own hook
+throws on web when the tab is hidden at mount.
