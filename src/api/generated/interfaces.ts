@@ -1249,7 +1249,6 @@ export interface RestaurantDetail {
   category: RestaurantCategory;
   amenities: Amenity[];
   is_active?: boolean;
-  owner: User;
   venue: string;
   email?: string | string;
   phone?: string | string;
