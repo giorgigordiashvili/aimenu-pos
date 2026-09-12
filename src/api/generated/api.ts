@@ -22,7 +22,10 @@ import type {
   TokenRefresh,
   ContactMessageCreateRequest,
   ContactMessageCreate,
+  MenuImport,
+  MenuImportApplyRequest,
   PlatformStatus,
+  MenuImportRequestRequest,
   MenuSyncRequestRequest,
   MenuSync,
   PauseRequest,
@@ -318,10 +321,41 @@ export async function dashboardAuditStatsRetrieve(): Promise<any> {
   return response.data;
 }
 
+export async function dashboardDeliveryImportsRetrieve(
+  importId: string,
+): Promise<MenuImport> {
+  const response = await axios.get(
+    `/api/v1/dashboard/delivery/imports/${importId}/`,
+  );
+  return response.data;
+}
+
+export async function dashboardDeliveryImportsApplyCreate(
+  importId: string,
+  data: MenuImportApplyRequest,
+): Promise<MenuImport> {
+  const response = await axios.post(
+    `/api/v1/dashboard/delivery/imports/${importId}/apply/`,
+    data,
+  );
+  return response.data;
+}
+
 export async function dashboardDeliveryPlatformsList(): Promise<
   PlatformStatus[]
 > {
   const response = await axios.get(`/api/v1/dashboard/delivery/platforms/`);
+  return response.data;
+}
+
+export async function dashboardDeliveryPlatformsImportMenuCreate(
+  code: string,
+  data: MenuImportRequestRequest,
+): Promise<MenuImport> {
+  const response = await axios.post(
+    `/api/v1/dashboard/delivery/platforms/${code}/import-menu/`,
+    data,
+  );
   return response.data;
 }
 

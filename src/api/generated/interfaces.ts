@@ -360,6 +360,26 @@ export interface MenuCategoryRequest {
   is_active?: boolean;
 }
 
+export interface MenuImport {
+  id: string;
+  source: string;
+  status: string;
+  preview: any;
+  stats: any;
+  error: string;
+  created_at: string;
+  applied_at: string;
+}
+
+export interface MenuImportApplyRequest {
+  update_prices?: boolean;
+  download_images?: boolean;
+}
+
+export interface MenuImportRequestRequest {
+  price_units?: PriceUnitsEnum;
+}
+
 export interface MenuItem {
   id: string;
   translations: string;
@@ -1284,6 +1304,10 @@ export interface PreferredLanguageEnum {
 }
 
 export interface PreparationStationEnum {
+  [key: string]: any;
+}
+
+export interface PriceUnitsEnum {
   [key: string]: any;
 }
 
