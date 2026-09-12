@@ -980,6 +980,13 @@ export interface PaginatedPrinterList {
   results: Printer[];
 }
 
+export interface PaginatedPurchaseOrderList {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: PurchaseOrder[];
+}
+
 export interface PaginatedRefundList {
   count: number;
   next?: string;
@@ -1034,6 +1041,13 @@ export interface PaginatedStaffRoleListList {
   next?: string;
   previous?: string;
   results: StaffRoleList[];
+}
+
+export interface PaginatedSupplierList {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: Supplier[];
 }
 
 export interface PaginatedTableList {
@@ -1556,6 +1570,40 @@ export interface PromotionModeEnum {
   [key: string]: any;
 }
 
+export interface PurchaseOrder {
+  id: string;
+  number: string;
+  status?: PurchaseOrderStatusEnum;
+  supplier?: string;
+  supplier_name: string;
+  expected_on?: string;
+  subtotal?: string;
+  notes?: string;
+  reference?: string;
+  sent_at?: string;
+  received_at?: string;
+  created_at: string;
+  lines: PurchaseOrderLine[];
+}
+
+export interface PurchaseOrderLine {
+  id: string;
+  stock_item: string;
+  stock_item_name: string;
+  quantity: string;
+  unit: number;
+  unit_code: string;
+  unit_price?: string;
+  received_qty?: string;
+  line_total: string;
+  outstanding: string;
+  note?: string;
+}
+
+export interface PurchaseOrderStatusEnum {
+  [key: string]: any;
+}
+
 export interface QrresolveData {
   kind: QrresolveDataKindEnum;
   path: string;
@@ -1583,6 +1631,18 @@ export interface ReasonOption {
   label: string;
   kind: string;
   requires_manager: boolean;
+}
+
+export interface ReceiveLineRequest {
+  line_id: string;
+  quantity: string;
+  unit_price?: string;
+  expiry_date?: string;
+}
+
+export interface ReceiveRequest {
+  reference?: string;
+  lines: ReceiveLineRequest[];
 }
 
 export interface RecordPaymentMethodEnum {
@@ -2219,6 +2279,17 @@ export interface StoreStatus {
   online: boolean;
   paused_until: string;
   live: any;
+}
+
+export interface Supplier {
+  id: string;
+  name: string;
+  contact_name?: string;
+  phone?: string;
+  email?: string | string;
+  lead_days?: number;
+  payment_terms?: string;
+  is_active?: boolean;
 }
 
 export interface Table {

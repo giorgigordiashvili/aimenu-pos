@@ -104,6 +104,10 @@ import type {
   SetUnavailableRequest,
   ItemAvailability,
   PromoCodeRequest,
+  PaginatedPurchaseOrderList,
+  PurchaseOrder,
+  ReceiveRequest,
+  PaginatedSupplierList,
   PaginatedReservationListList,
   ReservationDetail,
   ReservationUpdateRequest,
@@ -1371,6 +1375,75 @@ export async function dashboardPromotionsUnavailableList(): Promise<
   ItemAvailability[]
 > {
   const response = await axios.get(`/api/v1/dashboard/promotions/unavailable/`);
+  return response.data;
+}
+
+export async function dashboardPurchasingOrdersList(
+  ordering?: string,
+  page?: number,
+  pageSize?: number,
+  search?: string,
+): Promise<PaginatedPurchaseOrderList> {
+  const response = await axios.get(
+    `/api/v1/dashboard/purchasing/orders/${(() => {
+      const parts = [
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
+  return response.data;
+}
+
+export async function dashboardPurchasingOrdersRetrieve(
+  orderId: string,
+): Promise<PurchaseOrder> {
+  const response = await axios.get(
+    `/api/v1/dashboard/purchasing/orders/${orderId}/`,
+  );
+  return response.data;
+}
+
+export async function dashboardPurchasingOrdersReceiveCreate(
+  orderId: string,
+  data: ReceiveRequest,
+): Promise<PurchaseOrder> {
+  const response = await axios.post(
+    `/api/v1/dashboard/purchasing/orders/${orderId}/receive/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardPurchasingOrdersFromBuyListCreate(): Promise<
+  PurchaseOrder[]
+> {
+  const response = await axios.post(
+    `/api/v1/dashboard/purchasing/orders/from-buy-list/`,
+  );
+  return response.data;
+}
+
+export async function dashboardPurchasingSuppliersList(
+  ordering?: string,
+  page?: number,
+  pageSize?: number,
+  search?: string,
+): Promise<PaginatedSupplierList> {
+  const response = await axios.get(
+    `/api/v1/dashboard/purchasing/suppliers/${(() => {
+      const parts = [
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
   return response.data;
 }
 
