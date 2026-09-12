@@ -13,6 +13,7 @@ import {
 
 import Button from "@/components/Button";
 import TopBar from "@/components/TopBar";
+import { moduleOn } from "@/api/restaurants";
 import { useAuth } from "@/context/AuthContext";
 import { useLocale } from "@/i18n";
 import { money } from "@/lib/money";
@@ -20,6 +21,13 @@ import { useShift } from "@/lib/useShift";
 import { usePrinters } from "@/lib/usePrinters";
 import { useDeliveryPlatforms } from "@/lib/useDeliveryPlatforms";
 import { useNotifications } from "@/lib/useNotifications";
+import {
+  clock,
+  clockStatus,
+  myShifts,
+  whosIn,
+  type ClockStatus,
+} from "@/api/timekeeping";
 import {
   getPrefs,
   sendTestPush,
@@ -44,6 +52,37 @@ export default function SettingsScreen() {
   const printers = usePrinters();
   const delivery = useDeliveryPlatforms();
   const notifications = useNotifications();
+  const timekeepingOn = moduleOn(currentRestaurant, "timekeeping");
+  const clockQuery = useQuery({
+    queryKey: ["clock-status"],
+    queryFn: clockStatus,
+    enabled: timekeepingOn,
+    refetchInterval: 60_000,
+  });
+  const whosInQuery = useQuery({
+    queryKey: ["whos-in"],
+    queryFn: whosIn,
+    enabled: timekeepingOn && !!clockQuery.data?.manager,
+    refetchInterval: 60_000,
+  });
+  const shiftsQuery = useQuery({
+    queryKey: ["my-shifts"],
+    queryFn: myShifts,
+    enabled: timekeepingOn,
+  });
+  const [clockNote, setClockNote] = useState("");
+  const toggleClock = async () => {
+    const status = clockQuery.data;
+    if (!status) return;
+    setClockNote("");
+    try {
+      const next: ClockStatus = await clock(status.clocked_in ? "out" : "in");
+      qc.setQueryData(["clock-status"], next);
+      qc.invalidateQueries({ queryKey: ["whos-in"] });
+    } catch {
+      setClockNote(t.timekeeping.failed);
+    }
+  };
   const qc = useQueryClient();
   const prefsQuery = useQuery({
     queryKey: ["notification-prefs"],
@@ -142,6 +181,83 @@ export default function SettingsScreen() {
               fullWidth
               onPress={() => router.push("/cash" as Href)}
             />
+          </View>
+        ) : null}
+
+        {timekeepingOn && clockQuery.data ? (
+          <View style={styles.card} testID="timekeeping-card">
+            <Text style={styles.cardTitle}>{t.timekeeping.title}</Text>
+            <Text style={styles.cardBody}>
+              {clockQuery.data.clocked_in && clockQuery.data.entry
+                ? t.timekeeping.since.replace(
+                    "{time}",
+                    new Date(clockQuery.data.entry.clock_in).toLocaleTimeString(
+                      [],
+                      { hour: "2-digit", minute: "2-digit" },
+                    ),
+                  )
+                : ""}
+              {clockQuery.data.clocked_in ? " · " : ""}
+              {t.timekeeping.today.replace(
+                "{h}",
+                (clockQuery.data.today_minutes / 60).toFixed(1),
+              )}
+            </Text>
+            <Button
+              title={
+                clockQuery.data.clocked_in
+                  ? t.timekeeping.clockOut
+                  : t.timekeeping.clockIn
+              }
+              variant={clockQuery.data.clocked_in ? "outline" : "primary"}
+              fullWidth
+              onPress={toggleClock}
+              testID="clock-toggle"
+            />
+            {clockNote ? (
+              <Text style={styles.cardBody}>{clockNote}</Text>
+            ) : null}
+            {clockQuery.data.manager ? (
+              <>
+                <Text style={[styles.cardBody, { marginTop: 8 }]}>
+                  {t.timekeeping.whosIn}
+                </Text>
+                {(whosInQuery.data ?? []).length === 0 ? (
+                  <Text style={styles.cardBody}>{t.timekeeping.nobody}</Text>
+                ) : (
+                  (whosInQuery.data ?? []).map((e) => (
+                    <View key={e.id} style={styles.printerRow}>
+                      <View
+                        style={[
+                          styles.printerDot,
+                          { backgroundColor: colors.success },
+                        ]}
+                      />
+                      <Text style={styles.printerName}>
+                        {e.name} · {e.role} ·{" "}
+                        {new Date(e.clock_in).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </Text>
+                    </View>
+                  ))
+                )}
+              </>
+            ) : null}
+            <Text style={[styles.cardBody, { marginTop: 8 }]}>
+              {t.timekeeping.myShifts}
+            </Text>
+            {(shiftsQuery.data ?? []).length === 0 ? (
+              <Text style={styles.cardBody}>{t.timekeeping.noShifts}</Text>
+            ) : (
+              (shiftsQuery.data ?? []).map((s) => (
+                <Text key={s.id} style={styles.printerName}>
+                  {s.date} · {s.start_time.slice(0, 5)}–{s.end_time.slice(0, 5)}
+                  {s.label ? ` · ${s.label}` : ""}
+                </Text>
+              ))
+            )}
           </View>
         ) : null}
 
