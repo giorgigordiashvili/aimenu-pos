@@ -249,6 +249,13 @@ export const dictionaries = {
         unavailable: "მიუწვდომელი",
       },
     },
+    crm: {
+      visits: "{n} ვიზიტი",
+      spend: "სულ {amount}",
+      lastVisit: "ბოლო ვიზიტი {days} დღის წინ",
+      newGuest: "ახალი სტუმარი",
+      optedIn: "შეთავაზებებზე თანახმაა",
+    },
     timekeeping: {
       title: "სამუშაო დრო",
       clockIn: "ცვლის დაწყება",
@@ -673,6 +680,13 @@ export const dictionaries = {
         reserved: "Reserved",
         unavailable: "Unavailable",
       },
+    },
+    crm: {
+      visits: "{n} visits",
+      spend: "{amount} total",
+      lastVisit: "last visit {days} days ago",
+      newGuest: "New guest",
+      optedIn: "opted in to offers",
     },
     timekeeping: {
       title: "Timekeeping",

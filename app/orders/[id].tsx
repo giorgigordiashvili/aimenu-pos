@@ -34,6 +34,7 @@ import { can, moduleOn } from "@/api/restaurants";
 import Button from "@/components/Button";
 import DiscountSheet, { type DiscountInput } from "@/components/DiscountSheet";
 import PromoCodeSheet from "@/components/PromoCodeSheet";
+import { lookupCustomer } from "@/api/crm";
 import MoveTableSheet from "@/components/MoveTableSheet";
 import PaymentSheet, { type PaymentTarget } from "@/components/PaymentSheet";
 import ReasonSheet from "@/components/ReasonSheet";
@@ -67,6 +68,7 @@ export default function OrderDetailScreen() {
   const [promoOpen, setPromoOpen] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(null);
   const promoOn = moduleOn(currentRestaurant, "promotions");
+  const crmOn = moduleOn(currentRestaurant, "crm");
   const [splitOpen, setSplitOpen] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
   const [itemAction, setItemAction] = useState<ItemAction>(null);
@@ -89,6 +91,12 @@ export default function OrderDetailScreen() {
     enabled: !!id,
     refetchInterval: 10_000,
     refetchIntervalInBackground: false,
+  });
+  const guest = useQuery({
+    queryKey: ["crm-lookup", order?.customer_phone],
+    queryFn: () => lookupCustomer(order?.customer_phone ?? ""),
+    enabled: crmOn && !!order?.customer_phone,
+    staleTime: 60_000,
   });
 
   const invalidateOnOrderChange = () => {
@@ -290,6 +298,20 @@ export default function OrderDetailScreen() {
           </Text>
           {order.customer_name ? (
             <Text style={styles.guest}>{order.customer_name}</Text>
+          ) : null}
+          {crmOn && order.customer_phone && guest.data ? (
+            <Text style={styles.muted} testID="guest-badge">
+              {guest.data.visits > 0
+                ? `${t.crm.visits.replace("{n}", String(guest.data.visits))} · ${t.crm.spend.replace("{amount}", money(guest.data.total_spend))}`
+                : t.crm.newGuest}
+              {guest.data.days_since_visit !== null && guest.data.visits > 0
+                ? ` · ${t.crm.lastVisit.replace("{days}", String(guest.data.days_since_visit))}`
+                : ""}
+              {guest.data.tags?.length
+                ? ` · ${guest.data.tags.join(", ")}`
+                : ""}
+              {guest.data.marketing_opt_in ? ` · ${t.crm.optedIn}` : ""}
+            </Text>
           ) : null}
           {order.customer_phone ? (
             <Text style={styles.muted}>{order.customer_phone}</Text>

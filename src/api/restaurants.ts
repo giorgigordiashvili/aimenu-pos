@@ -19,6 +19,7 @@ export type ModuleCode =
   | "promotions"
   | "purchasing"
   | "timekeeping"
+  | "crm"
   | "payments";
 
 export type Resource =
