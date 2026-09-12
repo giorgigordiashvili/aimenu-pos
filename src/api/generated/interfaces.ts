@@ -94,6 +94,10 @@ export interface DefaultLanguageEnum {
   [key: string]: any;
 }
 
+export interface DestinationEnum {
+  [key: string]: any;
+}
+
 export interface EligibleOrder {
   id: string;
   order_number: string;
@@ -847,6 +851,8 @@ export interface PatchedStaffRoleRequest {
 export interface PatchedTableQrcodeRequest {
   name?: string;
   is_active?: boolean;
+  destination?: DestinationEnum;
+  custom_url?: string | string;
 }
 
 export interface PatchedTableRequest {
@@ -948,6 +954,24 @@ export interface PreferredLanguageEnum {
 
 export interface PreparationStationEnum {
   [key: string]: any;
+}
+
+export interface QrresolveData {
+  kind: QrresolveDataKindEnum;
+  path: string;
+  url: string;
+  restaurant_slug: string;
+  venue_slug: string;
+  table_code: string;
+}
+
+export interface QrresolveDataKindEnum {
+  [key: string]: any;
+}
+
+export interface QrresolveResponse {
+  success: boolean;
+  data: QrresolveData;
 }
 
 export interface ReferredUser {
@@ -1557,13 +1581,23 @@ export interface TableQrcode {
   code: string;
   name?: string;
   is_active?: boolean;
+  destination?: DestinationEnum;
+  custom_url?: string | string;
+  qr_url: string;
+  qr_image: string;
+  image_is_current: boolean;
+  resolved_url: string;
   scans_count: number;
   last_scanned_at: string;
+  resolves_count: number;
+  last_resolved_at: string;
 }
 
 export interface TableQrcodeRequest {
   name?: string;
   is_active?: boolean;
+  destination?: DestinationEnum;
+  custom_url?: string | string;
 }
 
 export interface TableRequest {

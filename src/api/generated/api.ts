@@ -109,6 +109,7 @@ import type {
   FavoriteRestaurantCreate,
   PaginatedOrderList,
   PaginatedPaymentMethodList,
+  QrresolveResponse,
   PaginatedWalletTransactionList,
   ReferredUser,
   ReservationCreateRequest,
@@ -1258,6 +1259,15 @@ export async function dashboardTablesQrCodesDestroy(id: string): Promise<any> {
   return response.data;
 }
 
+export async function dashboardTablesQrCodesRegenerateCreate(
+  id: string,
+): Promise<TableQrcode> {
+  const response = await axios.post(
+    `/api/v1/dashboard/tables/qr-codes/${id}/regenerate/`,
+  );
+  return response.data;
+}
+
 export async function dashboardTablesSectionsList(
   ordering?: string,
   page?: number,
@@ -1761,6 +1771,11 @@ export async function paymentsMethodsDestroy(id: string): Promise<any> {
 
 export async function paymentsMethodsAddCreate(): Promise<any> {
   const response = await axios.post(`/api/v1/payments/methods/add/`);
+  return response.data;
+}
+
+export async function qrRetrieve(code: string): Promise<QrresolveResponse> {
+  const response = await axios.get(`/api/v1/qr/${code}/`);
   return response.data;
 }
 
