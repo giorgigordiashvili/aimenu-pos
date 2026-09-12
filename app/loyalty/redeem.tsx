@@ -1,7 +1,7 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { Ionicons } from "@expo/vector-icons";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -13,38 +13,46 @@ import {
   Text,
   TextInput,
   View,
-} from 'react-native';
+} from "react-native";
 
 import {
   confirmLoyaltyCode,
   validateLoyaltyCode,
   type LoyaltyValidateResponse,
-} from '@/api/loyalty';
-import Button from '@/components/Button';
-import { useT } from '@/i18n';
-import { colors, radius, shadows, spacing, typography } from '@/theme/tokens';
+} from "@/api/loyalty";
+import Button from "@/components/Button";
+import { useT } from "@/i18n";
+import { colors, radius, shadows, spacing, typography } from "@/theme/tokens";
 
 type BackendErrorCode =
-  | 'not_found'
-  | 'expired'
-  | 'already_handled'
-  | 'insufficient'
-  | 'generic';
+  | "not_found"
+  | "expired"
+  | "already_handled"
+  | "insufficient"
+  | "generic";
 
 function normaliseError(err: unknown): BackendErrorCode {
-  const code = (err as { response?: { data?: { error?: { code?: string } } } })?.response?.data
-    ?.error?.code;
-  const known: BackendErrorCode[] = ['not_found', 'expired', 'already_handled', 'insufficient'];
-  if (code && known.includes(code as BackendErrorCode)) return code as BackendErrorCode;
-  return 'generic';
+  const code = (err as { response?: { data?: { error?: { code?: string } } } })
+    ?.response?.data?.error?.code;
+  const known: BackendErrorCode[] = [
+    "not_found",
+    "expired",
+    "already_handled",
+    "insufficient",
+  ];
+  if (code && known.includes(code as BackendErrorCode))
+    return code as BackendErrorCode;
+  return "generic";
 }
 
 export default function LoyaltyRedeemScreen() {
   const router = useRouter();
   const t = useT();
   const qc = useQueryClient();
-  const [code, setCode] = useState('');
-  const [validated, setValidated] = useState<LoyaltyValidateResponse | null>(null);
+  const [code, setCode] = useState("");
+  const [validated, setValidated] = useState<LoyaltyValidateResponse | null>(
+    null,
+  );
   const [errorCode, setErrorCode] = useState<BackendErrorCode | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -52,11 +60,13 @@ export default function LoyaltyRedeemScreen() {
     mutationFn: (c: string) => validateLoyaltyCode(c.trim()),
     onSuccess: (data: any) => {
       const payload: LoyaltyValidateResponse =
-        (data && typeof data === 'object' && 'data' in data ? (data as any).data : data);
+        data && typeof data === "object" && "data" in data
+          ? (data as any).data
+          : data;
       setValidated(payload);
       setErrorCode(null);
     },
-    onError: err => {
+    onError: (err) => {
       setValidated(null);
       setErrorCode(normaliseError(err));
     },
@@ -67,11 +77,11 @@ export default function LoyaltyRedeemScreen() {
     onSuccess: () => {
       setSuccessMessage(t.loyalty.confirmed);
       setValidated(null);
-      setCode('');
+      setCode("");
       qc.invalidateQueries();
       setTimeout(() => router.back(), 1200);
     },
-    onError: err => setErrorCode(normaliseError(err)),
+    onError: (err) => setErrorCode(normaliseError(err)),
   });
 
   return (
@@ -79,37 +89,40 @@ export default function LoyaltyRedeemScreen() {
       <View style={styles.topBar}>
         <Text style={styles.title}>{t.loyalty.title}</Text>
         <Pressable onPress={() => router.back()} style={styles.closeBtn}>
-          <Ionicons name='close' size={20} color={colors.slate700} />
+          <Ionicons name="close" size={20} color={colors.slate700} />
         </Pressable>
       </View>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps='handled'>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={styles.card}>
             <Text style={styles.label}>{t.loyalty.codeHint}</Text>
             <TextInput
               style={styles.input}
-              autoCapitalize='none'
+              autoCapitalize="none"
               autoCorrect={false}
               value={code}
-              onChangeText={txt => {
+              onChangeText={(txt) => {
                 setCode(txt);
                 if (validated) setValidated(null);
                 if (errorCode) setErrorCode(null);
                 if (successMessage) setSuccessMessage(null);
               }}
-              placeholder='ABcd1234...'
+              placeholder="ABcd1234..."
               placeholderTextColor={colors.slate400}
               multiline
               numberOfLines={2}
             />
             <Button
               title={t.loyalty.validate}
-              variant='primary'
-              size='lg'
+              variant="primary"
+              size="lg"
               fullWidth
               disabled={!code.trim() || validate.isPending}
               loading={validate.isPending}
@@ -119,7 +132,11 @@ export default function LoyaltyRedeemScreen() {
 
           {errorCode ? (
             <View style={styles.errorBox}>
-              <Ionicons name='alert-circle-outline' size={18} color={colors.danger} />
+              <Ionicons
+                name="alert-circle-outline"
+                size={18}
+                color={colors.danger}
+              />
               <Text style={styles.errorText}>
                 {t.loyalty.errors[errorCode]}
               </Text>
@@ -128,7 +145,11 @@ export default function LoyaltyRedeemScreen() {
 
           {successMessage ? (
             <View style={styles.successBox}>
-              <Ionicons name='checkmark-circle' size={20} color={colors.successDark} />
+              <Ionicons
+                name="checkmark-circle"
+                size={20}
+                color={colors.successDark}
+              />
               <Text style={styles.successText}>{successMessage}</Text>
             </View>
           ) : null}
@@ -137,10 +158,13 @@ export default function LoyaltyRedeemScreen() {
             <View style={styles.card}>
               <Text style={styles.sectionTitle}>{t.loyalty.validated}</Text>
               <Row label={t.loyalty.customer} value={validated.customer_name} />
-              <Row label={t.loyalty.program} value={validated.program?.name ?? '—'} />
+              <Row
+                label={t.loyalty.program}
+                value={validated.program?.name ?? "—"}
+              />
               <Row
                 label={t.loyalty.reward}
-                value={`${validated.program.reward_quantity}× ${validated.program.reward_item_detail?.name ?? ''}`}
+                value={`${validated.program.reward_quantity}× ${validated.program.reward_item_detail?.name ?? ""}`}
               />
               <Row
                 label={t.loyalty.expiresAt}
@@ -149,8 +173,8 @@ export default function LoyaltyRedeemScreen() {
               <View style={{ height: spacing.md }} />
               <Button
                 title={t.loyalty.confirm}
-                variant='success'
-                size='lg'
+                variant="success"
+                size="lg"
                 fullWidth
                 loading={confirm.isPending}
                 onPress={() => confirm.mutate(validated.code)}
@@ -159,7 +183,7 @@ export default function LoyaltyRedeemScreen() {
           ) : null}
 
           {validate.isPending ? (
-            <ActivityIndicator size='large' color={colors.primary} />
+            <ActivityIndicator size="large" color={colors.primary} />
           ) : null}
         </ScrollView>
       </KeyboardAvoidingView>
@@ -179,9 +203,9 @@ function Row({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.lg,
     borderBottomWidth: 1,
@@ -197,15 +221,15 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   content: {
     padding: spacing.xl,
     gap: spacing.lg,
     maxWidth: 720,
-    width: '100%',
-    alignSelf: 'center',
+    width: "100%",
+    alignSelf: "center",
   },
   card: {
     backgroundColor: colors.surface,
@@ -231,7 +255,7 @@ const styles = StyleSheet.create({
     color: colors.foreground,
     backgroundColor: colors.white,
     minHeight: 64,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
   },
   sectionTitle: {
     fontSize: typography.sizes.md,
@@ -239,8 +263,8 @@ const styles = StyleSheet.create({
     color: colors.successDark,
   },
   row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     paddingVertical: 6,
     borderBottomWidth: 1,
     borderBottomColor: colors.slate100,
@@ -251,11 +275,11 @@ const styles = StyleSheet.create({
     color: colors.foreground,
     fontWeight: typography.weights.semibold,
     flexShrink: 1,
-    textAlign: 'right',
+    textAlign: "right",
   },
   errorBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.sm,
     backgroundColor: colors.dangerTint,
     borderRadius: radius.md,
@@ -263,12 +287,16 @@ const styles = StyleSheet.create({
   },
   errorText: { color: colors.danger, fontSize: typography.sizes.sm, flex: 1 },
   successBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.sm,
     backgroundColor: colors.successTint,
     borderRadius: radius.md,
     padding: spacing.md,
   },
-  successText: { color: colors.successDark, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  successText: {
+    color: colors.successDark,
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.semibold,
+  },
 });

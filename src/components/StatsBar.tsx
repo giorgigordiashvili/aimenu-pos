@@ -1,10 +1,10 @@
-import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { StyleSheet, Text, View, type ViewStyle } from "react-native";
 
-import { colors, radius, shadows, spacing, typography } from '@/theme/tokens';
+import { colors, radius, shadows, spacing, typography } from "@/theme/tokens";
 
-type Tone = 'warning' | 'success' | 'accent';
+type Tone = "warning" | "success" | "accent";
 
 interface StatCardProps {
   tone: Tone;
@@ -42,32 +42,47 @@ interface StatsBarProps {
   labels: { pending: string; confirmed: string; today: string };
 }
 
-export default function StatsBar({ pending, confirmed, todayTotal, labels }: StatsBarProps) {
+export default function StatsBar({
+  pending,
+  confirmed,
+  todayTotal,
+  labels,
+}: StatsBarProps) {
   return (
     <View style={styles.row}>
-      <StatCard tone='warning' icon='time-outline' label={labels.pending} value={pending} />
       <StatCard
-        tone='success'
-        icon='checkmark-circle-outline'
+        tone="warning"
+        icon="time-outline"
+        label={labels.pending}
+        value={pending}
+      />
+      <StatCard
+        tone="success"
+        icon="checkmark-circle-outline"
         label={labels.confirmed}
         value={confirmed}
       />
-      <StatCard tone='accent' icon='calendar-outline' label={labels.today} value={todayTotal} />
+      <StatCard
+        tone="accent"
+        icon="calendar-outline"
+        label={labels.today}
+        value={todayTotal}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.md,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.lg,
-    flexWrap: 'wrap',
+    flexWrap: "wrap",
   },
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.md,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
@@ -83,8 +98,8 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   cardBody: { flex: 1 },
   cardLabel: {

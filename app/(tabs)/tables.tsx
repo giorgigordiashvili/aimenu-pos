@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { Ionicons } from "@expo/vector-icons";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -14,96 +14,133 @@ import {
   Text,
   View,
   useWindowDimensions,
-} from 'react-native';
-import QRCode from 'react-native-qrcode-svg';
+} from "react-native";
+import QRCode from "react-native-qrcode-svg";
 
-import { AxiosError } from 'axios';
+import { AxiosError } from "axios";
 
+import { getOrder } from "@/api/orders";
+import type { RecordPaymentResult } from "@/api/payments";
 import {
   closeTableSession,
   listActiveTableSessions,
   markTableSessionCashPaid,
   type TableSessionRow,
-} from '@/api/sessions';
-import Button from '@/components/Button';
-import TopBar from '@/components/TopBar';
-import { useT } from '@/i18n';
-import { colors, radius, shadows, spacing, typography } from '@/theme/tokens';
+} from "@/api/sessions";
+import BillModal from "@/components/BillModal";
+import Button from "@/components/Button";
+import PaymentSheet, { type PaymentTarget } from "@/components/PaymentSheet";
+import ShiftBanner from "@/components/ShiftBanner";
+import TopBar from "@/components/TopBar";
+import { useAuth } from "@/context/AuthContext";
+import { useT } from "@/i18n";
+import { money } from "@/lib/money";
+import { printReceipt } from "@/lib/printReceipt";
+import { useShift } from "@/lib/useShift";
+import { colors, radius, shadows, spacing, typography } from "@/theme/tokens";
 
 // Customer-site root — used to build the QR / deep link for self-serve
 // payment. Override at build time with EXPO_PUBLIC_CUSTOMER_URL if the
 // POS ever targets a different environment.
 const CUSTOMER_SITE =
-  (process.env.EXPO_PUBLIC_CUSTOMER_URL as string | undefined) ?? 'https://aimenu.ge';
+  (process.env.EXPO_PUBLIC_CUSTOMER_URL as string | undefined) ??
+  "https://aimenu.ge";
 
 export default function TablesScreen() {
   const t = useT();
   const qc = useQueryClient();
   const { width } = useWindowDimensions();
+  const { restaurantSlug, currentRestaurant } = useAuth();
+  const { canPay } = useShift();
   // When set, the big pay-QR overlay is visible. Staff points a customer
   // at the screen (or hands over the iPad) to let them settle with their
   // own phone. The session id is enough for /table/settle to load —
   // TableContext seeds itself from the URL param.
-  const [payQrSession, setPayQrSession] = useState<TableSessionRow | null>(null);
+  const [payQrSession, setPayQrSession] = useState<TableSessionRow | null>(
+    null,
+  );
+  const [billSession, setBillSession] = useState<TableSessionRow | null>(null);
+  const [payTarget, setPayTarget] = useState<PaymentTarget | null>(null);
 
   const { data, isLoading, isRefetching, refetch } = useQuery({
-    queryKey: ['active-sessions'],
+    queryKey: ["active-sessions"],
     queryFn: () => listActiveTableSessions(),
     refetchInterval: 10_000,
     refetchIntervalInBackground: false,
   });
 
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["active-sessions"] });
+    qc.invalidateQueries({ queryKey: ["orders-board"] });
+    qc.invalidateQueries({ queryKey: ["session-bill"] });
+    qc.invalidateQueries({ queryKey: ["cash-shift"] });
+  };
+
   const closeMutation = useMutation({
     mutationFn: ({ id, force }: { id: string; force?: boolean }) =>
       closeTableSession(id, force),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['active-sessions'] });
-      qc.invalidateQueries({ queryKey: ['orders-board'] });
-    },
+    onSuccess: invalidate,
   });
 
+  // Fallback for restaurants without the Cash module: one tap records the
+  // whole table as paid in cash (no shift needed while the module is off).
   const cashMutation = useMutation({
     mutationFn: (id: string) => markTableSessionCashPaid(id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['active-sessions'] });
-      qc.invalidateQueries({ queryKey: ['orders-board'] });
-    },
+    onSuccess: invalidate,
   });
 
   function confirmCashPaid(session: TableSessionRow) {
     const summary = session.orders_summary;
     const title = t.tablesScreen.cashConfirmTitle;
     const body = t.tablesScreen.cashConfirmBody
-      .replace('{count}', String(summary.unpaid_count))
-      .replace('{total}', summary.unpaid_total);
+      .replace("{count}", String(summary.unpaid_count))
+      .replace("{total}", summary.unpaid_total);
     const run = () => cashMutation.mutate(session.id);
-    if (Platform.OS === 'web') {
-      if (typeof globalThis.confirm === 'function' && globalThis.confirm(`${title}\n\n${body}`)) {
+    if (Platform.OS === "web") {
+      if (
+        typeof globalThis.confirm === "function" &&
+        globalThis.confirm(`${title}\n\n${body}`)
+      ) {
         run();
       }
       return;
     }
     Alert.alert(title, body, [
-      { text: t.tablesScreen.closeCancel, style: 'cancel' },
-      { text: t.tablesScreen.cashConfirmAction, style: 'default', onPress: run },
+      { text: t.tablesScreen.closeCancel, style: "cancel" },
+      {
+        text: t.tablesScreen.cashConfirmAction,
+        style: "default",
+        onPress: run,
+      },
     ]);
   }
 
-  function promptUnpaid(session: TableSessionRow, unpaidCount: number, unpaidTotal: string) {
+  function promptUnpaid(
+    session: TableSessionRow,
+    unpaidCount: number,
+    unpaidTotal: string,
+  ) {
     const title = t.tablesScreen.unpaidWarningTitle;
     const body = t.tablesScreen.unpaidWarningBody
-      .replace('{count}', String(unpaidCount))
-      .replace('{total}', unpaidTotal);
+      .replace("{count}", String(unpaidCount))
+      .replace("{total}", unpaidTotal);
     const run = () => closeMutation.mutate({ id: session.id, force: true });
-    if (Platform.OS === 'web') {
-      if (typeof globalThis.confirm === 'function' && globalThis.confirm(`${title}\n\n${body}`)) {
+    if (Platform.OS === "web") {
+      if (
+        typeof globalThis.confirm === "function" &&
+        globalThis.confirm(`${title}\n\n${body}`)
+      ) {
         run();
       }
       return;
     }
     Alert.alert(title, body, [
-      { text: t.tablesScreen.closeCancel, style: 'cancel' },
-      { text: t.tablesScreen.unpaidForceAction, style: 'destructive', onPress: run },
+      { text: t.tablesScreen.closeCancel, style: "cancel" },
+      {
+        text: t.tablesScreen.unpaidForceAction,
+        style: "destructive",
+        onPress: run,
+      },
     ]);
   }
 
@@ -119,47 +156,91 @@ export default function TablesScreen() {
       closeMutation.mutate(
         { id: session.id },
         {
-          onError: err => {
-            const data = (err as AxiosError<{ error?: { code?: string; unpaid_order_numbers?: string[]; unpaid_total?: string } }>)
-              .response?.data?.error;
-            if (data?.code === 'unpaid_orders') {
+          onError: (err) => {
+            const data = (
+              err as AxiosError<{
+                error?: {
+                  code?: string;
+                  unpaid_order_numbers?: string[];
+                  unpaid_total?: string;
+                };
+              }>
+            ).response?.data?.error;
+            if (data?.code === "unpaid_orders") {
               promptUnpaid(
                 session,
                 data.unpaid_order_numbers?.length ?? 0,
-                data.unpaid_total ?? '0'
+                data.unpaid_total ?? "0",
               );
             }
           },
-        }
+        },
       );
     };
-    if (Platform.OS === 'web') {
-      if (typeof globalThis.confirm === 'function' && !globalThis.confirm(`${title}\n\n${body}`)) {
+    if (Platform.OS === "web") {
+      if (
+        typeof globalThis.confirm === "function" &&
+        !globalThis.confirm(`${title}\n\n${body}`)
+      ) {
         return;
       }
       run();
       return;
     }
     Alert.alert(title, body, [
-      { text: t.tablesScreen.closeCancel, style: 'cancel' },
-      { text: t.tablesScreen.closeAction, style: 'destructive', onPress: run },
+      { text: t.tablesScreen.closeCancel, style: "cancel" },
+      { text: t.tablesScreen.closeAction, style: "destructive", onPress: run },
     ]);
+  }
+
+  function payTable(session: TableSessionRow, balance?: string) {
+    setPayTarget({
+      kind: "session",
+      sessionId: session.id,
+      label: `${t.tablesScreen.tableLabel} ${session.table_number}`,
+      balance:
+        balance ??
+        session.orders_summary.balance ??
+        session.orders_summary.unpaid_total,
+    });
+  }
+
+  async function printLast(result: RecordPaymentResult) {
+    const orderId = result.payment.order;
+    if (!orderId) return;
+    try {
+      const order = await getOrder(orderId);
+      await printReceipt(order, restaurantSlug, {
+        payment: result.payment,
+        cashier: result.payment.processed_by_name,
+        restaurantName: currentRestaurant?.name ?? null,
+      });
+    } catch {
+      /* printing must never block the till */
+    }
   }
 
   const rows = data?.results ?? [];
   const columns = width >= 1280 ? 3 : width >= 900 ? 2 : 1;
-  const cardWidth = columns === 1 ? '100%' : (`${100 / columns - 1}%` as unknown as number);
+  const cardWidth =
+    columns === 1 ? "100%" : (`${100 / columns - 1}%` as unknown as number);
 
   return (
     <SafeAreaView style={styles.root}>
       <TopBar title={t.tablesScreen.title} subtitle={t.tablesScreen.subtitle} />
+      <ShiftBanner />
       <ScrollView
         contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={() => refetch()}
+          />
+        }
       >
         {isLoading && !data ? (
           <View style={styles.loading}>
-            <ActivityIndicator color={colors.primary} size='large' />
+            <ActivityIndicator color={colors.primary} size="large" />
           </View>
         ) : rows.length === 0 ? (
           <View style={styles.empty}>
@@ -167,19 +248,28 @@ export default function TablesScreen() {
           </View>
         ) : (
           <View style={styles.grid}>
-            {rows.map(session => (
-              <View key={session.id} style={[styles.gridItem, { width: cardWidth as any }]}>
+            {rows.map((session) => (
+              <View
+                key={session.id}
+                style={[styles.gridItem, { width: cardWidth as any }]}
+              >
                 <SessionCard
                   row={session}
                   t={t}
+                  canPay={canPay}
                   onClose={() => confirmClose(session)}
                   onShowPayQr={() => setPayQrSession(session)}
-                  onMarkCash={() => confirmCashPaid(session)}
+                  onShowBill={() => setBillSession(session)}
+                  onPay={() =>
+                    canPay ? payTable(session) : confirmCashPaid(session)
+                  }
                   isClosing={
-                    closeMutation.isPending && closeMutation.variables?.id === session.id
+                    closeMutation.isPending &&
+                    closeMutation.variables?.id === session.id
                   }
                   isMarkingCash={
-                    cashMutation.isPending && cashMutation.variables === session.id
+                    cashMutation.isPending &&
+                    cashMutation.variables === session.id
                   }
                 />
               </View>
@@ -192,6 +282,28 @@ export default function TablesScreen() {
         session={payQrSession}
         t={t}
         onClose={() => setPayQrSession(null)}
+      />
+
+      <BillModal
+        sessionId={billSession?.id ?? null}
+        tableNumber={billSession?.table_number}
+        canPay={canPay}
+        onClose={() => setBillSession(null)}
+        onPayAll={(balance) => billSession && payTable(billSession, balance)}
+        onPayOrder={(orderId, orderNumber, balance) =>
+          setPayTarget({ kind: "order", orderId, label: orderNumber, balance })
+        }
+      />
+
+      <PaymentSheet
+        visible={!!payTarget}
+        target={payTarget}
+        onClose={() => {
+          setPayTarget(null);
+          invalidate();
+        }}
+        onPaid={() => invalidate()}
+        onPrint={printLast}
       />
     </SafeAreaView>
   );
@@ -209,19 +321,14 @@ function PayQrModal({ session, t, onClose }: PayQrModalProps) {
   if (!session) return null;
   const url = `${CUSTOMER_SITE}/table/settle?session=${session.id}`;
   return (
-    <Modal
-      visible
-      animationType='fade'
-      transparent
-      onRequestClose={onClose}
-    >
+    <Modal visible animationType="fade" transparent onRequestClose={onClose}>
       <Pressable style={styles.qrOverlay} onPress={onClose}>
         <Pressable style={styles.qrPanel} onPress={() => undefined}>
           <Text style={styles.qrTitle}>{t.tablesScreen.payQrTitle}</Text>
           <Text style={styles.qrSubtitle}>
             {t.tablesScreen.payQrSubtitle
-              .replace('{table}', session.table_number)
-              .replace('{total}', session.orders_summary.unpaid_total)}
+              .replace("{table}", session.table_number)
+              .replace("{total}", session.orders_summary.unpaid_total)}
           </Text>
           <View style={styles.qrWrap}>
             <QRCode value={url} size={240} />
@@ -231,7 +338,7 @@ function PayQrModal({ session, t, onClose }: PayQrModalProps) {
           </Text>
           <Button
             title={t.tablesScreen.payQrDone}
-            variant='primary'
+            variant="primary"
             fullWidth
             onPress={onClose}
           />
@@ -244,9 +351,11 @@ function PayQrModal({ session, t, onClose }: PayQrModalProps) {
 interface CardProps {
   row: TableSessionRow;
   t: ReturnType<typeof useT>;
+  canPay: boolean;
   onClose: () => void;
   onShowPayQr: () => void;
-  onMarkCash: () => void;
+  onShowBill: () => void;
+  onPay: () => void;
   isClosing: boolean;
   isMarkingCash: boolean;
 }
@@ -254,9 +363,11 @@ interface CardProps {
 function SessionCard({
   row,
   t,
+  canPay,
   onClose,
   onShowPayQr,
-  onMarkCash,
+  onShowBill,
+  onPay,
   isClosing,
   isMarkingCash,
 }: CardProps) {
@@ -269,10 +380,13 @@ function SessionCard({
       ? t.tablesScreen.closeButton
       : t.tablesScreen.closeDisabled;
   const modeLabel =
-    row.payment_mode === 'host_covers' ? t.tablesScreen.hostCovers : t.tablesScreen.splitBill;
+    row.payment_mode === "host_covers"
+      ? t.tablesScreen.hostCovers
+      : t.tablesScreen.splitBill;
+  const balance = summary.balance ?? summary.unpaid_total;
 
   return (
-    <View style={styles.card}>
+    <View style={styles.card} testID={`session-${row.table_number}`}>
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={styles.tableLabel}>
@@ -283,18 +397,25 @@ function SessionCard({
         <View style={styles.totalBlock}>
           <Text style={styles.totalLabel}>{t.tablesScreen.totalLabel}</Text>
           <Text style={styles.totalValue}>{summary.grand_total} ₾</Text>
+          {summary.paid_total && parseFloat(summary.paid_total) > 0 ? (
+            <Text style={styles.paidLabel}>
+              {t.cash.paid} {money(summary.paid_total)}
+            </Text>
+          ) : null}
         </View>
       </View>
 
       {hasUnpaid ? (
         <View style={styles.unpaidBanner}>
-          <Ionicons name='warning' size={16} color={colors.danger} />
+          <Ionicons name="warning" size={16} color={colors.danger} />
           <View style={{ flex: 1 }}>
             <Text style={styles.unpaidText}>
-              {t.tablesScreen.unpaidBadge}: {summary.unpaid_count} · {summary.unpaid_total} ₾
+              {t.tablesScreen.unpaidBadge}: {summary.unpaid_count} · {balance} ₾
             </Text>
             {summary.unpaid_order_numbers.length > 0 ? (
-              <Text style={styles.unpaidOrders}>{summary.unpaid_order_numbers.join(', ')}</Text>
+              <Text style={styles.unpaidOrders}>
+                {summary.unpaid_order_numbers.join(", ")}
+              </Text>
             ) : null}
           </View>
         </View>
@@ -306,36 +427,78 @@ function SessionCard({
       </View>
 
       <View style={styles.statusRow}>
-        <StatusChip n={summary.counts.pending} color={colors.warning} label='pend' />
-        <StatusChip n={summary.counts.confirmed} color={colors.info} label='conf' />
-        <StatusChip n={summary.counts.preparing} color={colors.accent} label='prep' />
-        <StatusChip n={summary.counts.ready} color={colors.success} label='ready' />
-        <StatusChip n={summary.counts.served} color={colors.slate500} label='srvd' />
-        <StatusChip n={summary.counts.completed} color={colors.successDark} label='done' />
+        <StatusChip
+          n={summary.counts.pending}
+          color={colors.warning}
+          label="pend"
+        />
+        <StatusChip
+          n={summary.counts.confirmed}
+          color={colors.info}
+          label="conf"
+        />
+        <StatusChip
+          n={summary.counts.preparing}
+          color={colors.accent}
+          label="prep"
+        />
+        <StatusChip
+          n={summary.counts.ready}
+          color={colors.success}
+          label="ready"
+        />
+        <StatusChip
+          n={summary.counts.served}
+          color={colors.slate500}
+          label="srvd"
+        />
+        <StatusChip
+          n={summary.counts.completed}
+          color={colors.successDark}
+          label="done"
+        />
+      </View>
+
+      <View style={styles.buttonRow}>
+        <View style={{ flex: 1 }}>
+          <Button
+            title={t.cash.bill}
+            variant="outline"
+            fullWidth
+            onPress={onShowBill}
+          />
+        </View>
+        {hasUnpaid ? (
+          <View style={{ flex: 1 }}>
+            <Button
+              title={
+                canPay
+                  ? `${t.cash.pay} ${money(balance)}`
+                  : t.tablesScreen.markCashButton
+              }
+              variant="success"
+              fullWidth
+              loading={isMarkingCash}
+              disabled={isMarkingCash}
+              onPress={onPay}
+              testID="pay-table"
+            />
+          </View>
+        ) : null}
       </View>
 
       {hasUnpaid ? (
-        <>
-          <Button
-            title={t.tablesScreen.payQrButton}
-            variant='primary'
-            fullWidth
-            onPress={onShowPayQr}
-          />
-          <Button
-            title={t.tablesScreen.markCashButton}
-            variant='success'
-            fullWidth
-            loading={isMarkingCash}
-            disabled={isMarkingCash}
-            onPress={onMarkCash}
-          />
-        </>
+        <Button
+          title={t.tablesScreen.payQrButton}
+          variant="primary"
+          fullWidth
+          onPress={onShowPayQr}
+        />
       ) : null}
 
       <Button
         title={closeLabel}
-        variant={canClose ? 'danger' : 'outline'}
+        variant={canClose ? "danger" : "outline"}
         fullWidth
         disabled={(!canClose && !hasUnpaid) || isClosing}
         loading={isClosing}
@@ -354,11 +517,24 @@ function Stat({ label, value }: { label: string; value: number | string }) {
   );
 }
 
-function StatusChip({ n, color, label }: { n: number; color: string; label: string }) {
+function StatusChip({
+  n,
+  color,
+  label,
+}: {
+  n: number;
+  color: string;
+  label: string;
+}) {
   if (!n) return null;
   return (
-    <View style={[styles.chip, { backgroundColor: color + '22', borderColor: color }]}>
-      <Ionicons name='ellipse' size={8} color={color} />
+    <View
+      style={[
+        styles.chip,
+        { backgroundColor: color + "22", borderColor: color },
+      ]}
+    >
+      <Ionicons name="ellipse" size={8} color={color} />
       <Text style={[styles.chipText, { color }]}>
         {n} {label}
       </Text>
@@ -369,10 +545,10 @@ function StatusChip({ n, color, label }: { n: number; color: string; label: stri
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: spacing.xxxl },
-  loading: { paddingVertical: spacing.xxxl, alignItems: 'center' },
-  empty: { paddingVertical: spacing.xxxl, alignItems: 'center' },
+  loading: { paddingVertical: spacing.xxxl, alignItems: "center" },
+  empty: { paddingVertical: spacing.xxxl, alignItems: "center" },
   emptyText: { fontSize: typography.sizes.md, color: colors.muted },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md },
   gridItem: { minWidth: 280 },
   card: {
     backgroundColor: colors.surface,
@@ -383,26 +559,35 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     ...shadows.sm,
   },
-  header: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
+  header: { flexDirection: "row", alignItems: "flex-start", gap: spacing.md },
   tableLabel: {
     fontSize: typography.sizes.lg,
     fontWeight: typography.weights.bold,
     color: colors.foreground,
   },
-  modeLabel: { fontSize: typography.sizes.xs, color: colors.muted, marginTop: 2 },
-  totalBlock: { alignItems: 'flex-end' },
+  modeLabel: {
+    fontSize: typography.sizes.xs,
+    color: colors.muted,
+    marginTop: 2,
+  },
+  totalBlock: { alignItems: "flex-end" },
   totalLabel: { fontSize: typography.sizes.xs, color: colors.muted },
   totalValue: {
     fontSize: typography.sizes.xxl,
     fontWeight: typography.weights.bold,
     color: colors.primary,
   },
-  statsRow: { flexDirection: 'row', gap: spacing.md },
+  paidLabel: {
+    fontSize: typography.sizes.xs,
+    color: colors.successDark,
+    fontWeight: typography.weights.semibold,
+  },
+  statsRow: { flexDirection: "row", gap: spacing.md },
   stat: { flex: 1 },
   statLabel: {
     fontSize: typography.sizes.xs,
     color: colors.muted,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     letterSpacing: 0.4,
   },
   statValue: {
@@ -412,10 +597,10 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   unpaidBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
-    backgroundColor: colors.danger + '1A',
+    backgroundColor: colors.danger + "1A",
     borderWidth: 1,
     borderColor: colors.danger,
     paddingHorizontal: spacing.sm,
@@ -433,10 +618,11 @@ const styles = StyleSheet.create({
     marginTop: 2,
     opacity: 0.9,
   },
-  statusRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  statusRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  buttonRow: { flexDirection: "row", gap: spacing.sm },
   chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
@@ -449,9 +635,9 @@ const styles = StyleSheet.create({
   },
   qrOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 43, 0.72)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "rgba(15, 23, 43, 0.72)",
+    alignItems: "center",
+    justifyContent: "center",
     padding: spacing.lg,
   },
   qrPanel: {
@@ -459,20 +645,20 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     padding: spacing.xl,
     maxWidth: 360,
-    width: '100%',
+    width: "100%",
     gap: spacing.md,
-    alignItems: 'center',
+    alignItems: "center",
   },
   qrTitle: {
     fontSize: typography.sizes.xl,
     fontWeight: typography.weights.bold,
     color: colors.foreground,
-    textAlign: 'center',
+    textAlign: "center",
   },
   qrSubtitle: {
     fontSize: typography.sizes.sm,
     color: colors.muted,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 20,
   },
   qrWrap: {
@@ -485,7 +671,7 @@ const styles = StyleSheet.create({
   qrUrl: {
     fontSize: typography.sizes.xs,
     color: colors.muted,
-    textAlign: 'center',
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    textAlign: "center",
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
   },
 });

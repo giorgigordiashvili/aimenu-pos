@@ -105,6 +105,8 @@ function AuthGate() {
         options={{ presentation: "card" }}
       />
       <Stack.Screen name="loyalty/redeem" options={{ presentation: "modal" }} />
+      <Stack.Screen name="cash/index" options={{ presentation: "card" }} />
+      <Stack.Screen name="cash/shift/[id]" options={{ presentation: "card" }} />
       <Stack.Screen
         name="restaurants/select"
         options={{ presentation: "modal" }}

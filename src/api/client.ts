@@ -1,16 +1,16 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 
-const DEFAULT_BASE_URL = 'https://admin.aimenu.ge';
+const DEFAULT_BASE_URL = "https://admin.aimenu.ge";
 
 const baseURL =
-  (typeof process !== 'undefined' &&
+  (typeof process !== "undefined" &&
     (process.env.EXPO_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL)) ||
   DEFAULT_BASE_URL;
 
-const TOKEN_KEY = 'aimenu_pos_access_token';
-const REFRESH_KEY = 'aimenu_pos_refresh_token';
-const RESTAURANT_KEY = 'aimenu_pos_restaurant_slug';
+const TOKEN_KEY = "aimenu_pos_access_token";
+const REFRESH_KEY = "aimenu_pos_refresh_token";
+const RESTAURANT_KEY = "aimenu_pos_restaurant_slug";
 
 export const tokenStore = {
   async get(): Promise<string | null> {
@@ -50,33 +50,33 @@ export const restaurantStore = {
 
 export const api = axios.create({
   baseURL,
-  headers: { 'Content-Type': 'application/json' },
+  headers: { "Content-Type": "application/json" },
   timeout: 20_000,
 });
 
 // The backend wraps some responses as { success, data } and others just return
 // plain JSON. Unwrap transparently like the web frontend does.
-api.interceptors.response.use(response => {
+api.interceptors.response.use((response) => {
   if (
     response.data &&
-    typeof response.data === 'object' &&
-    'success' in response.data &&
+    typeof response.data === "object" &&
+    "success" in response.data &&
     response.data.success === true &&
-    'data' in response.data
+    "data" in response.data
   ) {
     response.data = response.data.data;
   }
   return response;
 });
 
-api.interceptors.request.use(async config => {
+api.interceptors.request.use(async (config) => {
   const token = await tokenStore.get();
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   const slug = await restaurantStore.get();
   if (slug && config.headers) {
-    config.headers['X-Restaurant'] = slug;
+    config.headers["X-Restaurant"] = slug;
   }
   return config;
 });
@@ -94,7 +94,7 @@ async function refreshAccessToken(): Promise<string | null> {
       const response = await axios.post<{ access: string }>(
         `${baseURL}/api/v1/auth/token/refresh/`,
         { refresh },
-        { headers: { 'Content-Type': 'application/json' } }
+        { headers: { "Content-Type": "application/json" } },
       );
       const access = response.data?.access;
       if (access) {
@@ -113,9 +113,11 @@ async function refreshAccessToken(): Promise<string | null> {
 }
 
 api.interceptors.response.use(
-  r => r,
+  (r) => r,
   async (error: AxiosError) => {
-    const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const original = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
     if (error.response?.status === 401 && original && !original._retry) {
       original._retry = true;
       const fresh = await refreshAccessToken();
@@ -125,7 +127,7 @@ api.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export { baseURL };

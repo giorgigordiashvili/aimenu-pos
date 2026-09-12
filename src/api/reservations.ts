@@ -1,14 +1,14 @@
-import { api } from './client';
+import { api } from "./client";
 
 export type ReservationStatus =
-  | 'pending_payment'
-  | 'pending'
-  | 'confirmed'
-  | 'waitlist'
-  | 'seated'
-  | 'completed'
-  | 'cancelled'
-  | 'no_show';
+  | "pending_payment"
+  | "pending"
+  | "confirmed"
+  | "waitlist"
+  | "seated"
+  | "completed"
+  | "cancelled"
+  | "no_show";
 
 export interface PreOrderItemModifier {
   id?: string;
@@ -85,14 +85,14 @@ export async function listTodayReservations(params?: {
   pageSize?: number;
 }): Promise<Paginated<Reservation>> {
   const response = await api.get<Paginated<Reservation>>(
-    '/api/v1/dashboard/reservations/today/',
+    "/api/v1/dashboard/reservations/today/",
     {
       params: {
-        ordering: params?.ordering ?? 'reservation_time',
+        ordering: params?.ordering ?? "reservation_time",
         page: params?.page,
         page_size: params?.pageSize ?? 100,
       },
-    }
+    },
   );
   return response.data;
 }
@@ -103,37 +103,42 @@ export async function listUpcomingReservations(params?: {
   pageSize?: number;
 }): Promise<Paginated<Reservation>> {
   const response = await api.get<Paginated<Reservation>>(
-    '/api/v1/dashboard/reservations/upcoming/',
+    "/api/v1/dashboard/reservations/upcoming/",
     {
       params: {
-        ordering: params?.ordering ?? 'reservation_date',
+        ordering: params?.ordering ?? "reservation_date",
         page: params?.page,
         page_size: params?.pageSize ?? 100,
       },
-    }
+    },
   );
   return response.data;
 }
 
 export async function getReservation(id: string): Promise<Reservation> {
-  const response = await api.get<Reservation>(`/api/v1/dashboard/reservations/${id}/`);
+  const response = await api.get<Reservation>(
+    `/api/v1/dashboard/reservations/${id}/`,
+  );
   return response.data;
 }
 
 export async function setReservationStatus(
   id: string,
   status: ReservationStatus,
-  notes?: string
+  notes?: string,
 ): Promise<Reservation> {
   const response = await api.post<Reservation>(
     `/api/v1/dashboard/reservations/${id}/status/`,
-    { status, notes }
+    { status, notes },
   );
   return response.data;
 }
 
-export function resolveReservationStatus(raw: Reservation['status']): ReservationStatus {
-  if (typeof raw === 'string') return raw as ReservationStatus;
-  if (raw && typeof raw === 'object' && 'value' in raw) return raw.value as ReservationStatus;
-  return 'pending';
+export function resolveReservationStatus(
+  raw: Reservation["status"],
+): ReservationStatus {
+  if (typeof raw === "string") return raw as ReservationStatus;
+  if (raw && typeof raw === "object" && "value" in raw)
+    return raw.value as ReservationStatus;
+  return "pending";
 }

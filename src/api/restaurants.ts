@@ -11,7 +11,21 @@ export type ModuleCode =
   | "warehouse"
   | "loyalty"
   | "reviews"
+  | "cash"
   | "payments";
+
+export type Resource =
+  | "menu"
+  | "orders"
+  | "tables"
+  | "reservations"
+  | "warehouse"
+  | "warehouse_logs"
+  | "cash"
+  | "staff"
+  | "settings"
+  | "analytics";
+export type Action = "create" | "read" | "update" | "delete";
 
 export interface MyRestaurantInfo extends Omit<
   MyRestaurant,
@@ -21,6 +35,24 @@ export interface MyRestaurantInfo extends Omit<
   venue: { slug: string; name: string } | null;
   /** Which product areas the restaurant has switched on (Settings -> Modules). */
   modules: Partial<Record<ModuleCode, boolean>>;
+  /** Effective role permissions of the signed-in user at this restaurant. */
+  permissions?: Partial<Record<Resource, string[]>>;
+}
+
+/**
+ * May the signed-in user do `action` on `resource` here? Owners may do
+ * anything; an unknown restaurant (typed slug) is optimistic, the API 403s.
+ */
+export function can(
+  r: MyRestaurantInfo | null | undefined,
+  resource: Resource,
+  action: Action,
+): boolean {
+  if (!r) return true;
+  if (r.is_owner) return true;
+  const allowed = r.permissions?.[resource];
+  if (!allowed) return false;
+  return allowed.includes(action) || allowed.includes("*");
 }
 
 export function moduleOn(
@@ -29,7 +61,8 @@ export function moduleOn(
 ): boolean {
   // Missing key (older backend) counts as on, except for opt-in modules.
   const value = r?.modules?.[code];
-  if (value === undefined) return code !== "warehouse" && code !== "payments";
+  if (value === undefined)
+    return code !== "warehouse" && code !== "payments" && code !== "cash";
   return value;
 }
 

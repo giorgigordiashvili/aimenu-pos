@@ -24,10 +24,38 @@ export interface OrderItem {
   unit_price: string;
   quantity?: number;
   total_price: string;
+  /** Item-level discount (a comp discounts the whole line). */
+  discount_amount?: string;
+  net_price?: string;
+  is_comped?: boolean;
+  discount_reason_label?: string;
   status?: string;
+  voided_at?: string | null;
+  void_reason_label?: string;
+  was_sent_to_kitchen?: boolean;
   preparation_station?: string;
   special_instructions?: string;
   modifiers: OrderItemModifier[];
+}
+
+export interface OrderDiscount {
+  id: string;
+  kind: "manual" | "loyalty_tier" | "promo";
+  mode: "percent" | "fixed";
+  value: string;
+  amount: string;
+  label: string;
+  created_at: string;
+}
+
+export interface OrderPaymentBrief {
+  id: string;
+  payment_method: string;
+  amount: string;
+  tip_amount: string;
+  receipt_number: string;
+  status: string;
+  completed_at: string | null;
 }
 
 export interface OrderListRow {
@@ -35,8 +63,12 @@ export interface OrderListRow {
   order_number: string;
   order_type?: string;
   status?: OrderStatus | { value: string };
+  table?: string | null;
   table_number?: string;
+  table_session?: string | null;
   customer_name?: string;
+  subtotal?: string;
+  discount_amount?: string;
   total?: string;
   items_count?: string | number;
   created_at: string;
@@ -49,6 +81,12 @@ export interface Order extends OrderListRow {
   tip_amount?: string;
   server?: string | null;
   discount_amount?: string;
+  discounts?: OrderDiscount[];
+  wallet_applied?: string;
+  paid_amount?: string;
+  balance?: string;
+  is_paid?: boolean;
+  payments?: OrderPaymentBrief[];
   customer_phone?: string;
   customer_email?: string;
   customer_notes?: string;
@@ -156,12 +194,117 @@ export async function updateOrderItemStatus(
   orderId: string,
   itemId: string,
   status: string,
+  reason?: ReasonInput,
 ): Promise<unknown> {
   const response = await api.patch(
     `/api/v1/dashboard/orders/${orderId}/items/${itemId}/status/`,
-    { status },
+    { status, ...(reason ?? {}) },
   );
   return response.data;
+}
+
+// ── money: discounts / comps / voids / split / move ─────────────────────────
+
+export interface ReasonInput {
+  reason_id?: string | null;
+  reason_text?: string;
+}
+
+export async function applyOrderDiscount(
+  orderId: string,
+  body: { mode: "percent" | "fixed"; value: string } & ReasonInput,
+): Promise<Order> {
+  const response = await api.post<Order>(
+    `/api/v1/dashboard/orders/${orderId}/discount/`,
+    body,
+  );
+  return response.data;
+}
+
+export async function removeOrderDiscount(
+  orderId: string,
+  discountId?: string,
+): Promise<Order> {
+  const response = await api.delete<Order>(
+    `/api/v1/dashboard/orders/${orderId}/discount/`,
+    { data: discountId ? { discount_id: discountId } : {} },
+  );
+  return response.data;
+}
+
+export async function discountOrderItem(
+  orderId: string,
+  itemId: string,
+  body: { mode: "percent" | "fixed"; value: string } & ReasonInput,
+): Promise<Order> {
+  const response = await api.post<Order>(
+    `/api/v1/dashboard/orders/${orderId}/items/${itemId}/discount/`,
+    body,
+  );
+  return response.data;
+}
+
+export async function clearOrderItemDiscount(
+  orderId: string,
+  itemId: string,
+): Promise<Order> {
+  const response = await api.delete<Order>(
+    `/api/v1/dashboard/orders/${orderId}/items/${itemId}/discount/`,
+  );
+  return response.data;
+}
+
+export async function compOrderItem(
+  orderId: string,
+  itemId: string,
+  reason: ReasonInput,
+): Promise<Order> {
+  const response = await api.post<Order>(
+    `/api/v1/dashboard/orders/${orderId}/items/${itemId}/comp/`,
+    reason,
+  );
+  return response.data;
+}
+
+export async function voidOrderItem(
+  orderId: string,
+  itemId: string,
+  reason: ReasonInput,
+): Promise<Order> {
+  const response = await api.post<Order>(
+    `/api/v1/dashboard/orders/${orderId}/items/${itemId}/void/`,
+    reason,
+  );
+  return response.data;
+}
+
+export async function splitOrder(
+  orderId: string,
+  body: { item_ids: string[]; table_id?: string; session_id?: string },
+): Promise<{ order: Order; new_order: Order }> {
+  const response = await api.post<{ order: Order; new_order: Order }>(
+    `/api/v1/dashboard/orders/${orderId}/split/`,
+    body,
+  );
+  return response.data;
+}
+
+export async function moveOrder(
+  orderId: string,
+  tableId: string,
+): Promise<Order> {
+  const response = await api.post<Order>(
+    `/api/v1/dashboard/orders/${orderId}/move/`,
+    { table_id: tableId },
+  );
+  return response.data;
+}
+
+/** Stable `error.code` from an order-money endpoint (409/400), or null. */
+export function orderErrorCode(err: unknown): string | null {
+  const data = (err as { response?: { data?: { error?: { code?: string } } } })
+    ?.response?.data;
+  return data?.error?.code ?? null;
 }
 
 export function resolveOrderStatus(raw: OrderListRow["status"]): OrderStatus {

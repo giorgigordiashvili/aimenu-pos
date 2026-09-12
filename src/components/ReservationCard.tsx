@@ -1,13 +1,13 @@
-import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import type { Reservation, ReservationStatus } from '@/api/reservations';
-import { resolveReservationStatus } from '@/api/reservations';
-import Button from '@/components/Button';
-import StatusBadge from '@/components/StatusBadge';
-import type { Dict } from '@/i18n';
-import { colors, radius, shadows, spacing, typography } from '@/theme/tokens';
+import type { Reservation, ReservationStatus } from "@/api/reservations";
+import { resolveReservationStatus } from "@/api/reservations";
+import Button from "@/components/Button";
+import StatusBadge from "@/components/StatusBadge";
+import type { Dict } from "@/i18n";
+import { colors, radius, shadows, spacing, typography } from "@/theme/tokens";
 
 interface Props {
   row: Reservation;
@@ -23,18 +23,21 @@ interface Props {
 
 function formatDate(d: string, locale: string): string {
   try {
-    return new Date(d + 'T00:00:00').toLocaleDateString(locale === 'ka' ? 'ka-GE' : 'en-US', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
+    return new Date(d + "T00:00:00").toLocaleDateString(
+      locale === "ka" ? "ka-GE" : "en-US",
+      {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      },
+    );
   } catch {
     return d;
   }
 }
 
 function formatTime(t: string): string {
-  return t?.slice(0, 5) ?? '';
+  return t?.slice(0, 5) ?? "";
 }
 
 function formatAmount(raw?: string | null): string | undefined {
@@ -58,10 +61,13 @@ export default function ReservationCard({
   const status: ReservationStatus = resolveReservationStatus(row.status);
   const summary = row.pre_order_summary ?? null;
   const detailPreOrder = row.pre_order ?? null;
-  const hasOrder = !!summary || (!!detailPreOrder && (detailPreOrder.items?.length ?? 0) > 0);
+  const hasOrder =
+    !!summary || (!!detailPreOrder && (detailPreOrder.items?.length ?? 0) > 0);
   const total = formatAmount(summary?.total ?? detailPreOrder?.total);
   const menu = formatAmount(summary?.subtotal ?? detailPreOrder?.subtotal);
-  const typeLabel = hasOrder ? t.reservationCard.reservationPlusOrder : t.reservationCard.reservationOnly;
+  const typeLabel = hasOrder
+    ? t.reservationCard.reservationPlusOrder
+    : t.reservationCard.reservationOnly;
 
   return (
     <Pressable
@@ -76,12 +82,12 @@ export default function ReservationCard({
             </Text>
             <StatusBadge
               status={status}
-              kind='reservation'
+              kind="reservation"
               label={row.status_display ?? status}
             />
           </View>
           <View style={styles.phoneRow}>
-            <Ionicons name='call-outline' size={14} color={colors.muted} />
+            <Ionicons name="call-outline" size={14} color={colors.muted} />
             <Text style={styles.phoneText}>{row.guest_phone}</Text>
           </View>
         </View>
@@ -92,24 +98,28 @@ export default function ReservationCard({
           <Text style={styles.chipNeutralText}>ID:{row.confirmation_code}</Text>
         </View>
         <View style={styles.chipNeutral}>
-          <Ionicons name='bag-handle-outline' size={12} color={colors.slate700} />
+          <Ionicons
+            name="bag-handle-outline"
+            size={12}
+            color={colors.slate700}
+          />
           <Text style={styles.chipNeutralText}>{typeLabel}</Text>
         </View>
       </View>
 
       <View style={{ gap: spacing.sm, marginTop: spacing.md }}>
         <InfoRow
-          icon='calendar-outline'
+          icon="calendar-outline"
           color={colors.warning}
           text={formatDate(row.reservation_date, locale)}
         />
         <InfoRow
-          icon='time-outline'
+          icon="time-outline"
           color={colors.accent}
           text={formatTime(row.reservation_time)}
         />
         <InfoRow
-          icon='people-outline'
+          icon="people-outline"
           color={colors.success}
           text={`${row.party_size} ${t.reservationCard.guests}`}
         />
@@ -118,12 +128,16 @@ export default function ReservationCard({
       {hasOrder && (
         <View style={styles.orderBox}>
           <View style={styles.orderRow}>
-            <Text style={styles.orderLabel}>{t.reservationCard.totalAmount}</Text>
+            <Text style={styles.orderLabel}>
+              {t.reservationCard.totalAmount}
+            </Text>
             <Text style={styles.orderValue}>{total} ₾</Text>
           </View>
           {menu ? (
             <View style={styles.orderRow}>
-              <Text style={styles.orderSubLabel}>{t.reservationCard.menuValue}</Text>
+              <Text style={styles.orderSubLabel}>
+                {t.reservationCard.menuValue}
+              </Text>
               <Text style={styles.orderSubValue}>{menu} ₾</Text>
             </View>
           ) : null}
@@ -139,39 +153,39 @@ export default function ReservationCard({
       ) : null}
 
       <View style={styles.actions}>
-        {status === 'pending' ? (
+        {status === "pending" ? (
           <>
             <Button
               title={t.reservationCard.reject}
-              variant='danger'
-              size='md'
+              variant="danger"
+              size="md"
               style={{ flex: 1 }}
               loading={isMutating && !!onReject}
               onPress={onReject}
             />
             <Button
               title={t.reservationCard.confirm}
-              variant='success'
-              size='md'
+              variant="success"
+              size="md"
               style={{ flex: 1 }}
               loading={isMutating && !!onAccept}
               onPress={onAccept}
             />
           </>
-        ) : status === 'confirmed' ? (
+        ) : status === "confirmed" ? (
           <Button
             title={t.reservationCard.seated}
-            variant='success'
-            size='md'
+            variant="success"
+            size="md"
             style={{ flex: 1 }}
             loading={isMutating && !!onSeated}
             onPress={onSeated}
           />
-        ) : status === 'seated' ? (
+        ) : status === "seated" ? (
           <Button
             title={t.reservationCard.completed}
-            variant='success'
-            size='md'
+            variant="success"
+            size="md"
             style={{ flex: 1 }}
             loading={isMutating && !!onComplete}
             onPress={onComplete}
@@ -181,7 +195,7 @@ export default function ReservationCard({
 
       <Pressable onPress={onPress} style={styles.fullInfo}>
         <Text style={styles.fullInfoText}>{t.reservationCard.fullInfo}</Text>
-        <Ionicons name='chevron-forward' size={14} color={colors.slate700} />
+        <Ionicons name="chevron-forward" size={14} color={colors.slate700} />
       </Pressable>
     </Pressable>
   );
@@ -215,13 +229,13 @@ const styles = StyleSheet.create({
     ...shadows.sm,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
   },
   headerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     gap: spacing.sm,
   },
   guestName: {
@@ -231,8 +245,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   phoneRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
   },
   phoneText: {
@@ -240,13 +254,13 @@ const styles = StyleSheet.create({
     color: colors.mutedStrong,
   },
   chipsRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.sm,
-    flexWrap: 'wrap',
+    flexWrap: "wrap",
   },
   chipNeutral: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
@@ -259,8 +273,8 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.medium,
   },
   infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.sm,
   },
   infoText: {
@@ -275,9 +289,9 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   orderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   orderLabel: {
     fontSize: typography.sizes.sm,
@@ -309,14 +323,14 @@ const styles = StyleSheet.create({
     color: colors.warningDark,
   },
   actions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.sm,
     marginTop: spacing.md,
   },
   fullInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 4,
     paddingVertical: spacing.sm,
     marginTop: 4,

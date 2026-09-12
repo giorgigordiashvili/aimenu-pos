@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from "@expo/vector-icons";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ActivityIndicator,
   Pressable,
@@ -9,36 +9,44 @@ import {
   StyleSheet,
   Text,
   View,
-} from 'react-native';
+} from "react-native";
 
 import {
   getReservation,
   resolveReservationStatus,
   setReservationStatus,
   type ReservationStatus,
-} from '@/api/reservations';
-import Button from '@/components/Button';
-import StatusBadge from '@/components/StatusBadge';
-import { useLocale } from '@/i18n';
-import { colors, radius, shadows, spacing, typography } from '@/theme/tokens';
+} from "@/api/reservations";
+import Button from "@/components/Button";
+import StatusBadge from "@/components/StatusBadge";
+import { useLocale } from "@/i18n";
+import { colors, radius, shadows, spacing, typography } from "@/theme/tokens";
 
-const ADVANCE: Partial<Record<ReservationStatus, { next: ReservationStatus; key: 'markSeated' | 'markCompleted' }>> = {
-  pending: { next: 'confirmed', key: 'markSeated' },
-  confirmed: { next: 'seated', key: 'markSeated' },
-  seated: { next: 'completed', key: 'markCompleted' },
+const ADVANCE: Partial<
+  Record<
+    ReservationStatus,
+    { next: ReservationStatus; key: "markSeated" | "markCompleted" }
+  >
+> = {
+  pending: { next: "confirmed", key: "markSeated" },
+  confirmed: { next: "seated", key: "markSeated" },
+  seated: { next: "completed", key: "markCompleted" },
 };
 
 function formatTime(t: string): string {
-  return t?.slice(0, 5) ?? '';
+  return t?.slice(0, 5) ?? "";
 }
 
 function formatDate(d: string, locale: string): string {
   try {
-    return new Date(d + 'T00:00:00').toLocaleDateString(locale === 'ka' ? 'ka-GE' : 'en-US', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
+    return new Date(d + "T00:00:00").toLocaleDateString(
+      locale === "ka" ? "ka-GE" : "en-US",
+      {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      },
+    );
   } catch {
     return d;
   }
@@ -46,13 +54,13 @@ function formatDate(d: string, locale: string): string {
 
 function formatDateTime(iso: string, locale: string): string {
   try {
-    return new Date(iso).toLocaleString(locale === 'ka' ? 'ka-GE' : 'en-US', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
+    return new Date(iso).toLocaleString(locale === "ka" ? "ka-GE" : "en-US", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
     });
   } catch {
     return iso;
@@ -60,7 +68,7 @@ function formatDateTime(iso: string, locale: string): string {
 }
 
 function formatCurrency(raw: string | undefined | null): string {
-  if (!raw) return '—';
+  if (!raw) return "—";
   const n = parseFloat(raw);
   if (Number.isNaN(n)) return raw;
   return `${n.toFixed(2)} ₾`;
@@ -73,7 +81,7 @@ export default function ReservationDetailScreen() {
   const { t, locale } = useLocale();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['reservation', id],
+    queryKey: ["reservation", id],
     queryFn: () => getReservation(id!),
     enabled: !!id,
     refetchInterval: 15_000,
@@ -81,10 +89,10 @@ export default function ReservationDetailScreen() {
   });
 
   const invalidateLists = () => {
-    qc.invalidateQueries({ queryKey: ['reservation', id] });
-    qc.invalidateQueries({ queryKey: ['reservations-today'] });
-    qc.invalidateQueries({ queryKey: ['reservations-upcoming'] });
-    qc.invalidateQueries({ queryKey: ['orders-board'] });
+    qc.invalidateQueries({ queryKey: ["reservation", id] });
+    qc.invalidateQueries({ queryKey: ["reservations-today"] });
+    qc.invalidateQueries({ queryKey: ["reservations-upcoming"] });
+    qc.invalidateQueries({ queryKey: ["orders-board"] });
   };
 
   const advance = useMutation({
@@ -93,7 +101,7 @@ export default function ReservationDetailScreen() {
   });
 
   const cancel = useMutation({
-    mutationFn: () => setReservationStatus(id!, 'cancelled'),
+    mutationFn: () => setReservationStatus(id!, "cancelled"),
     onSuccess: () => {
       invalidateLists();
       router.back();
@@ -101,7 +109,7 @@ export default function ReservationDetailScreen() {
   });
 
   const noShow = useMutation({
-    mutationFn: () => setReservationStatus(id!, 'no_show'),
+    mutationFn: () => setReservationStatus(id!, "no_show"),
     onSuccess: invalidateLists,
   });
 
@@ -109,7 +117,7 @@ export default function ReservationDetailScreen() {
     return (
       <SafeAreaView style={styles.root}>
         <View style={styles.loading}>
-          <ActivityIndicator color={colors.primary} size='large' />
+          <ActivityIndicator color={colors.primary} size="large" />
         </View>
       </SafeAreaView>
     );
@@ -117,7 +125,8 @@ export default function ReservationDetailScreen() {
 
   const status = resolveReservationStatus(data.status);
   const next = ADVANCE[status];
-  const isTerminal = status === 'completed' || status === 'cancelled' || status === 'no_show';
+  const isTerminal =
+    status === "completed" || status === "cancelled" || status === "no_show";
   const preOrder = data.pre_order ?? null;
   const hasPreOrder = !!preOrder && (preOrder.items?.length ?? 0) > 0;
   const typeLabel = hasPreOrder
@@ -129,56 +138,66 @@ export default function ReservationDetailScreen() {
       <View style={styles.topBar}>
         <Text style={styles.title}>{t.reservationDetails.title}</Text>
         <Pressable onPress={() => router.back()} style={styles.closeBtn}>
-          <Ionicons name='close' size={20} color={colors.slate700} />
+          <Ionicons name="close" size={20} color={colors.slate700} />
         </Pressable>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.chipsRow}>
           <View style={styles.chipNeutral}>
-            <Text style={styles.chipNeutralText}>ID:{data.confirmation_code}</Text>
+            <Text style={styles.chipNeutralText}>
+              ID:{data.confirmation_code}
+            </Text>
           </View>
           <View style={styles.chipNeutral}>
-            <Ionicons name='bag-handle-outline' size={12} color={colors.slate700} />
+            <Ionicons
+              name="bag-handle-outline"
+              size={12}
+              color={colors.slate700}
+            />
             <Text style={styles.chipNeutralText}>{typeLabel}</Text>
           </View>
-          <View style={{ marginLeft: 'auto' }}>
+          <View style={{ marginLeft: "auto" }}>
             <StatusBadge
               status={status}
-              kind='reservation'
+              kind="reservation"
               label={data.status_display ?? status}
             />
           </View>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>{t.reservationDetails.guestInfo}</Text>
-          <IconRow icon='person-outline' iconColor={colors.accent}>
+          <Text style={styles.sectionTitle}>
+            {t.reservationDetails.guestInfo}
+          </Text>
+          <IconRow icon="person-outline" iconColor={colors.accent}>
             {data.guest_name}
           </IconRow>
-          <IconRow icon='call-outline' iconColor={colors.success}>
+          <IconRow icon="call-outline" iconColor={colors.success}>
             {data.guest_phone}
           </IconRow>
           {data.guest_email ? (
-            <IconRow icon='mail-outline' iconColor={colors.warning}>
+            <IconRow icon="mail-outline" iconColor={colors.warning}>
               {data.guest_email}
             </IconRow>
           ) : null}
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>{t.reservationDetails.reservationInfo}</Text>
-          <IconRow icon='calendar-outline' iconColor={colors.warning}>
+          <Text style={styles.sectionTitle}>
+            {t.reservationDetails.reservationInfo}
+          </Text>
+          <IconRow icon="calendar-outline" iconColor={colors.warning}>
             {formatDate(data.reservation_date, locale)}
           </IconRow>
-          <IconRow icon='time-outline' iconColor={colors.accent}>
+          <IconRow icon="time-outline" iconColor={colors.accent}>
             {formatTime(data.reservation_time)}
           </IconRow>
-          <IconRow icon='people-outline' iconColor={colors.success}>
+          <IconRow icon="people-outline" iconColor={colors.success}>
             {data.party_size} {t.reservationCard.guests}
           </IconRow>
           {data.table_number ? (
-            <IconRow icon='grid-outline' iconColor={colors.primary}>
+            <IconRow icon="grid-outline" iconColor={colors.primary}>
               #{data.table_number}
             </IconRow>
           ) : null}
@@ -186,8 +205,10 @@ export default function ReservationDetailScreen() {
 
         {hasPreOrder ? (
           <View style={styles.preOrderBox}>
-            <Text style={styles.sectionTitle}>{t.reservationDetails.orderedItems}</Text>
-            {preOrder!.items!.map(item => (
+            <Text style={styles.sectionTitle}>
+              {t.reservationDetails.orderedItems}
+            </Text>
+            {preOrder!.items!.map((item) => (
               <View key={item.id} style={styles.preOrderRow}>
                 <View style={styles.qtyBadge}>
                   <Text style={styles.qtyBadgeText}>{item.quantity ?? 1}</Text>
@@ -196,25 +217,42 @@ export default function ReservationDetailScreen() {
                   <Text style={styles.preOrderName}>{item.item_name}</Text>
                   {item.modifiers && item.modifiers.length > 0 ? (
                     <Text style={styles.preOrderSub}>
-                      {item.modifiers.map(m => m.modifier_name).filter(Boolean).join(', ')}
+                      {item.modifiers
+                        .map((m) => m.modifier_name)
+                        .filter(Boolean)
+                        .join(", ")}
                     </Text>
                   ) : null}
                   {item.special_instructions ? (
-                    <Text style={styles.preOrderSub}>{item.special_instructions}</Text>
+                    <Text style={styles.preOrderSub}>
+                      {item.special_instructions}
+                    </Text>
                   ) : null}
                 </View>
-                <Text style={styles.preOrderPrice}>{formatCurrency(item.total_price)}</Text>
+                <Text style={styles.preOrderPrice}>
+                  {formatCurrency(item.total_price)}
+                </Text>
               </View>
             ))}
             <View style={styles.preOrderDivider} />
             {preOrder!.subtotal ? (
-              <TotalRow label={t.reservationDetails.subtotal} value={formatCurrency(preOrder!.subtotal)} />
+              <TotalRow
+                label={t.reservationDetails.subtotal}
+                value={formatCurrency(preOrder!.subtotal)}
+              />
             ) : null}
             {preOrder!.tax_amount && parseFloat(preOrder!.tax_amount) > 0 ? (
-              <TotalRow label={t.reservationDetails.tax} value={formatCurrency(preOrder!.tax_amount)} />
+              <TotalRow
+                label={t.reservationDetails.tax}
+                value={formatCurrency(preOrder!.tax_amount)}
+              />
             ) : null}
-            {preOrder!.service_charge && parseFloat(preOrder!.service_charge) > 0 ? (
-              <TotalRow label={t.reservationDetails.service} value={formatCurrency(preOrder!.service_charge)} />
+            {preOrder!.service_charge &&
+            parseFloat(preOrder!.service_charge) > 0 ? (
+              <TotalRow
+                label={t.reservationDetails.service}
+                value={formatCurrency(preOrder!.service_charge)}
+              />
             ) : null}
             <TotalRow
               label={t.reservationDetails.total}
@@ -226,21 +264,24 @@ export default function ReservationDetailScreen() {
 
         {data.special_requests ? (
           <View style={styles.noteBox}>
-            <Text style={styles.noteTitle}>{t.reservationDetails.specialRequests}</Text>
+            <Text style={styles.noteTitle}>
+              {t.reservationDetails.specialRequests}
+            </Text>
             <Text style={styles.noteText}>{data.special_requests}</Text>
           </View>
         ) : null}
 
         <Text style={styles.timestamp}>
-          {t.reservationDetails.createdAt} {formatDateTime(data.created_at, locale)}
+          {t.reservationDetails.createdAt}{" "}
+          {formatDateTime(data.created_at, locale)}
         </Text>
 
         {!isTerminal && (
           <View style={styles.actions}>
             <Button
               title={t.reservationDetails.cancel}
-              variant='danger'
-              size='lg'
+              variant="danger"
+              size="lg"
               style={{ flex: 1 }}
               loading={cancel.isPending}
               onPress={() => cancel.mutate()}
@@ -248,8 +289,8 @@ export default function ReservationDetailScreen() {
             {next ? (
               <Button
                 title={t.reservationDetails[next.key]}
-                variant='success'
-                size='lg'
+                variant="success"
+                size="lg"
                 style={{ flex: 1 }}
                 loading={advance.isPending}
                 onPress={() => advance.mutate(next.next)}
@@ -260,8 +301,8 @@ export default function ReservationDetailScreen() {
         {!isTerminal ? (
           <Button
             title={t.reservationDetails.markNoShow}
-            variant='outline'
-            size='md'
+            variant="outline"
+            size="md"
             fullWidth
             loading={noShow.isPending}
             onPress={() => noShow.mutate()}
@@ -283,7 +324,7 @@ function IconRow({
 }) {
   return (
     <View style={styles.row}>
-      <View style={[styles.rowIcon, { backgroundColor: iconColor + '22' }]}>
+      <View style={[styles.rowIcon, { backgroundColor: iconColor + "22" }]}>
         <Ionicons name={icon} size={16} color={iconColor} />
       </View>
       <Text style={styles.rowText}>{children}</Text>
@@ -305,7 +346,10 @@ function TotalRow({
       <Text
         style={[
           styles.totalLabel,
-          emphasised && { color: colors.foreground, fontWeight: typography.weights.bold },
+          emphasised && {
+            color: colors.foreground,
+            fontWeight: typography.weights.bold,
+          },
         ]}
       >
         {label}
@@ -328,11 +372,11 @@ function TotalRow({
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
-  loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  loading: { flex: 1, alignItems: "center", justifyContent: "center" },
   topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.lg,
     borderBottomWidth: 1,
@@ -348,25 +392,25 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   content: {
     padding: spacing.xl,
     gap: spacing.lg,
     maxWidth: 720,
-    width: '100%',
-    alignSelf: 'center',
+    width: "100%",
+    alignSelf: "center",
   },
   chipsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.sm,
-    flexWrap: 'wrap',
+    flexWrap: "wrap",
   },
   chipNeutral: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
@@ -394,8 +438,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.sm,
     paddingVertical: 6,
   },
@@ -403,8 +447,8 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   rowText: {
     fontSize: typography.sizes.md,
@@ -417,8 +461,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   preOrderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.sm,
     backgroundColor: colors.surface,
     borderRadius: radius.md,
@@ -429,8 +473,8 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: radius.pill,
     backgroundColor: colors.info,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   qtyBadgeText: {
     color: colors.white,
@@ -458,8 +502,8 @@ const styles = StyleSheet.create({
     marginVertical: spacing.xs,
   },
   totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     paddingVertical: 4,
   },
   totalLabel: {
@@ -491,7 +535,7 @@ const styles = StyleSheet.create({
     color: colors.muted,
   },
   actions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.md,
   },
 });

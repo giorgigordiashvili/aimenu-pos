@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from "expo-router";
 import {
   Alert,
   Platform,
@@ -8,34 +8,40 @@ import {
   StyleSheet,
   Text,
   View,
-} from 'react-native';
+} from "react-native";
 
-import Button from '@/components/Button';
-import TopBar from '@/components/TopBar';
-import { useAuth } from '@/context/AuthContext';
-import { useLocale } from '@/i18n';
-import { colors, radius, spacing, typography } from '@/theme/tokens';
+import Button from "@/components/Button";
+import TopBar from "@/components/TopBar";
+import { useAuth } from "@/context/AuthContext";
+import { useLocale } from "@/i18n";
+import { money } from "@/lib/money";
+import { useShift } from "@/lib/useShift";
+import { colors, radius, spacing, typography } from "@/theme/tokens";
 
 export default function SettingsScreen() {
   const { signOut, restaurantSlug, currentRestaurant, restaurants } = useAuth();
   const router = useRouter();
   const { t, locale, setLocale } = useLocale();
+  const shift = useShift();
 
   function handleSignOut() {
     const run = async () => {
       await signOut();
-      router.replace('/login');
+      router.replace("/login");
     };
-    if (Platform.OS === 'web') {
-      if (typeof globalThis.confirm === 'function' && !globalThis.confirm(t.settings.signOutConfirm)) {
+    if (Platform.OS === "web") {
+      if (
+        typeof globalThis.confirm === "function" &&
+        !globalThis.confirm(t.settings.signOutConfirm)
+      ) {
         return;
       }
       run();
       return;
     }
     Alert.alert(t.settings.signOutConfirm, t.settings.signOutConfirmBody, [
-      { text: t.settings.cancel, style: 'cancel' },
-      { text: t.settings.signOut, style: 'destructive', onPress: run },
+      { text: t.settings.cancel, style: "cancel" },
+      { text: t.settings.signOut, style: "destructive", onPress: run },
     ]);
   }
 
@@ -45,49 +51,77 @@ export default function SettingsScreen() {
       <ScrollView contentContainerStyle={styles.body}>
         <View style={styles.card}>
           <Text style={styles.cardTitle}>{t.settings.restaurant}</Text>
-          <Text style={styles.currentName}>{currentRestaurant?.name ?? restaurantSlug ?? '—'}</Text>
+          <Text style={styles.currentName}>
+            {currentRestaurant?.name ?? restaurantSlug ?? "—"}
+          </Text>
           <Text style={styles.cardBody}>
             {currentRestaurant?.venue
               ? `${t.restaurantPicker.venue}: ${currentRestaurant.venue.name}`
               : t.settings.restaurantHint}
           </Text>
           <Button
-            title={restaurants.length > 1 ? t.settings.switchRestaurant : t.settings.changeRestaurant}
-            variant='outline'
+            title={
+              restaurants.length > 1
+                ? t.settings.switchRestaurant
+                : t.settings.changeRestaurant
+            }
+            variant="outline"
             fullWidth
-            onPress={() => router.push('/restaurants/select')}
+            onPress={() => router.push("/restaurants/select")}
           />
         </View>
+
+        {shift.enabled ? (
+          <View style={styles.card} testID="cash-card">
+            <Text style={styles.cardTitle}>{t.cash.title}</Text>
+            <Text style={styles.currentName}>
+              {shift.shift
+                ? `${t.cash.shiftOpen.replace("{n}", String(shift.shift.number))} · ${t.cash.openingFloat} ${money(shift.shift.opening_float)}`
+                : t.cash.noShift}
+            </Text>
+            <Button
+              title={t.cash.history}
+              variant="outline"
+              fullWidth
+              onPress={() => router.push("/cash" as Href)}
+            />
+          </View>
+        ) : null}
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>{t.loyalty.title}</Text>
           <Text style={styles.cardBody}>{t.loyalty.codeHint}</Text>
           <Button
             title={t.loyalty.openButton}
-            variant='primary'
+            variant="primary"
             fullWidth
-            onPress={() => router.push('/loyalty/redeem')}
+            onPress={() => router.push("/loyalty/redeem")}
           />
         </View>
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>{t.settings.account}</Text>
           <Text style={styles.cardBody}>{t.settings.accountBody}</Text>
-          <Button title={t.settings.signOut} variant='danger' fullWidth onPress={handleSignOut} />
+          <Button
+            title={t.settings.signOut}
+            variant="danger"
+            fullWidth
+            onPress={handleSignOut}
+          />
         </View>
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>{t.settings.language}</Text>
           <View style={styles.localeRow}>
             <LocaleButton
-              active={locale === 'ka'}
-              label='ქართული'
-              onPress={() => setLocale('ka')}
+              active={locale === "ka"}
+              label="ქართული"
+              onPress={() => setLocale("ka")}
             />
             <LocaleButton
-              active={locale === 'en'}
-              label='English'
-              onPress={() => setLocale('en')}
+              active={locale === "en"}
+              label="English"
+              onPress={() => setLocale("en")}
             />
           </View>
         </View>
@@ -96,7 +130,7 @@ export default function SettingsScreen() {
           <Text style={styles.cardTitle}>{t.settings.about}</Text>
           <Text style={styles.cardBody}>AiMenu POS · v0.1.0</Text>
           <Text style={styles.cardBody}>
-            {process.env.EXPO_PUBLIC_API_URL ?? 'https://admin.aimenu.ge'}
+            {process.env.EXPO_PUBLIC_API_URL ?? "https://admin.aimenu.ge"}
           </Text>
         </View>
       </ScrollView>
@@ -118,7 +152,11 @@ function LocaleButton({
       onPress={onPress}
       style={[styles.localeBtn, active && styles.localeBtnActive]}
     >
-      <Text style={[styles.localeBtnText, active && styles.localeBtnTextActive]}>{label}</Text>
+      <Text
+        style={[styles.localeBtnText, active && styles.localeBtnTextActive]}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -129,8 +167,8 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     gap: spacing.lg,
     maxWidth: 640,
-    width: '100%',
-    alignSelf: 'center',
+    width: "100%",
+    alignSelf: "center",
   },
   card: {
     backgroundColor: colors.surface,
@@ -145,16 +183,24 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.bold,
     color: colors.foreground,
   },
-  cardBody: { fontSize: typography.sizes.md, color: colors.muted, lineHeight: 22 },
-  currentName: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: colors.foreground },
-  localeRow: { flexDirection: 'row', gap: spacing.sm },
+  cardBody: {
+    fontSize: typography.sizes.md,
+    color: colors.muted,
+    lineHeight: 22,
+  },
+  currentName: {
+    fontSize: typography.sizes.xl,
+    fontWeight: typography.weights.bold,
+    color: colors.foreground,
+  },
+  localeRow: { flexDirection: "row", gap: spacing.sm },
   localeBtn: {
     flex: 1,
     paddingVertical: spacing.md,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
-    alignItems: 'center',
+    alignItems: "center",
   },
   localeBtnActive: {
     backgroundColor: colors.foreground,

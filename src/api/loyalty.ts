@@ -1,4 +1,4 @@
-import { api } from './client';
+import { api } from "./client";
 
 export interface LoyaltyValidateResponse {
   id: string;
@@ -18,20 +18,22 @@ export interface LoyaltyValidateResponse {
   };
 }
 
-export async function validateLoyaltyCode(code: string): Promise<LoyaltyValidateResponse> {
+export async function validateLoyaltyCode(
+  code: string,
+): Promise<LoyaltyValidateResponse> {
   const response = await api.post<LoyaltyValidateResponse>(
-    '/api/v1/dashboard/loyalty/redeem/validate/',
-    { code }
+    "/api/v1/dashboard/loyalty/redeem/validate/",
+    { code },
   );
   return response.data;
 }
 
 export async function confirmLoyaltyCode(
   code: string,
-  orderId?: string
+  orderId?: string,
 ): Promise<LoyaltyValidateResponse> {
   const response = await api.post<LoyaltyValidateResponse>(
-    '/api/v1/dashboard/loyalty/redeem/confirm/',
+    "/api/v1/dashboard/loyalty/redeem/confirm/",
     { code, order_id: orderId },
   );
   return response.data;

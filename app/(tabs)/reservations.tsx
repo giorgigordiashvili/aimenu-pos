@@ -1,6 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -11,7 +11,7 @@ import {
   Text,
   View,
   useWindowDimensions,
-} from 'react-native';
+} from "react-native";
 
 import {
   listTodayReservations,
@@ -20,30 +20,30 @@ import {
   setReservationStatus,
   type Reservation,
   type ReservationStatus,
-} from '@/api/reservations';
-import ReservationCard from '@/components/ReservationCard';
-import StatsBar from '@/components/StatsBar';
-import TopBar from '@/components/TopBar';
-import { useLocale } from '@/i18n';
-import { colors, radius, shadows, spacing, typography } from '@/theme/tokens';
+} from "@/api/reservations";
+import ReservationCard from "@/components/ReservationCard";
+import StatsBar from "@/components/StatsBar";
+import TopBar from "@/components/TopBar";
+import { useLocale } from "@/i18n";
+import { colors, radius, shadows, spacing, typography } from "@/theme/tokens";
 
-type Tab = 'pending' | 'history';
+type Tab = "pending" | "history";
 
 export default function ReservationsScreen() {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>('pending');
+  const [tab, setTab] = useState<Tab>("pending");
   const { t, locale } = useLocale();
   const { width } = useWindowDimensions();
   const qc = useQueryClient();
 
   const today = useQuery({
-    queryKey: ['reservations-today'],
+    queryKey: ["reservations-today"],
     queryFn: () => listTodayReservations(),
     refetchInterval: 10_000,
     refetchIntervalInBackground: false,
   });
   const upcoming = useQuery({
-    queryKey: ['reservations-upcoming'],
+    queryKey: ["reservations-upcoming"],
     queryFn: () => listUpcomingReservations(),
     refetchInterval: 30_000,
     refetchIntervalInBackground: false,
@@ -55,9 +55,11 @@ export default function ReservationsScreen() {
   const isRefreshing = today.isRefetching || upcoming.isRefetching;
 
   const stats = useMemo(() => {
-    const pending = todayRows.filter(r => resolveReservationStatus(r.status) === 'pending').length;
+    const pending = todayRows.filter(
+      (r) => resolveReservationStatus(r.status) === "pending",
+    ).length;
     const confirmed = todayRows.filter(
-      r => resolveReservationStatus(r.status) === 'confirmed'
+      (r) => resolveReservationStatus(r.status) === "confirmed",
     ).length;
     return { pending, confirmed, today: todayRows.length };
   }, [todayRows]);
@@ -65,17 +67,19 @@ export default function ReservationsScreen() {
   const filtered = useMemo(() => {
     const base = [...todayRows, ...upcomingRows];
     const seen = new Set<string>();
-    const unique = base.filter(r => {
+    const unique = base.filter((r) => {
       if (seen.has(r.id)) return false;
       seen.add(r.id);
       return true;
     });
-    if (tab === 'pending') {
-      return unique.filter(r => resolveReservationStatus(r.status) === 'pending');
+    if (tab === "pending") {
+      return unique.filter(
+        (r) => resolveReservationStatus(r.status) === "pending",
+      );
     }
     // history tab: anything accepted / seated / completed / cancelled / no-show.
     return unique
-      .filter(r => resolveReservationStatus(r.status) !== 'pending')
+      .filter((r) => resolveReservationStatus(r.status) !== "pending")
       .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
   }, [todayRows, upcomingRows, tab]);
 
@@ -83,28 +87,32 @@ export default function ReservationsScreen() {
     mutationFn: ({ id, status }: { id: string; status: ReservationStatus }) =>
       setReservationStatus(id, status),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['reservations-today'] });
-      qc.invalidateQueries({ queryKey: ['reservations-upcoming'] });
-      qc.invalidateQueries({ queryKey: ['reservation'] });
+      qc.invalidateQueries({ queryKey: ["reservations-today"] });
+      qc.invalidateQueries({ queryKey: ["reservations-upcoming"] });
+      qc.invalidateQueries({ queryKey: ["reservation"] });
       // Reservation status gates which orders kitchen can see
       // (backend filter hides orders whose reservation is still pending).
-      qc.invalidateQueries({ queryKey: ['orders-board'] });
+      qc.invalidateQueries({ queryKey: ["orders-board"] });
     },
   });
 
   const columns = width >= 1280 ? 3 : width >= 900 ? 2 : 1;
-  const cardWidth = columns === 1 ? '100%' : `${100 / columns - 1}%`;
+  const cardWidth = columns === 1 ? "100%" : `${100 / columns - 1}%`;
 
   function counts() {
     const base = [...todayRows, ...upcomingRows];
     const seen = new Set<string>();
-    const unique = base.filter(r => {
+    const unique = base.filter((r) => {
       if (seen.has(r.id)) return false;
       seen.add(r.id);
       return true;
     });
-    const pending = unique.filter(r => resolveReservationStatus(r.status) === 'pending').length;
-    const history = unique.filter(r => resolveReservationStatus(r.status) !== 'pending').length;
+    const pending = unique.filter(
+      (r) => resolveReservationStatus(r.status) === "pending",
+    ).length;
+    const history = unique.filter(
+      (r) => resolveReservationStatus(r.status) !== "pending",
+    ).length;
     return { pending, history };
   }
   const c = counts();
@@ -136,57 +144,64 @@ export default function ReservationsScreen() {
         />
         <View style={styles.tabs}>
           <TabButton
-            active={tab === 'pending'}
+            active={tab === "pending"}
             label={`${t.dashboard.tabs.pending} (${c.pending})`}
-            onPress={() => setTab('pending')}
+            onPress={() => setTab("pending")}
           />
           <TabButton
-            active={tab === 'history'}
+            active={tab === "history"}
             label={`${t.dashboard.tabs.history} (${c.history})`}
-            onPress={() => setTab('history')}
+            onPress={() => setTab("history")}
           />
         </View>
 
         {isLoading ? (
           <View style={styles.loading}>
-            <ActivityIndicator color={colors.primary} size='large' />
+            <ActivityIndicator color={colors.primary} size="large" />
           </View>
         ) : filtered.length === 0 ? (
           <View style={styles.empty}>
             <Text style={styles.emptyText}>
-              {tab === 'history' ? t.dashboard.emptyHistory : t.dashboard.empty}
+              {tab === "history" ? t.dashboard.emptyHistory : t.dashboard.empty}
             </Text>
           </View>
         ) : (
           <View style={styles.grid}>
             {filtered.map((row: Reservation) => {
               const status = resolveReservationStatus(row.status);
-              const isMutating = mutate.isPending && mutate.variables?.id === row.id;
+              const isMutating =
+                mutate.isPending && mutate.variables?.id === row.id;
               return (
-                <View key={row.id} style={[styles.gridItem, { width: cardWidth as any }]}>
+                <View
+                  key={row.id}
+                  style={[styles.gridItem, { width: cardWidth as any }]}
+                >
                   <ReservationCard
                     row={row}
                     t={t}
                     locale={locale}
                     onPress={() => router.push(`/reservations/${row.id}`)}
                     onAccept={
-                      status === 'pending'
-                        ? () => mutate.mutate({ id: row.id, status: 'confirmed' })
+                      status === "pending"
+                        ? () =>
+                            mutate.mutate({ id: row.id, status: "confirmed" })
                         : undefined
                     }
                     onReject={
-                      status === 'pending'
-                        ? () => mutate.mutate({ id: row.id, status: 'cancelled' })
+                      status === "pending"
+                        ? () =>
+                            mutate.mutate({ id: row.id, status: "cancelled" })
                         : undefined
                     }
                     onSeated={
-                      status === 'confirmed'
-                        ? () => mutate.mutate({ id: row.id, status: 'seated' })
+                      status === "confirmed"
+                        ? () => mutate.mutate({ id: row.id, status: "seated" })
                         : undefined
                     }
                     onComplete={
-                      status === 'seated'
-                        ? () => mutate.mutate({ id: row.id, status: 'completed' })
+                      status === "seated"
+                        ? () =>
+                            mutate.mutate({ id: row.id, status: "completed" })
                         : undefined
                     }
                     isMutating={isMutating}
@@ -215,7 +230,9 @@ function TabButton({
       onPress={onPress}
       style={[styles.tabBtn, active && styles.tabBtnActive]}
     >
-      <Text style={[styles.tabBtnText, active && styles.tabBtnTextActive]}>{label}</Text>
+      <Text style={[styles.tabBtnText, active && styles.tabBtnTextActive]}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -226,11 +243,11 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxxl,
   },
   tabs: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.sm,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.lg,
-    flexWrap: 'wrap',
+    flexWrap: "wrap",
   },
   tabBtn: {
     paddingVertical: spacing.sm,
@@ -254,18 +271,18 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontWeight: typography.weights.semibold,
   },
-  loading: { paddingVertical: spacing.xxxl, alignItems: 'center' },
+  loading: { paddingVertical: spacing.xxxl, alignItems: "center" },
   empty: {
     paddingVertical: spacing.xxxl,
-    alignItems: 'center',
+    alignItems: "center",
   },
   emptyText: {
     fontSize: typography.sizes.md,
     color: colors.muted,
   },
   grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: spacing.md,
     padding: spacing.xl,
   },

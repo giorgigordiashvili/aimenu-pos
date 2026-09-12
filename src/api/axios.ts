@@ -1,3 +1,3 @@
-import { api } from './client';
+import { api } from "./client";
 
 export default api;
