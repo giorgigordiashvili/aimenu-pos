@@ -22,6 +22,13 @@ import type {
   TokenRefresh,
   ContactMessageCreateRequest,
   ContactMessageCreate,
+  PaginatedCampaignList,
+  PaginatedCustomerList,
+  Customer,
+  PatchedCustomerRequest,
+  ConsentRequest,
+  Segment,
+  Summary,
   MenuImport,
   MenuImportApplyRequest,
   PlatformStatus,
@@ -342,6 +349,92 @@ export async function dashboardAuditExportRetrieve(): Promise<any> {
 
 export async function dashboardAuditStatsRetrieve(): Promise<any> {
   const response = await axios.get(`/api/v1/dashboard/audit/stats/`);
+  return response.data;
+}
+
+export async function dashboardCrmCampaignsList(
+  ordering?: string,
+  page?: number,
+  pageSize?: number,
+  search?: string,
+): Promise<PaginatedCampaignList> {
+  const response = await axios.get(
+    `/api/v1/dashboard/crm/campaigns/${(() => {
+      const parts = [
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
+  return response.data;
+}
+
+export async function dashboardCrmCustomersList(
+  ordering?: string,
+  page?: number,
+  pageSize?: number,
+  search?: string,
+): Promise<PaginatedCustomerList> {
+  const response = await axios.get(
+    `/api/v1/dashboard/crm/customers/${(() => {
+      const parts = [
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
+  return response.data;
+}
+
+export async function dashboardCrmCustomersRetrieve(
+  customerId: string,
+): Promise<Customer> {
+  const response = await axios.get(
+    `/api/v1/dashboard/crm/customers/${customerId}/`,
+  );
+  return response.data;
+}
+
+export async function dashboardCrmCustomersPartialUpdate(
+  customerId: string,
+  data: PatchedCustomerRequest,
+): Promise<Customer> {
+  const response = await axios.patch(
+    `/api/v1/dashboard/crm/customers/${customerId}/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardCrmCustomersConsentCreate(
+  customerId: string,
+  data: ConsentRequest,
+): Promise<Customer> {
+  const response = await axios.post(
+    `/api/v1/dashboard/crm/customers/${customerId}/consent/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardCrmCustomersLookupRetrieve(): Promise<Customer> {
+  const response = await axios.get(`/api/v1/dashboard/crm/customers/lookup/`);
+  return response.data;
+}
+
+export async function dashboardCrmSegmentsList(): Promise<Segment[]> {
+  const response = await axios.get(`/api/v1/dashboard/crm/segments/`);
+  return response.data;
+}
+
+export async function dashboardCrmSummaryRetrieve(): Promise<Summary> {
+  const response = await axios.get(`/api/v1/dashboard/crm/summary/`);
   return response.data;
 }
 

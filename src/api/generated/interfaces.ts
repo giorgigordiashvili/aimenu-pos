@@ -62,6 +62,33 @@ export interface BridgeJob {
   escpos_b64: string;
 }
 
+export interface Campaign {
+  id: string;
+  name: string;
+  channel?: CampaignChannelEnum;
+  segment: string;
+  segment_name: string;
+  subject?: string;
+  body: string;
+  promotion?: string;
+  scheduled_at?: string;
+  status: CampaignStatusEnum;
+  audience_count: number;
+  sent_count: number;
+  failed_count: number;
+  skipped_count: number;
+  started_at: string;
+  finished_at: string;
+}
+
+export interface CampaignChannelEnum {
+  [key: string]: any;
+}
+
+export interface CampaignStatusEnum {
+  [key: string]: any;
+}
+
 export interface CashMovement {
   id: string;
   kind: Kind7e2enum;
@@ -147,6 +174,10 @@ export interface ConnectionEnum {
   [key: string]: any;
 }
 
+export interface ConsentRequest {
+  marketing_opt_in: boolean;
+}
+
 export interface ContactMessageCreate {
   first_name: string;
   last_name?: string;
@@ -169,6 +200,31 @@ export interface ContactMessageCreateRequest {
 export interface CustomTokenObtainPairRequest {
   email: string;
   password: string;
+}
+
+export interface Customer {
+  id: string;
+  name?: string;
+  phone: string;
+  email: string;
+  birthday?: string;
+  language: string;
+  tags?: any;
+  notes?: string;
+  marketing_opt_in: boolean;
+  opt_in_at: string;
+  source: string;
+  first_seen_at: string;
+  last_visit_at: string;
+  last_order_at: string;
+  visits: number;
+  orders_count: number;
+  reservations_count: number;
+  reviews_count: number;
+  total_spend: string;
+  avg_ticket: string;
+  last_rating: number;
+  days_since_visit: number;
 }
 
 export interface DayOfWeekEnum {
@@ -871,11 +927,25 @@ export interface PaginatedAuditLogListList {
   results: AuditLogList[];
 }
 
+export interface PaginatedCampaignList {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: Campaign[];
+}
+
 export interface PaginatedCashShiftList {
   count: number;
   next?: string;
   previous?: string;
   results: CashShift[];
+}
+
+export interface PaginatedCustomerList {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: Customer[];
 }
 
 export interface PaginatedEligibleOrderList {
@@ -1131,6 +1201,13 @@ export interface PasswordResetRequest {
 
 export interface PasswordResetRequestRequest {
   email: string;
+}
+
+export interface PatchedCustomerRequest {
+  name?: string;
+  birthday?: string;
+  tags?: any;
+  notes?: string;
 }
 
 export interface PatchedLoyaltyProgramWriteRequest {
@@ -1762,6 +1839,7 @@ export interface ReservationCreate {
 }
 
 export interface ReservationCreateRequest {
+  marketing_opt_in?: boolean;
   guest_name: string;
   guest_email?: string | string;
   guest_phone: string;
@@ -2158,6 +2236,16 @@ export interface RotaShift {
   hours: string;
 }
 
+export interface Segment {
+  id: string;
+  name: string;
+  description?: string;
+  rules?: any;
+  is_builtin?: boolean;
+  is_active?: boolean;
+  count: number;
+}
+
 export interface SelectionTypeEnum {
   [key: string]: any;
 }
@@ -2309,6 +2397,15 @@ export interface StoreStatus {
   online: boolean;
   paused_until: string;
   live: any;
+}
+
+export interface Summary {
+  customers: number;
+  opted_in: number;
+  new_30d: number;
+  returning_30d: number;
+  campaigns_30d: number;
+  messages_30d: number;
 }
 
 export interface Supplier {
@@ -2572,6 +2669,8 @@ export interface UserProfile {
   email_notifications?: boolean;
   sms_notifications?: boolean;
   push_notifications?: boolean;
+  marketing_opt_in?: boolean;
+  marketing_opt_in_at: string;
 }
 
 export interface UserProfileRequest {
@@ -2580,6 +2679,7 @@ export interface UserProfileRequest {
   email_notifications?: boolean;
   sms_notifications?: boolean;
   push_notifications?: boolean;
+  marketing_opt_in?: boolean;
 }
 
 export interface UserRegistration {
