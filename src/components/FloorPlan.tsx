@@ -145,13 +145,20 @@ export default function FloorPlan({
   const floorH = activeSection?.floor_height ?? 700;
   const scale = containerWidth > 0 ? containerWidth / floorW : 0.5;
 
+  // Touch drags fire many move events per render; chain them through a ref so
+  // each delta applies on top of the previous one, not on a stale snapshot.
+  const draftsRef = useRef(drafts);
+  draftsRef.current = drafts;
+
   function update(id: string, patch: Partial<Draft>) {
-    const cur = drafts[id];
+    const cur = draftsRef.current[id];
     if (!cur) return;
     const next = { ...cur, ...patch };
     next.x = Math.max(0, Math.min(floorW - next.w, next.x));
     next.y = Math.max(0, Math.min(floorH - next.h, next.y));
-    onDraftsChange({ ...drafts, [id]: next });
+    const all = { ...draftsRef.current, [id]: next };
+    draftsRef.current = all;
+    onDraftsChange(all);
   }
 
   return (
@@ -222,11 +229,11 @@ export default function FloorPlan({
             now={now}
             onPress={() => (editing ? setSelected(tb.id) : onPressTable(tb))}
             onMove={(dx, dy) => {
-              const d = drafts[tb.id];
+              const d = draftsRef.current[tb.id];
               update(tb.id, { x: d.x + dx / scale, y: d.y + dy / scale });
             }}
             onRelease={() => {
-              const d = drafts[tb.id];
+              const d = draftsRef.current[tb.id];
               update(tb.id, {
                 x: Math.round(d.x / GRID) * GRID,
                 y: Math.round(d.y / GRID) * GRID,
