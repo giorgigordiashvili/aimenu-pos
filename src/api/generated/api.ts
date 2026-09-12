@@ -22,6 +22,11 @@ import type {
   TokenRefresh,
   ContactMessageCreateRequest,
   ContactMessageCreate,
+  PlatformStatus,
+  MenuSyncRequestRequest,
+  MenuSync,
+  PauseRequest,
+  StoreStatus,
   PaginatedFiscalDocumentList,
   PaginatedLoyaltyProgramList,
   LoyaltyProgramWriteRequest,
@@ -310,6 +315,53 @@ export async function dashboardAuditExportRetrieve(): Promise<any> {
 
 export async function dashboardAuditStatsRetrieve(): Promise<any> {
   const response = await axios.get(`/api/v1/dashboard/audit/stats/`);
+  return response.data;
+}
+
+export async function dashboardDeliveryPlatformsList(): Promise<
+  PlatformStatus[]
+> {
+  const response = await axios.get(`/api/v1/dashboard/delivery/platforms/`);
+  return response.data;
+}
+
+export async function dashboardDeliveryPlatformsMenuSyncCreate(
+  code: string,
+  data: MenuSyncRequestRequest,
+): Promise<MenuSync> {
+  const response = await axios.post(
+    `/api/v1/dashboard/delivery/platforms/${code}/menu-sync/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardDeliveryPlatformsPauseCreate(
+  code: string,
+  data: PauseRequest,
+): Promise<StoreStatus> {
+  const response = await axios.post(
+    `/api/v1/dashboard/delivery/platforms/${code}/pause/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardDeliveryPlatformsResumeCreate(
+  code: string,
+): Promise<StoreStatus> {
+  const response = await axios.post(
+    `/api/v1/dashboard/delivery/platforms/${code}/resume/`,
+  );
+  return response.data;
+}
+
+export async function dashboardDeliveryPlatformsStatusRetrieve(
+  code: string,
+): Promise<StoreStatus> {
+  const response = await axios.get(
+    `/api/v1/dashboard/delivery/platforms/${code}/status/`,
+  );
   return response.data;
 }
 

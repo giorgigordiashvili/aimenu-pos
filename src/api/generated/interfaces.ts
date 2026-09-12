@@ -471,6 +471,24 @@ export interface MenuItemUpdateRequest {
   modifier_group_ids?: string[];
 }
 
+export interface MenuSync {
+  id: string;
+  status: string;
+  kind: string;
+  product_count: number;
+  error: string;
+  created_at: string;
+  finished_at: string;
+}
+
+export interface MenuSyncRequestKindEnum {
+  [key: string]: any;
+}
+
+export interface MenuSyncRequestRequest {
+  kind?: MenuSyncRequestKindEnum;
+}
+
 export interface Method5ffEnum {
   [key: string]: any;
 }
@@ -1152,6 +1170,10 @@ export interface PatchedVenueTableWriteRequest {
   is_active?: boolean;
 }
 
+export interface PauseRequest {
+  minutes?: number;
+}
+
 export interface Payment {
   id: string;
   order: string;
@@ -1237,6 +1259,24 @@ export interface PaymentRefundRequest {
   reason_id?: string;
   reason_details?: string;
   order_id?: string;
+}
+
+export interface PlatformStatus {
+  platform: string;
+  label: string;
+  implemented: boolean;
+  is_enabled: boolean;
+  configured: boolean;
+  store_external_id: string;
+  auto_accept: boolean;
+  prep_time_minutes: number;
+  sandbox: boolean;
+  online: boolean;
+  paused_until: string;
+  last_menu_sync_at: string;
+  last_menu_sync_status: string;
+  orders_today: number;
+  awaiting_accept: number;
 }
 
 export interface PreferredLanguageEnum {
@@ -2000,6 +2040,12 @@ export interface StatusB75enum {
 
 export interface StatusCd5enum {
   [key: string]: any;
+}
+
+export interface StoreStatus {
+  online: boolean;
+  paused_until: string;
+  live: any;
 }
 
 export interface Table {

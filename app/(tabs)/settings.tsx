@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useRouter, type Href } from "expo-router";
 import {
   Alert,
@@ -17,7 +18,14 @@ import { useLocale } from "@/i18n";
 import { money } from "@/lib/money";
 import { useShift } from "@/lib/useShift";
 import { usePrinters } from "@/lib/usePrinters";
+import { useDeliveryPlatforms } from "@/lib/useDeliveryPlatforms";
 import { testPrinter } from "@/api/printing";
+import {
+  pausePlatform,
+  resumePlatform,
+  syncPlatformMenu,
+  type PlatformCode,
+} from "@/api/delivery";
 import { colors, radius, spacing, typography } from "@/theme/tokens";
 
 export default function SettingsScreen() {
@@ -26,6 +34,24 @@ export default function SettingsScreen() {
   const { t, locale, setLocale } = useLocale();
   const shift = useShift();
   const printers = usePrinters();
+  const delivery = useDeliveryPlatforms();
+  const [platformBusy, setPlatformBusy] = useState<PlatformCode | null>(null);
+  const [platformNote, setPlatformNote] = useState<string>("");
+  const runPlatform = async (
+    code: PlatformCode,
+    fn: () => Promise<unknown>,
+  ) => {
+    setPlatformBusy(code);
+    setPlatformNote("");
+    try {
+      await fn();
+      await delivery.refetch();
+    } catch {
+      setPlatformNote(t.delivery.failed);
+    } finally {
+      setPlatformBusy(null);
+    }
+  };
 
   function handleSignOut() {
     const run = async () => {
@@ -88,6 +114,115 @@ export default function SettingsScreen() {
               fullWidth
               onPress={() => router.push("/cash" as Href)}
             />
+          </View>
+        ) : null}
+
+        {delivery.enabled ? (
+          <View style={styles.card} testID="delivery-card">
+            <Text style={styles.cardTitle}>{t.delivery.platforms}</Text>
+            {delivery.platforms.length === 0 ? (
+              <Text style={styles.cardBody}>{t.delivery.none}</Text>
+            ) : (
+              delivery.platforms.map((p) => (
+                <View key={p.platform} style={styles.printerRow}>
+                  <View
+                    style={[
+                      styles.printerDot,
+                      {
+                        backgroundColor: p.online
+                          ? colors.success
+                          : colors.warning,
+                      },
+                    ]}
+                  />
+                  <Text style={styles.printerName}>
+                    {p.label} ·{" "}
+                    {p.online
+                      ? t.delivery.online
+                      : t.delivery.pausedUntil.replace(
+                          "{time}",
+                          p.paused_until
+                            ? new Date(p.paused_until).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })
+                            : "",
+                        )}
+                    {` · ${p.orders_today} ${t.delivery.ordersToday}`}
+                    {p.awaiting_accept
+                      ? ` · ${p.awaiting_accept} ${t.delivery.awaiting}`
+                      : ""}
+                  </Text>
+                  {delivery.canPause ? (
+                    p.online ? (
+                      <>
+                        <Pressable
+                          disabled={platformBusy === p.platform}
+                          onPress={() =>
+                            runPlatform(p.platform, () =>
+                              pausePlatform(p.platform, 30),
+                            )
+                          }
+                          style={styles.printerTest}
+                          testID={`pause-${p.platform}-30`}
+                        >
+                          <Text style={styles.printerTestText}>
+                            {t.delivery.pause} {t.delivery.pause30}
+                          </Text>
+                        </Pressable>
+                        <Pressable
+                          disabled={platformBusy === p.platform}
+                          onPress={() =>
+                            runPlatform(p.platform, () =>
+                              pausePlatform(p.platform, 60),
+                            )
+                          }
+                          style={styles.printerTest}
+                        >
+                          <Text style={styles.printerTestText}>
+                            {t.delivery.pause60}
+                          </Text>
+                        </Pressable>
+                      </>
+                    ) : (
+                      <Pressable
+                        disabled={platformBusy === p.platform}
+                        onPress={() =>
+                          runPlatform(p.platform, () =>
+                            resumePlatform(p.platform),
+                          )
+                        }
+                        style={styles.printerTest}
+                        testID={`resume-${p.platform}`}
+                      >
+                        <Text style={styles.printerTestText}>
+                          {t.delivery.resume}
+                        </Text>
+                      </Pressable>
+                    )
+                  ) : null}
+                  {delivery.canSyncMenu ? (
+                    <Pressable
+                      disabled={platformBusy === p.platform}
+                      onPress={() =>
+                        runPlatform(p.platform, async () => {
+                          await syncPlatformMenu(p.platform, "updates");
+                          setPlatformNote(t.delivery.synced);
+                        })
+                      }
+                      style={styles.printerTest}
+                    >
+                      <Text style={styles.printerTestText}>
+                        {t.delivery.syncMenu}
+                      </Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+              ))
+            )}
+            {platformNote ? (
+              <Text style={styles.cardBody}>{platformNote}</Text>
+            ) : null}
           </View>
         ) : null}
 
