@@ -3,7 +3,7 @@
  * DO NOT EDIT MANUALLY
  */
 
-import axios from "../axios";
+import axios from '../axios';
 import type {
   PaginatedAuditLogListList,
   AuditLogDetail,
@@ -22,6 +22,7 @@ import type {
   TokenRefresh,
   ContactMessageCreateRequest,
   ContactMessageCreate,
+  PaginatedFiscalDocumentList,
   PaginatedLoyaltyProgramList,
   LoyaltyProgramWriteRequest,
   LoyaltyProgramWrite,
@@ -172,7 +173,7 @@ import type {
   VenueDetailResponse,
   VenueMenuResponse,
   VenueValidateResponse,
-} from "./interfaces";
+} from './interfaces';
 
 export async function adminAuditList(
   ordering?: string,
@@ -183,12 +184,12 @@ export async function adminAuditList(
   const response = await axios.get(
     `/api/v1/admin/audit/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -279,12 +280,12 @@ export async function dashboardAuditList(
   const response = await axios.get(
     `/api/v1/dashboard/audit/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -312,6 +313,35 @@ export async function dashboardAuditStatsRetrieve(): Promise<any> {
   return response.data;
 }
 
+export async function dashboardFiscalDocumentsList(
+  ordering?: string,
+  page?: number,
+  pageSize?: number,
+  search?: string,
+): Promise<PaginatedFiscalDocumentList> {
+  const response = await axios.get(
+    `/api/v1/dashboard/fiscal/documents/${(() => {
+      const parts = [
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
+  return response.data;
+}
+
+export async function dashboardFiscalPaymentsReceiptRetrieve(
+  id: string,
+): Promise<any> {
+  const response = await axios.get(
+    `/api/v1/dashboard/fiscal/payments/${id}/receipt/`,
+  );
+  return response.data;
+}
+
 export async function dashboardLoyaltyProgramsList(
   ordering?: string,
   page?: number,
@@ -321,12 +351,12 @@ export async function dashboardLoyaltyProgramsList(
   const response = await axios.get(
     `/api/v1/dashboard/loyalty/programs/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -403,12 +433,12 @@ export async function dashboardMenuCategoriesList(
   const response = await axios.get(
     `/api/v1/dashboard/menu/categories/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -473,12 +503,12 @@ export async function dashboardMenuItemsList(
   const response = await axios.get(
     `/api/v1/dashboard/menu/items/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -538,12 +568,12 @@ export async function dashboardMenuModifierGroupsList(
   const response = await axios.get(
     `/api/v1/dashboard/menu/modifier-groups/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -608,12 +638,12 @@ export async function dashboardOrdersList(
   const response = await axios.get(
     `/api/v1/dashboard/orders/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -695,12 +725,12 @@ export async function dashboardOrdersHistoryList(
   const response = await axios.get(
     `/api/v1/dashboard/orders/${orderId}/history/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -776,12 +806,12 @@ export async function dashboardOrdersKitchenList(
   const response = await axios.get(
     `/api/v1/dashboard/orders/kitchen/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -801,12 +831,12 @@ export async function dashboardPaymentsList(
   const response = await axios.get(
     `/api/v1/dashboard/payments/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -863,12 +893,12 @@ export async function dashboardPaymentsRefundsList(
   const response = await axios.get(
     `/api/v1/dashboard/payments/refunds/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -893,12 +923,12 @@ export async function dashboardPaymentsShiftsList(
   const response = await axios.get(
     `/api/v1/dashboard/payments/shifts/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -990,12 +1020,12 @@ export async function dashboardPrintingJobsList(
   const response = await axios.get(
     `/api/v1/dashboard/printing/jobs/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -1029,12 +1059,12 @@ export async function dashboardPrintingPrintersList(
   const response = await axios.get(
     `/api/v1/dashboard/printing/printers/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -1117,11 +1147,11 @@ export async function dashboardReportsRetrieve(
   const response = await axios.get(
     `/api/v1/dashboard/reports/${key}/${(() => {
       const parts = [
-        from ? "from=" + encodeURIComponent(from) : null,
-        range ? "range=" + encodeURIComponent(range) : null,
-        to ? "to=" + encodeURIComponent(to) : null,
+        from ? 'from=' + encodeURIComponent(from) : null,
+        range ? 'range=' + encodeURIComponent(range) : null,
+        to ? 'to=' + encodeURIComponent(to) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -1136,12 +1166,12 @@ export async function dashboardReservationsList(
   const response = await axios.get(
     `/api/v1/dashboard/reservations/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -1208,12 +1238,12 @@ export async function dashboardReservationsBlockedTimesList(
   const response = await axios.get(
     `/api/v1/dashboard/reservations/blocked-times/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -1318,12 +1348,12 @@ export async function dashboardReservationsTodayList(
   const response = await axios.get(
     `/api/v1/dashboard/reservations/today/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -1338,12 +1368,12 @@ export async function dashboardReservationsUpcomingList(
   const response = await axios.get(
     `/api/v1/dashboard/reservations/upcoming/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -1398,12 +1428,12 @@ export async function dashboardStaffList(
   const response = await axios.get(
     `/api/v1/dashboard/staff/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -1446,12 +1476,12 @@ export async function dashboardStaffInvitationsList(
   const response = await axios.get(
     `/api/v1/dashboard/staff/invitations/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -1480,12 +1510,12 @@ export async function dashboardStaffRolesList(
   const response = await axios.get(
     `/api/v1/dashboard/staff/roles/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -1529,12 +1559,12 @@ export async function dashboardTablesList(
   const response = await axios.get(
     `/api/v1/dashboard/tables/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -1590,12 +1620,12 @@ export async function dashboardTablesQrCodesList(
   const response = await axios.get(
     `/api/v1/dashboard/tables/${tableId}/qr-codes/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -1673,12 +1703,12 @@ export async function dashboardTablesSectionsList(
   const response = await axios.get(
     `/api/v1/dashboard/tables/sections/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -1736,12 +1766,12 @@ export async function dashboardTablesSessionsList(
   const response = await axios.get(
     `/api/v1/dashboard/tables/sessions/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -1905,12 +1935,12 @@ export async function favoritesMenuItemsList(
   const response = await axios.get(
     `/api/v1/favorites/menu-items/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -1966,12 +1996,12 @@ export async function favoritesRestaurantsList(
   const response = await axios.get(
     `/api/v1/favorites/restaurants/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -2070,12 +2100,12 @@ export async function ordersMyList(
   const response = await axios.get(
     `/api/v1/orders/my/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -2133,12 +2163,12 @@ export async function paymentsHistoryList(
   const response = await axios.get(
     `/api/v1/payments/history/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -2153,12 +2183,12 @@ export async function paymentsMethodsList(
   const response = await axios.get(
     `/api/v1/payments/methods/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -2201,7 +2231,7 @@ export async function printBridgeJobsNextRetrieve(
   wait?: number,
 ): Promise<BridgeJob> {
   const response = await axios.get(
-    `/api/v1/print-bridge/jobs/next/${wait ? "?wait=" + encodeURIComponent(wait) : ""}`,
+    `/api/v1/print-bridge/jobs/next/${wait ? '?wait=' + encodeURIComponent(wait) : ''}`,
   );
   return response.data;
 }
@@ -2230,12 +2260,12 @@ export async function referralsHistoryList(
   const response = await axios.get(
     `/api/v1/referrals/history/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -2287,12 +2317,12 @@ export async function reservationsMyList(
   const response = await axios.get(
     `/api/v1/reservations/my/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -2333,28 +2363,28 @@ export async function restaurantsList(
     `/api/v1/restaurants/${(() => {
       const parts = [
         acceptsPlatformLoyalty
-          ? "accepts_platform_loyalty=" +
+          ? 'accepts_platform_loyalty=' +
             encodeURIComponent(acceptsPlatformLoyalty)
           : null,
         acceptsRemoteOrders
-          ? "accepts_remote_orders=" + encodeURIComponent(acceptsRemoteOrders)
+          ? 'accepts_remote_orders=' + encodeURIComponent(acceptsRemoteOrders)
           : null,
         acceptsReservations
-          ? "accepts_reservations=" + encodeURIComponent(acceptsReservations)
+          ? 'accepts_reservations=' + encodeURIComponent(acceptsReservations)
           : null,
         acceptsTakeaway
-          ? "accepts_takeaway=" + encodeURIComponent(acceptsTakeaway)
+          ? 'accepts_takeaway=' + encodeURIComponent(acceptsTakeaway)
           : null,
-        city ? "city=" + encodeURIComponent(city) : null,
-        country ? "country=" + encodeURIComponent(country) : null,
-        minRating ? "min_rating=" + encodeURIComponent(minRating) : null,
-        name ? "name=" + encodeURIComponent(name) : null,
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        city ? 'city=' + encodeURIComponent(city) : null,
+        country ? 'country=' + encodeURIComponent(country) : null,
+        minRating ? 'min_rating=' + encodeURIComponent(minRating) : null,
+        name ? 'name=' + encodeURIComponent(name) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -2387,12 +2417,12 @@ export async function restaurantsMenuCategoriesList(
   const response = await axios.get(
     `/api/v1/restaurants/${slug}/menu/categories/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -2408,12 +2438,12 @@ export async function restaurantsMenuItemsList(
   const response = await axios.get(
     `/api/v1/restaurants/${slug}/menu/items/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -2436,10 +2466,10 @@ export async function restaurantsAmenitiesList(
   const response = await axios.get(
     `/api/v1/restaurants/amenities/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -2452,10 +2482,10 @@ export async function restaurantsCategoriesList(
   const response = await axios.get(
     `/api/v1/restaurants/categories/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -2483,13 +2513,13 @@ export async function restaurantsSearchRetrieve(
   const response = await axios.get(
     `/api/v1/restaurants/search/${(() => {
       const parts = [
-        city ? "city=" + encodeURIComponent(city) : null,
-        date ? "date=" + encodeURIComponent(date) : null,
-        partySize ? "party_size=" + encodeURIComponent(partySize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
-        time ? "time=" + encodeURIComponent(time) : null,
+        city ? 'city=' + encodeURIComponent(city) : null,
+        date ? 'date=' + encodeURIComponent(date) : null,
+        partySize ? 'party_size=' + encodeURIComponent(partySize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
+        time ? 'time=' + encodeURIComponent(time) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -2560,12 +2590,12 @@ export async function reviewsEligibleOrdersList(
   const response = await axios.get(
     `/api/v1/reviews/eligible-orders/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -2580,12 +2610,12 @@ export async function reviewsMineList(
   const response = await axios.get(
     `/api/v1/reviews/mine/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -2601,12 +2631,12 @@ export async function reviewsRestaurantList(
   const response = await axios.get(
     `/api/v1/reviews/restaurant/${slug}/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -2660,12 +2690,12 @@ export async function tablesSessionsGuestsList(
   const response = await axios.get(
     `/api/v1/tables/sessions/${sessionId}/guests/${(() => {
       const parts = [
-        ordering ? "ordering=" + encodeURIComponent(ordering) : null,
-        page ? "page=" + encodeURIComponent(page) : null,
-        pageSize ? "page_size=" + encodeURIComponent(pageSize) : null,
-        search ? "search=" + encodeURIComponent(search) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        page ? 'page=' + encodeURIComponent(page) : null,
+        pageSize ? 'page_size=' + encodeURIComponent(pageSize) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
       ].filter(Boolean);
-      return parts.length > 0 ? "?" + parts.join("&") : "";
+      return parts.length > 0 ? '?' + parts.join('&') : '';
     })()}`,
   );
   return response.data;
@@ -2771,7 +2801,7 @@ export async function venuesMenuRetrieve(
   restaurants?: string,
 ): Promise<VenueMenuResponse> {
   const response = await axios.get(
-    `/api/v1/venues/${slug}/menu/${restaurants ? "?restaurants=" + encodeURIComponent(restaurants) : ""}`,
+    `/api/v1/venues/${slug}/menu/${restaurants ? '?restaurants=' + encodeURIComponent(restaurants) : ''}`,
   );
   return response.data;
 }

@@ -219,6 +219,37 @@ export interface FavoriteRestaurantCreateRequest {
   restaurant: string;
 }
 
+export interface FiscalDocument {
+  id: string;
+  kind: FiscalDocumentKindEnum;
+  status: FiscalDocumentStatusEnum;
+  provider: string;
+  fiscal_number: string;
+  external_id: string;
+  is_fiscal: boolean;
+  payment: string;
+  refund: string;
+  order: string;
+  vat_rate: string;
+  prices_include_vat: boolean;
+  net_total: string;
+  vat_total: string;
+  gross_total: string;
+  vat_breakdown: any;
+  error: string;
+  attempts: number;
+  issued_at: string;
+  created_at: string;
+}
+
+export interface FiscalDocumentKindEnum {
+  [key: string]: any;
+}
+
+export interface FiscalDocumentStatusEnum {
+  [key: string]: any;
+}
+
 export interface Kind0ffEnum {
   [key: string]: any;
 }
@@ -716,6 +747,13 @@ export interface PaginatedFavoriteRestaurantList {
   next?: string;
   previous?: string;
   results: FavoriteRestaurant[];
+}
+
+export interface PaginatedFiscalDocumentList {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: FiscalDocument[];
 }
 
 export interface PaginatedKitchenOrderList {

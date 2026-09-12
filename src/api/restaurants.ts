@@ -13,6 +13,7 @@ export type ModuleCode =
   | "reviews"
   | "cash"
   | "printing"
+  | "fiscal"
   | "payments";
 
 export type Resource =
@@ -67,7 +68,8 @@ export function moduleOn(
       code !== "warehouse" &&
       code !== "payments" &&
       code !== "cash" &&
-      code !== "printing"
+      code !== "printing" &&
+      code !== "fiscal"
     );
   return value;
 }

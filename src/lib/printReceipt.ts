@@ -112,11 +112,24 @@ function renderItemRow(item: OrderItem): string {
     </tr>`;
 }
 
+export interface ReceiptFiscal {
+  fiscal: boolean;
+  number: string;
+  legal_name?: string;
+  address?: string;
+  tax_id_line?: string;
+  vat_breakdown: { rate: string; net: string; vat: string; gross: string }[];
+  vat_note?: string;
+  footer?: string;
+}
+
 export interface ReceiptOptions {
   /** The payment just taken (tendered / change / receipt number). */
   payment?: PaymentRow | null;
   cashier?: string | null;
   restaurantName?: string | null;
+  /** From /dashboard/fiscal/payments/<id>/receipt/ when the Fiscal module is on. */
+  fiscal?: ReceiptFiscal | null;
 }
 
 export function buildReceiptHtml(
@@ -130,6 +143,14 @@ export function buildReceiptHtml(
     .join("");
   const payments = order.payments ?? [];
   const pay = options.payment ?? null;
+  const fiscal = options.fiscal ?? null;
+  const receiptNumber = fiscal?.number || pay?.receipt_number || "";
+  const vatRows = (fiscal?.vat_breakdown ?? [])
+    .map(
+      (v) =>
+        `<tr><td class="label">VAT ${escape(v.rate)}%</td><td class="val">${formatCurrency(v.vat)}</td></tr>`,
+    )
+    .join("");
   const title =
     options.restaurantName ?? restaurantSlug?.toUpperCase() ?? "AiMenu POS";
 
@@ -150,9 +171,13 @@ export function buildReceiptHtml(
 <body>
   <h1>${escape(title)}</h1>
   <div class="meta">
+    ${fiscal?.legal_name ? `${escape(fiscal.legal_name)}<br/>` : ""}
+    ${fiscal?.address ? `${escape(fiscal.address)}<br/>` : ""}
+    ${fiscal?.tax_id_line ? `${escape(fiscal.tax_id_line)}<br/>` : ""}
+    ${fiscal && !fiscal.fiscal ? `<strong>არაფისკალური ჩეკი / NON-FISCAL</strong><br/>` : ""}
     Order ${escape(order.order_number)}<br/>
     ${order.table_number ? `Table ${escape(order.table_number)} · ` : ""}${formatDateTime(order.created_at)}
-    ${pay?.receipt_number ? `<br/>Receipt ${escape(pay.receipt_number)}` : ""}
+    ${receiptNumber ? `<br/>Receipt ${escape(receiptNumber)}` : ""}
   </div>
 
   <div class="divider"></div>
@@ -169,7 +194,7 @@ export function buildReceiptHtml(
       <td class="val">${formatCurrency(order.subtotal)}</td>
     </tr>
     ${gt0(order.discount_amount) ? `<tr><td class="label">Discount</td><td class="val">−${formatCurrency(order.discount_amount)}</td></tr>` : ""}
-    ${gt0(order.tax_amount) ? `<tr><td class="label">Tax</td><td class="val">${formatCurrency(order.tax_amount)}</td></tr>` : ""}
+    ${vatRows || (gt0(order.tax_amount) ? `<tr><td class="label">Tax</td><td class="val">${formatCurrency(order.tax_amount)}</td></tr>` : "")}
     ${gt0(order.service_charge) ? `<tr><td class="label">Service</td><td class="val">${formatCurrency(order.service_charge)}</td></tr>` : ""}
     ${gt0(order.tip_amount) ? `<tr><td class="label">Tip</td><td class="val">${formatCurrency(order.tip_amount)}</td></tr>` : ""}
     <tr class="grand">
@@ -186,7 +211,8 @@ export function buildReceiptHtml(
   <div class="footer">
     ${order.customer_name ? `${escape(order.customer_name)}<br/>` : ""}
     ${options.cashier ? `Cashier: ${escape(options.cashier)}<br/>` : ""}
-    Thank you!
+    ${fiscal?.vat_note ? `${escape(fiscal.vat_note)}<br/>` : ""}
+    ${fiscal?.footer ? escape(fiscal.footer) : "Thank you!"}
   </div>
 </body>
 </html>`;

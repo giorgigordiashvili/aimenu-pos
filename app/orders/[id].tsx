@@ -28,7 +28,7 @@ import {
   type OrderStatus,
 } from "@/api/orders";
 import type { RecordPaymentResult } from "@/api/payments";
-import { can } from "@/api/restaurants";
+import { can, moduleOn } from "@/api/restaurants";
 import Button from "@/components/Button";
 import DiscountSheet, { type DiscountInput } from "@/components/DiscountSheet";
 import MoveTableSheet from "@/components/MoveTableSheet";
@@ -128,6 +128,7 @@ export default function OrderDetailScreen() {
           receiptPrinters,
           restaurantSlug,
           restaurantName: currentRestaurant?.name ?? null,
+          fiscalOn: moduleOn(currentRestaurant, "fiscal"),
         });
       } catch {
         // printing failure shouldn't block the status transition
@@ -145,6 +146,7 @@ export default function OrderDetailScreen() {
         receiptPrinters,
         restaurantSlug,
         restaurantName: currentRestaurant?.name ?? null,
+        fiscalOn: moduleOn(currentRestaurant, "fiscal"),
       });
     },
   });
@@ -216,6 +218,7 @@ export default function OrderDetailScreen() {
         receiptPrinters,
         restaurantSlug,
         restaurantName: currentRestaurant?.name ?? null,
+        fiscalOn: moduleOn(currentRestaurant, "fiscal"),
       });
     } catch {
       /* never block the till on printing */

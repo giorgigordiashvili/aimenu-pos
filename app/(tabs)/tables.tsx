@@ -21,7 +21,7 @@ import { AxiosError } from "axios";
 
 import { getOrder } from "@/api/orders";
 import type { RecordPaymentResult } from "@/api/payments";
-import { can } from "@/api/restaurants";
+import { can, moduleOn } from "@/api/restaurants";
 import {
   closeTableSession,
   listActiveTableSessions,
@@ -301,6 +301,7 @@ export default function TablesScreen() {
         receiptPrinters,
         restaurantSlug,
         restaurantName: currentRestaurant?.name ?? null,
+        fiscalOn: moduleOn(currentRestaurant, "fiscal"),
       });
     } catch {
       /* printing must never block the till */
