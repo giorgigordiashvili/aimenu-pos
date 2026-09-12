@@ -434,6 +434,7 @@ export interface MyRestaurant {
   role: string;
   is_owner: boolean;
   venue: Record<string, any>;
+  warehouse_enabled: boolean;
 }
 
 export interface NameEnum {
@@ -1300,6 +1301,7 @@ export interface RestaurantDetail {
   accepts_takeaway?: boolean;
   accepts_bog_payments?: boolean;
   accepts_flitt_payments?: boolean;
+  warehouse_enabled?: boolean;
   average_rating: string;
   total_reviews: number;
   total_orders: number;
@@ -1340,6 +1342,7 @@ export interface RestaurantList {
   accepts_platform_loyalty?: boolean;
   accepts_bog_payments?: boolean;
   accepts_flitt_payments?: boolean;
+  warehouse_enabled?: boolean;
 }
 
 export interface RestaurantRef {
@@ -1843,6 +1846,7 @@ export interface VenueRestaurantCard {
   accepts_platform_loyalty?: boolean;
   accepts_bog_payments?: boolean;
   accepts_flitt_payments?: boolean;
+  warehouse_enabled?: boolean;
   primary_color?: string;
   secondary_color?: string;
   default_currency?: DefaultCurrencyEnum;
