@@ -1,6 +1,6 @@
 import type { Href } from "expo-router";
 
-import type { MyRestaurantInfo } from "@/api/restaurants";
+import { moduleOn, type MyRestaurantInfo } from "@/api/restaurants";
 
 export type TabName =
   | "reservations"
@@ -45,10 +45,7 @@ const MINIMAL: TabName[] = ["settings"];
  * must not see never flashes. `null` = a slug typed by hand that is not among
  * the memberships → everything (legacy owners), the API will 403 what it must.
  */
-export function tabsForRestaurant(
-  r: MyRestaurantInfo | null | undefined,
-): TabName[] {
-  if (r === undefined) return MINIMAL;
+function tabsForRole(r: MyRestaurantInfo | null): TabName[] {
   if (r === null || r.is_owner) return MANAGER;
   switch (r.role) {
     case "owner":
@@ -62,6 +59,32 @@ export function tabsForRestaurant(
     default:
       return MINIMAL; // warehouse_manager, custom, staff
   }
+}
+
+/** A tab also needs its module switched on for the restaurant. */
+function tabAllowedByModules(
+  r: MyRestaurantInfo | null,
+  tab: TabName,
+): boolean {
+  if (r === null) return true;
+  switch (tab) {
+    case "reservations":
+      return moduleOn(r, "reservations");
+    case "tables":
+      return moduleOn(r, "tables");
+    case "kitchen":
+      return moduleOn(r, "kitchen") && moduleOn(r, "ordering");
+    default:
+      return true; // orders (POS-entered orders are internal) and settings
+  }
+}
+
+export function tabsForRestaurant(
+  r: MyRestaurantInfo | null | undefined,
+): TabName[] {
+  if (r === undefined) return MINIMAL;
+  const tabs = tabsForRole(r).filter((tab) => tabAllowedByModules(r, tab));
+  return tabs.length ? tabs : MINIMAL;
 }
 
 export function firstTabFor(r: MyRestaurantInfo | null | undefined): Href {
