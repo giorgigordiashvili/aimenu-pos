@@ -3,7 +3,7 @@
  * DO NOT EDIT MANUALLY
  */
 
-export interface ActionEnum {
+export interface Action810enum {
   [key: string]: any;
 }
 
@@ -26,7 +26,7 @@ export interface AuditLogDetail {
   user_agent?: string;
   restaurant?: string;
   restaurant_name: string;
-  action: ActionEnum;
+  action: Action810enum;
   action_display: string;
   target_model?: string;
   target_id?: string;
@@ -41,7 +41,7 @@ export interface AuditLogDetail {
 export interface AuditLogList {
   id: string;
   user_email: string;
-  action: ActionEnum;
+  action: Action810enum;
   action_display: string;
   target_model?: string;
   target_id?: string;
@@ -119,6 +119,23 @@ export interface ChangePasswordRequest {
   old_password: string;
   new_password: string;
   new_password_confirm: string;
+}
+
+export interface ClockActionActionEnum {
+  [key: string]: any;
+}
+
+export interface ClockActionRequest {
+  action: ClockActionActionEnum;
+  break_minutes?: number;
+  note?: string;
+}
+
+export interface ClockStatus {
+  clocked_in: boolean;
+  entry: TimeEntry;
+  today_minutes: number;
+  manager: boolean;
 }
 
 export interface CloseShiftRequest {
@@ -2128,6 +2145,19 @@ export interface ReviewStats {
   distribution: Record<string, any>;
 }
 
+export interface RotaShift {
+  id: string;
+  staff_member: string;
+  name: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  label?: string;
+  note?: string;
+  published?: boolean;
+  hours: string;
+}
+
 export interface SelectionTypeEnum {
   [key: string]: any;
 }
@@ -2477,6 +2507,24 @@ export interface TestMessageChannelEnum {
 export interface TestMessageRequest {
   channel: TestMessageChannelEnum;
   to: string;
+}
+
+export interface TimeEntry {
+  id: string;
+  staff_member: string;
+  name: string;
+  role: string;
+  clock_in?: string;
+  clock_out?: string;
+  break_minutes?: number;
+  source?: TimeEntrySourceEnum;
+  note?: string;
+  auto_closed?: boolean;
+  worked_minutes: number;
+}
+
+export interface TimeEntrySourceEnum {
+  [key: string]: any;
 }
 
 export interface TimezoneEnum {

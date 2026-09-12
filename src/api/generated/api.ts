@@ -148,6 +148,10 @@ import type {
   TableSection,
   PatchedTableSectionRequest,
   PaginatedTableSessionList,
+  ClockStatus,
+  ClockActionRequest,
+  TimeEntry,
+  RotaShift,
   VenueStateResponse,
   VenueLeaveRequest,
   VenueShareRequestCreateRequest,
@@ -2115,6 +2119,41 @@ export async function dashboardTablesSessionsMarkCashPaidCreate(
 
 export async function dashboardTablesSessionsStartCreate(): Promise<any> {
   const response = await axios.post(`/api/v1/dashboard/tables/sessions/start/`);
+  return response.data;
+}
+
+export async function dashboardTimekeepingClockRetrieve(): Promise<ClockStatus> {
+  const response = await axios.get(`/api/v1/dashboard/timekeeping/clock/`);
+  return response.data;
+}
+
+export async function dashboardTimekeepingClockCreate(
+  data: ClockActionRequest,
+): Promise<ClockStatus> {
+  const response = await axios.post(
+    `/api/v1/dashboard/timekeeping/clock/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardTimekeepingEntriesList(): Promise<TimeEntry[]> {
+  const response = await axios.get(`/api/v1/dashboard/timekeeping/entries/`);
+  return response.data;
+}
+
+export async function dashboardTimekeepingRotaList(): Promise<RotaShift[]> {
+  const response = await axios.get(`/api/v1/dashboard/timekeeping/rota/`);
+  return response.data;
+}
+
+export async function dashboardTimekeepingRotaMineList(): Promise<RotaShift[]> {
+  const response = await axios.get(`/api/v1/dashboard/timekeeping/rota/mine/`);
+  return response.data;
+}
+
+export async function dashboardTimekeepingWhosInList(): Promise<TimeEntry[]> {
+  const response = await axios.get(`/api/v1/dashboard/timekeeping/whos-in/`);
   return response.data;
 }
 
