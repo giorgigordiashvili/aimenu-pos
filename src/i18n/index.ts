@@ -15,6 +15,10 @@ export const dictionaries = {
       signIn: "შესვლა",
       signingIn: "შესვლა…",
       invalidCredentials: "მონაცემები არასწორია",
+      accountLocked:
+        "ძალიან ბევრი წარუმატებელი მცდელობა. ანგარიში დაბლოკილია 30 წუთით.",
+      tooManyAttempts: "ძალიან ბევრი მცდელობა. სცადეთ {seconds} წამში.",
+      networkError: "ქსელის შეცდომა. შეამოწმეთ კავშირი და სცადეთ თავიდან.",
     },
     nav: {
       reservations: "ჯავშნები",
@@ -633,6 +637,10 @@ export const dictionaries = {
       signIn: "Sign in",
       signingIn: "Signing in…",
       invalidCredentials: "Invalid email or password.",
+      accountLocked:
+        "Too many failed attempts. The account is locked for 30 minutes.",
+      tooManyAttempts: "Too many attempts. Try again in {seconds} seconds.",
+      networkError: "Network error. Check your connection and try again.",
     },
     nav: {
       reservations: "Reservations",

@@ -464,6 +464,15 @@ export interface EligibleOrder {
   created_at: string;
 }
 
+export interface EmailCheckRequest {
+  email: string;
+}
+
+export interface EmailCheckResult {
+  exists: boolean;
+  has_restaurants: boolean;
+}
+
 export interface Entry {
   id: string;
   kind: EntryKindEnum;
@@ -2488,7 +2497,7 @@ export interface RestaurantCategory {
 
 export interface RestaurantCreate {
   name: string;
-  slug: string;
+  slug?: string | string;
   description?: string;
   category_id?: string;
   email?: string | string;
@@ -2502,7 +2511,7 @@ export interface RestaurantCreate {
 
 export interface RestaurantCreateRequest {
   name: string;
-  slug: string;
+  slug?: string | string;
   description?: string;
   category_id?: string;
   email?: string | string;

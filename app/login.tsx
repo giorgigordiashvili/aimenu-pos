@@ -1,4 +1,5 @@
 import { useRouter } from "expo-router";
+import { loginErrorMessage } from "@/api/errors";
 import { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -39,10 +40,7 @@ export default function LoginScreen() {
         selected ? firstTabFor(restaurant) : "/restaurants/select",
       );
     } catch (err) {
-      setError(
-        (err as { response?: { data?: { detail?: string } } })?.response?.data
-          ?.detail ?? t.login.invalidCredentials,
-      );
+      setError(loginErrorMessage(err, t.login));
     } finally {
       setLoading(false);
     }
