@@ -2557,14 +2557,16 @@ export async function dashboardTerminalsTerminalsList(): Promise<Terminal[]> {
   return response.data;
 }
 
-export async function dashboardTerminalsTransactionsRetrieve(
-  shift?: string,
+export async function dashboardTerminalsTransactionsList(
+  order?: string,
+  session?: string,
   status?: string,
-): Promise<any> {
+): Promise<Transaction[]> {
   const response = await axios.get(
     `/api/v1/dashboard/terminals/transactions/${(() => {
       const parts = [
-        shift ? 'shift=' + encodeURIComponent(shift) : null,
+        order ? 'order=' + encodeURIComponent(order) : null,
+        session ? 'session=' + encodeURIComponent(session) : null,
         status ? 'status=' + encodeURIComponent(status) : null,
       ].filter(Boolean);
       return parts.length > 0 ? '?' + parts.join('&') : '';
@@ -2574,24 +2576,16 @@ export async function dashboardTerminalsTransactionsRetrieve(
 }
 
 export async function dashboardTerminalsTransactionsCreate(
-  shift?: string,
-  status?: string,
   data: StartSaleRequest,
 ): Promise<Transaction> {
   const response = await axios.post(
-    `/api/v1/dashboard/terminals/transactions/${(() => {
-      const parts = [
-        shift ? 'shift=' + encodeURIComponent(shift) : null,
-        status ? 'status=' + encodeURIComponent(status) : null,
-      ].filter(Boolean);
-      return parts.length > 0 ? '?' + parts.join('&') : '';
-    })()}`,
+    `/api/v1/dashboard/terminals/transactions/`,
     data,
   );
   return response.data;
 }
 
-export async function dashboardTerminalsTransactionsRetrieve2(
+export async function dashboardTerminalsTransactionsRetrieve(
   txId: string,
 ): Promise<Transaction> {
   const response = await axios.get(
