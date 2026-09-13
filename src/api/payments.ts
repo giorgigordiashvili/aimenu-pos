@@ -1,7 +1,13 @@
 import { api } from "./client";
 
 /** Ways staff can take money at the till. Online methods arrive via webhooks. */
-export type StaffPaymentMethod = "cash" | "card_terminal" | "voucher" | "other";
+export type StaffPaymentMethod =
+  | "cash"
+  | "card_terminal"
+  | "gift_card"
+  | "house_account"
+  | "voucher"
+  | "other";
 export type PaymentMethod =
   | StaffPaymentMethod
   | "online_bog"

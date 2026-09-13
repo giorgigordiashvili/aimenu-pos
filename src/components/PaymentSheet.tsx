@@ -23,14 +23,40 @@ import {
 import Button from "@/components/Button";
 import Sheet from "@/components/Sheet";
 import TerminalWaitSheet from "@/components/TerminalWaitSheet";
+import {
+  GiftCardMethod,
+  HouseAccountMethod,
+} from "@/components/CreditMethodPanel";
+import {
+  giftCardErrorCode,
+  redeemGiftCard,
+  type GiftCardLookup,
+} from "@/api/giftcards";
+import {
+  chargeHouseAccount,
+  houseAccountErrorCode,
+  type HouseAccountRow,
+} from "@/api/houseaccounts";
 import { useAuth } from "@/context/AuthContext";
 import { useT } from "@/i18n";
 import { fixed, money, num, tenderSuggestions } from "@/lib/money";
 import { colors, radius, spacing, typography } from "@/theme/tokens";
 
 export type PaymentTarget =
-  | { kind: "order"; orderId: string; label: string; balance: string }
-  | { kind: "session"; sessionId: string; label: string; balance: string };
+  | {
+      kind: "order";
+      orderId: string;
+      label: string;
+      balance: string;
+      customerPhone?: string;
+    }
+  | {
+      kind: "session";
+      sessionId: string;
+      label: string;
+      balance: string;
+      customerPhone?: string;
+    };
 
 interface Props {
   visible: boolean;
@@ -41,7 +67,7 @@ interface Props {
   onPrint?: (result: RecordPaymentResult) => void;
 }
 
-const METHODS: StaffPaymentMethod[] = [
+const BASE_METHODS: StaffPaymentMethod[] = [
   "cash",
   "card_terminal",
   "voucher",
@@ -51,6 +77,8 @@ const METHOD_ICONS: Record<StaffPaymentMethod, keyof typeof Ionicons.glyphMap> =
   {
     cash: "cash-outline",
     card_terminal: "card-outline",
+    gift_card: "gift-outline",
+    house_account: "wallet-outline",
     voucher: "ticket-outline",
     other: "ellipsis-horizontal-circle-outline",
   };
@@ -81,6 +109,21 @@ export default function PaymentSheet({
     (x) => x.is_active && x.configured,
   );
   const [terminalId, setTerminalId] = useState<string | null>(null);
+  const giftOn = moduleOn(currentRestaurant, "gift_cards");
+  const houseOn = moduleOn(currentRestaurant, "house_accounts");
+  const METHODS: StaffPaymentMethod[] = [
+    "cash",
+    "card_terminal",
+    ...(giftOn ? (["gift_card"] as StaffPaymentMethod[]) : []),
+    ...(houseOn ? (["house_account"] as StaffPaymentMethod[]) : []),
+    ...BASE_METHODS.slice(2),
+  ];
+  const [giftCode, setGiftCode] = useState("");
+  const [giftCard, setGiftCard] = useState<GiftCardLookup | null>(null);
+  const [houseAccount, setHouseAccount] = useState<HouseAccountRow | null>(
+    null,
+  );
+  const [signedBy, setSignedBy] = useState("");
   const [terminalTx, setTerminalTx] = useState<TerminalTransaction | null>(
     null,
   );
@@ -107,6 +150,10 @@ export default function PaymentSheet({
     setLast(null);
     setError(null);
     setTerminalTx(null);
+    setGiftCode("");
+    setGiftCard(null);
+    setHouseAccount(null);
+    setSignedBy("");
   }, [visible, target]);
 
   useEffect(() => {
@@ -193,6 +240,68 @@ export default function PaymentSheet({
         ? (t.terminals.errors as Record<string, string>)[code]
         : undefined;
       setError(known ?? t.terminals.errors.generic);
+    },
+  });
+
+  const applyCredit = (result: RecordPaymentResult) => {
+    setError(null);
+    setLast(result);
+    const remaining = num(result.balance);
+    setBalance(remaining);
+    setAmount(fixed(remaining));
+    setTip("");
+    if (mode === "split") setShareIndex((i) => Math.min(i + 1, ways - 1));
+    qc.invalidateQueries({ queryKey: ["cash-shift"] });
+    onPaid(result, remaining <= 0);
+  };
+  const giftPay = useMutation({
+    mutationFn: () => {
+      if (!target) throw new Error("no target");
+      const cap = giftCard ? Math.min(num(giftCard.balance), due) : due;
+      return redeemGiftCard({
+        code: giftCode.trim(),
+        amount: fixed(cap),
+        ...(target.kind === "order"
+          ? { order_id: target.orderId }
+          : { session_id: target.sessionId }),
+      });
+    },
+    onSuccess: (result) => {
+      setGiftCode("");
+      setGiftCard(null);
+      applyCredit(result);
+    },
+    onError: (err) => {
+      const code = giftCardErrorCode(err) ?? ledgerErrorCode(err);
+      const known = code
+        ? ((t.giftcards.errors as Record<string, string>)[code] ??
+          (t.cash.errors as Record<string, string>)[code])
+        : undefined;
+      setError(known ?? t.giftcards.errors.generic);
+    },
+  });
+  const housePay = useMutation({
+    mutationFn: () => {
+      if (!target || !houseAccount) throw new Error("no account");
+      return chargeHouseAccount(houseAccount.id, {
+        amount: fixed(due),
+        signed_by: signedBy.trim() || undefined,
+        ...(target.kind === "order"
+          ? { order_id: target.orderId }
+          : { session_id: target.sessionId }),
+      });
+    },
+    onSuccess: (result) => {
+      setHouseAccount(result.account);
+      applyCredit(result);
+    },
+    onError: (err) => {
+      const code = houseAccountErrorCode(err) ?? ledgerErrorCode(err);
+      const known = code
+        ? ((t.houseaccounts.errors as Record<string, string>)[code] ??
+          (t.cash.errors as Record<string, string>)[code])
+        : undefined;
+      setError(known ?? t.houseaccounts.errors.generic);
     },
   });
 
@@ -285,9 +394,11 @@ export default function PaymentSheet({
             {error ? <Text style={styles.error}>{error}</Text> : null}
             <Button
               title={
-                useTerminal
-                  ? `${t.terminals.cardPayment} · ${money(totalDue)}`
-                  : `${t.cash.takePayment} · ${money(totalDue)}`
+                method === "gift_card"
+                  ? `${t.giftcards.payWith} · ${money(giftCard ? Math.min(num(giftCard.balance), due) : due)}`
+                  : useTerminal
+                    ? `${t.terminals.cardPayment} · ${money(totalDue)}`
+                    : `${t.cash.takePayment} · ${money(totalDue)}`
               }
               variant="success"
               size="lg"
@@ -295,13 +406,28 @@ export default function PaymentSheet({
               disabled={
                 pay.isPending ||
                 terminalSale.isPending ||
+                giftPay.isPending ||
+                housePay.isPending ||
                 due <= 0 ||
                 cashShort ||
-                (useTerminal && !terminalId)
+                (useTerminal && !terminalId) ||
+                (method === "gift_card" && !giftCard) ||
+                (method === "house_account" && !houseAccount)
               }
-              loading={pay.isPending || terminalSale.isPending}
+              loading={
+                pay.isPending ||
+                terminalSale.isPending ||
+                giftPay.isPending ||
+                housePay.isPending
+              }
               onPress={() =>
-                useTerminal ? terminalSale.mutate() : pay.mutate()
+                method === "gift_card"
+                  ? giftPay.mutate()
+                  : method === "house_account"
+                    ? housePay.mutate()
+                    : useTerminal
+                      ? terminalSale.mutate()
+                      : pay.mutate()
               }
               testID="take-payment"
             />
@@ -409,6 +535,24 @@ export default function PaymentSheet({
                 ))
               )}
             </View>
+          ) : null}
+
+          {method === "gift_card" ? (
+            <GiftCardMethod
+              code={giftCode}
+              onCodeChange={setGiftCode}
+              onLookup={setGiftCard}
+              due={due}
+            />
+          ) : null}
+          {method === "house_account" ? (
+            <HouseAccountMethod
+              selected={houseAccount}
+              onSelect={setHouseAccount}
+              signedBy={signedBy}
+              onSignedByChange={setSignedBy}
+              suggestedPhone={target.customerPhone}
+            />
           ) : null}
 
           <View style={styles.modes}>

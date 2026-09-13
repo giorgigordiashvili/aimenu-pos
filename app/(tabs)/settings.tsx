@@ -27,6 +27,7 @@ import {
   resumeOnlineOrders,
 } from "@/api/ordering";
 import { listTerminals, terminalsSummary } from "@/api/terminals";
+import SellGiftCardSheet from "@/components/SellGiftCardSheet";
 import { useNotifications } from "@/lib/useNotifications";
 import {
   clock,
@@ -62,6 +63,8 @@ export default function SettingsScreen() {
   const timekeepingOn = moduleOn(currentRestaurant, "timekeeping");
   const orderingOn = moduleOn(currentRestaurant, "online_ordering");
   const terminalsOn = moduleOn(currentRestaurant, "terminals");
+  const giftOn = moduleOn(currentRestaurant, "gift_cards");
+  const [sellGift, setSellGift] = useState(false);
   const terminalsQuery = useQuery({
     queryKey: ["terminals"],
     queryFn: listTerminals,
@@ -382,6 +385,22 @@ export default function SettingsScreen() {
               </Pressable>
             </View>
             {testNote ? <Text style={styles.cardBody}>{testNote}</Text> : null}
+          </View>
+        ) : null}
+
+        {giftOn && can(currentRestaurant, "cash", "create") ? (
+          <View style={styles.card} testID="gift-cards-card">
+            <Text style={styles.cardTitle}>{t.giftcards.method}</Text>
+            <Button
+              title={t.giftcards.sell}
+              variant="primary"
+              onPress={() => setSellGift(true)}
+              testID="open-sell-gift-card"
+            />
+            <SellGiftCardSheet
+              visible={sellGift}
+              onClose={() => setSellGift(false)}
+            />
           </View>
         ) : null}
 

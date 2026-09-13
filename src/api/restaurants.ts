@@ -23,6 +23,8 @@ export type ModuleCode =
   | "online_ordering"
   | "terminals"
   | "waitlist"
+  | "gift_cards"
+  | "house_accounts"
   | "payments";
 
 export type Resource =
