@@ -3,7 +3,7 @@
  * DO NOT EDIT MANUALLY
  */
 
-export interface Action23eEnum {
+export interface ActionAf7enum {
   [key: string]: any;
 }
 
@@ -30,7 +30,7 @@ export interface AuditLogDetail {
   user_agent?: string;
   restaurant?: string;
   restaurant_name: string;
-  action: Action23eEnum;
+  action: ActionAf7enum;
   action_display: string;
   target_model?: string;
   target_id?: string;
@@ -45,7 +45,7 @@ export interface AuditLogDetail {
 export interface AuditLogList {
   id: string;
   user_email: string;
-  action: Action23eEnum;
+  action: ActionAf7enum;
   action_display: string;
   target_model?: string;
   target_id?: string;
@@ -55,6 +55,10 @@ export interface AuditLogList {
 }
 
 export interface AutoRequestCourierOnEnum {
+  [key: string]: any;
+}
+
+export interface BlankEnum {
   [key: string]: any;
 }
 
@@ -68,6 +72,19 @@ export interface BridgeJob {
   title: string;
   copies: number;
   escpos_b64: string;
+}
+
+export interface BridgeResultRequest {
+  status: BridgeResultStatusEnum;
+  auth_code?: string;
+  card_mask?: string;
+  rrn?: string;
+  error?: string;
+  raw?: Record<string, any>;
+}
+
+export interface BridgeResultStatusEnum {
+  [key: string]: any;
 }
 
 export interface Campaign {
@@ -182,6 +199,11 @@ export interface CloseShiftRequest {
   notes?: string;
 }
 
+export interface ConfirmRequest {
+  auth_code?: string;
+  card_mask?: string;
+}
+
 export interface ConnectionEnum {
   [key: string]: any;
 }
@@ -276,6 +298,10 @@ export interface Customer {
 
 export interface DayOfWeekEnum {
   [key: string]: any;
+}
+
+export interface DeclineRequest {
+  reason?: string;
 }
 
 export interface DefaultCurrencyEnum {
@@ -393,6 +419,10 @@ export interface DeviceRegisterRequest {
   kind?: DeviceRegisterKindEnum;
   platform?: string;
   app_version?: string;
+}
+
+export interface EcrProtocolEnum {
+  [key: string]: any;
 }
 
 export interface EligibleOrder {
@@ -1018,6 +1048,7 @@ export interface OrderList {
   table_session?: string;
   customer_name?: string;
   source?: SourceF68enum;
+  scheduled_for?: string;
   subtotal?: string;
   discount_amount?: string;
   total?: string;
@@ -1996,6 +2027,11 @@ export interface RefundCreateRequest {
   reason_details?: string;
 }
 
+export interface RefundRequest {
+  amount: string;
+  reason?: string;
+}
+
 export interface RefundStatusEnum {
   [key: string]: any;
 }
@@ -2477,6 +2513,10 @@ export interface SelectionTypeEnum {
   [key: string]: any;
 }
 
+export interface SendLinkRequest {
+  to: string;
+}
+
 export interface SetUnavailableRequest {
   until?: UntilEnum;
 }
@@ -2594,6 +2634,16 @@ export interface StaffRoleRequest {
   display_name?: string;
   permissions?: any;
   description?: string;
+}
+
+export interface StartSaleRequest {
+  terminal_id: string;
+  amount: string;
+  tip_amount?: string;
+  order_id?: string;
+  order_ids?: string[];
+  session_id?: string;
+  send_to?: string;
 }
 
 export interface StationEnum {
@@ -2824,6 +2874,28 @@ export interface TableStatusEnum {
   [key: string]: any;
 }
 
+export interface Terminal {
+  id: string;
+  name: string;
+  provider: TerminalProviderEnum;
+  provider_display: string;
+  ecr_protocol: EcrProtocolEnum | BlankEnum;
+  terminal_id: string;
+  is_active: boolean;
+  is_default: boolean;
+  is_online: boolean;
+  is_link: boolean;
+  auto_receipt: boolean;
+  timeout_seconds: number;
+  configured: string;
+  last_seen_at: string;
+  last_error: string;
+}
+
+export interface TerminalProviderEnum {
+  [key: string]: any;
+}
+
 export interface TestMessageChannelEnum {
   [key: string]: any;
 }
@@ -2862,6 +2934,45 @@ export interface TokenRefresh {
 
 export interface TokenRefreshRequest {
   refresh: string;
+}
+
+export interface Transaction {
+  id: string;
+  terminal: string;
+  terminal_name: string;
+  provider: string;
+  kind: TransactionKindEnum;
+  amount: string;
+  tip: string;
+  total: string;
+  currency: string;
+  status: TransactionStatusEnum;
+  status_display: string;
+  is_open: boolean;
+  order: string;
+  order_number: string;
+  session: string;
+  order_ids: any;
+  payment_id: string;
+  receipt_number: string;
+  external_id: string;
+  auth_code: string;
+  card_mask: string;
+  rrn: string;
+  pay_url: string;
+  error: string;
+  sent_to: string;
+  expires_at: string;
+  finished_at: string;
+  created_at: string;
+}
+
+export interface TransactionKindEnum {
+  [key: string]: any;
+}
+
+export interface TransactionStatusEnum {
+  [key: string]: any;
 }
 
 export interface UnreadCount {

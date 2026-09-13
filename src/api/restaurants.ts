@@ -21,6 +21,7 @@ export type ModuleCode =
   | "timekeeping"
   | "crm"
   | "online_ordering"
+  | "terminals"
   | "payments";
 
 export type Resource =

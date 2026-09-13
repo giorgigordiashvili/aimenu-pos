@@ -170,6 +170,13 @@ import type {
   TableSection,
   PatchedTableSectionRequest,
   PaginatedTableSessionList,
+  RefundRequest,
+  Transaction,
+  Terminal,
+  StartSaleRequest,
+  ConfirmRequest,
+  DeclineRequest,
+  SendLinkRequest,
   ClockStatus,
   ClockActionRequest,
   TimeEntry,
@@ -220,6 +227,7 @@ import type {
   ReviewStats,
   TableSessionDetail,
   PaginatedTableSessionGuestList,
+  BridgeResultRequest,
   User,
   UserUpdateRequest,
   UserUpdate,
@@ -2528,6 +2536,112 @@ export async function dashboardTablesSessionsStartCreate(): Promise<any> {
   return response.data;
 }
 
+export async function dashboardTerminalsPaymentsRefundCreate(
+  paymentId: string,
+  data: RefundRequest,
+): Promise<Transaction> {
+  const response = await axios.post(
+    `/api/v1/dashboard/terminals/payments/${paymentId}/refund/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardTerminalsSummaryRetrieve(): Promise<Summary> {
+  const response = await axios.get(`/api/v1/dashboard/terminals/summary/`);
+  return response.data;
+}
+
+export async function dashboardTerminalsTerminalsList(): Promise<Terminal[]> {
+  const response = await axios.get(`/api/v1/dashboard/terminals/terminals/`);
+  return response.data;
+}
+
+export async function dashboardTerminalsTransactionsRetrieve(
+  shift?: string,
+  status?: string,
+): Promise<any> {
+  const response = await axios.get(
+    `/api/v1/dashboard/terminals/transactions/${(() => {
+      const parts = [
+        shift ? 'shift=' + encodeURIComponent(shift) : null,
+        status ? 'status=' + encodeURIComponent(status) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
+  return response.data;
+}
+
+export async function dashboardTerminalsTransactionsCreate(
+  shift?: string,
+  status?: string,
+  data: StartSaleRequest,
+): Promise<Transaction> {
+  const response = await axios.post(
+    `/api/v1/dashboard/terminals/transactions/${(() => {
+      const parts = [
+        shift ? 'shift=' + encodeURIComponent(shift) : null,
+        status ? 'status=' + encodeURIComponent(status) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardTerminalsTransactionsRetrieve2(
+  txId: string,
+): Promise<Transaction> {
+  const response = await axios.get(
+    `/api/v1/dashboard/terminals/transactions/${txId}/`,
+  );
+  return response.data;
+}
+
+export async function dashboardTerminalsTransactionsCancelCreate(
+  txId: string,
+): Promise<Transaction> {
+  const response = await axios.post(
+    `/api/v1/dashboard/terminals/transactions/${txId}/cancel/`,
+  );
+  return response.data;
+}
+
+export async function dashboardTerminalsTransactionsConfirmCreate(
+  txId: string,
+  data: ConfirmRequest,
+): Promise<Transaction> {
+  const response = await axios.post(
+    `/api/v1/dashboard/terminals/transactions/${txId}/confirm/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardTerminalsTransactionsDeclineCreate(
+  txId: string,
+  data: DeclineRequest,
+): Promise<Transaction> {
+  const response = await axios.post(
+    `/api/v1/dashboard/terminals/transactions/${txId}/decline/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardTerminalsTransactionsSendLinkCreate(
+  txId: string,
+  data: SendLinkRequest,
+): Promise<Transaction> {
+  const response = await axios.post(
+    `/api/v1/dashboard/terminals/transactions/${txId}/send-link/`,
+    data,
+  );
+  return response.data;
+}
+
 export async function dashboardTimekeepingClockRetrieve(): Promise<ClockStatus> {
   const response = await axios.get(`/api/v1/dashboard/timekeeping/clock/`);
   return response.data;
@@ -3562,6 +3676,33 @@ export async function tablesSessionsJoinConfirmCreate(
 
 export async function tablesValidateRetrieve(code: string): Promise<any> {
   const response = await axios.get(`/api/v1/tables/validate/${code}/`);
+  return response.data;
+}
+
+export async function terminalBridgeJobsResultCreate(
+  txId: string,
+  data: BridgeResultRequest,
+): Promise<Record<string, any>> {
+  const response = await axios.post(
+    `/api/v1/terminal-bridge/jobs/${txId}/result/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function terminalBridgeJobsNextRetrieve(
+  wait?: number,
+): Promise<BridgeJob> {
+  const response = await axios.get(
+    `/api/v1/terminal-bridge/jobs/next/${wait ? '?wait=' + encodeURIComponent(wait) : ''}`,
+  );
+  return response.data;
+}
+
+export async function terminalBridgePingRetrieve(): Promise<
+  Record<string, any>
+> {
+  const response = await axios.get(`/api/v1/terminal-bridge/ping/`);
   return response.data;
 }
 

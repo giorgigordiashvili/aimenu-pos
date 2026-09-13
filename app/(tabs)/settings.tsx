@@ -26,6 +26,7 @@ import {
   pauseOnlineOrders,
   resumeOnlineOrders,
 } from "@/api/ordering";
+import { listTerminals, terminalsSummary } from "@/api/terminals";
 import { useNotifications } from "@/lib/useNotifications";
 import {
   clock,
@@ -60,6 +61,19 @@ export default function SettingsScreen() {
   const notifications = useNotifications();
   const timekeepingOn = moduleOn(currentRestaurant, "timekeeping");
   const orderingOn = moduleOn(currentRestaurant, "online_ordering");
+  const terminalsOn = moduleOn(currentRestaurant, "terminals");
+  const terminalsQuery = useQuery({
+    queryKey: ["terminals"],
+    queryFn: listTerminals,
+    enabled: terminalsOn,
+    refetchInterval: 60_000,
+  });
+  const terminalsSummaryQuery = useQuery({
+    queryKey: ["terminals-summary"],
+    queryFn: terminalsSummary,
+    enabled: terminalsOn,
+    refetchInterval: 60_000,
+  });
   const orderingQuery = useQuery({
     queryKey: ["ordering-summary"],
     queryFn: orderingSummary,
@@ -368,6 +382,42 @@ export default function SettingsScreen() {
               </Pressable>
             </View>
             {testNote ? <Text style={styles.cardBody}>{testNote}</Text> : null}
+          </View>
+        ) : null}
+
+        {terminalsOn ? (
+          <View style={styles.card} testID="terminals-card">
+            <Text style={styles.cardTitle}>{t.terminals.cardPayment}</Text>
+            {(terminalsQuery.data ?? []).length === 0 ? (
+              <Text style={styles.cardBody}>{t.terminals.noTerminals}</Text>
+            ) : (
+              (terminalsQuery.data ?? []).map((x) => (
+                <View key={x.id} style={styles.printerRow}>
+                  <View
+                    style={[
+                      styles.printerDot,
+                      {
+                        backgroundColor:
+                          x.is_active && x.configured && x.is_online
+                            ? colors.success
+                            : colors.warning,
+                      },
+                    ]}
+                  />
+                  <Text style={styles.printerName}>
+                    {x.name} · {x.provider_display}
+                    {x.is_default ? " · ★" : ""}
+                  </Text>
+                </View>
+              ))
+            )}
+            {terminalsSummaryQuery.data ? (
+              <Text style={styles.cardBody}>
+                {t.terminals.awaitingTerminal}:{" "}
+                {terminalsSummaryQuery.data.awaiting} · {t.terminals.declined}:{" "}
+                {terminalsSummaryQuery.data.declined_today}
+              </Text>
+            ) : null}
           </View>
         ) : null}
 

@@ -6,6 +6,7 @@ export type PaymentMethod =
   | StaffPaymentMethod
   | "online_bog"
   | "online_flitt"
+  | "online_tbc"
   | "card"
   | "mobile";
 

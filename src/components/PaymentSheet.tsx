@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
@@ -11,8 +11,19 @@ import {
   type RecordPaymentResult,
   type StaffPaymentMethod,
 } from "@/api/payments";
+import { moduleOn } from "@/api/restaurants";
+import { listPayments, type PaymentRow } from "@/api/payments";
+import {
+  listTerminals,
+  startTerminalSale,
+  terminalErrorCode,
+  type Terminal,
+  type TerminalTransaction,
+} from "@/api/terminals";
 import Button from "@/components/Button";
 import Sheet from "@/components/Sheet";
+import TerminalWaitSheet from "@/components/TerminalWaitSheet";
+import { useAuth } from "@/context/AuthContext";
 import { useT } from "@/i18n";
 import { fixed, money, num, tenderSuggestions } from "@/lib/money";
 import { colors, radius, spacing, typography } from "@/theme/tokens";
@@ -58,6 +69,21 @@ export default function PaymentSheet({
 }: Props) {
   const t = useT();
   const qc = useQueryClient();
+  const { currentRestaurant } = useAuth();
+  const terminalsOn = moduleOn(currentRestaurant, "terminals");
+  const terminalsQuery = useQuery({
+    queryKey: ["terminals"],
+    queryFn: listTerminals,
+    enabled: terminalsOn && visible,
+    staleTime: 60_000,
+  });
+  const terminals = (terminalsQuery.data ?? []).filter(
+    (x) => x.is_active && x.configured,
+  );
+  const [terminalId, setTerminalId] = useState<string | null>(null);
+  const [terminalTx, setTerminalTx] = useState<TerminalTransaction | null>(
+    null,
+  );
   const [method, setMethod] = useState<StaffPaymentMethod>("cash");
   const [mode, setMode] = useState<"full" | "partial" | "split">("full");
   const [ways, setWays] = useState(2);
@@ -80,7 +106,14 @@ export default function PaymentSheet({
     setShareIndex(0);
     setLast(null);
     setError(null);
+    setTerminalTx(null);
   }, [visible, target]);
+
+  useEffect(() => {
+    if (!terminals.length) return;
+    if (terminalId && terminals.some((x) => x.id === terminalId)) return;
+    setTerminalId((terminals.find((x) => x.is_default) ?? terminals[0]).id);
+  }, [terminals, terminalId]);
 
   const shares = useMemo(() => splitEvenly(balance, ways), [balance, ways]);
   const due = useMemo(() => {
@@ -136,6 +169,87 @@ export default function PaymentSheet({
     },
   });
 
+  const useTerminal =
+    terminalsOn && method === "card_terminal" && terminals.length > 0;
+  const terminalSale = useMutation({
+    mutationFn: () => {
+      if (!target || !terminalId) throw new Error("no terminal");
+      return startTerminalSale({
+        terminal_id: terminalId,
+        amount: fixed(due),
+        tip_amount: tipValue > 0 ? fixed(tipValue) : undefined,
+        ...(target.kind === "order"
+          ? { order_id: target.orderId }
+          : { session_id: target.sessionId }),
+      });
+    },
+    onSuccess: (tx) => {
+      setError(null);
+      setTerminalTx(tx);
+    },
+    onError: (err) => {
+      const code = terminalErrorCode(err);
+      const known = code
+        ? (t.terminals.errors as Record<string, string>)[code]
+        : undefined;
+      setError(known ?? t.terminals.errors.generic);
+    },
+  });
+
+  const onTerminalFinished = async (tx: TerminalTransaction) => {
+    if (tx.status !== "approved" || !tx.payment_id) return;
+    let payment: PaymentRow | undefined;
+    try {
+      const rows = await listPayments(
+        target?.kind === "order"
+          ? { order: target.orderId }
+          : {
+              session:
+                target?.kind === "session" ? target.sessionId : undefined,
+            },
+      );
+      payment = rows.results.find((p) => p.id === tx.payment_id);
+    } catch {
+      payment = undefined;
+    }
+    const paidNow = num(tx.amount);
+    const remaining = Math.max(Math.round((balance - paidNow) * 100) / 100, 0);
+    const result: RecordPaymentResult = {
+      payment:
+        payment ??
+        ({
+          id: tx.payment_id,
+          order: tx.order,
+          session: tx.session,
+          shift: null,
+          amount: tx.amount,
+          tip_amount: tx.tip,
+          total_amount: tx.total,
+          change_given: "0.00",
+          payment_method:
+            tx.provider === "bog_link"
+              ? "online_bog"
+              : tx.provider === "tbc_tpay"
+                ? "online_tbc"
+                : "card_terminal",
+          status: "completed",
+          receipt_number: tx.receipt_number,
+        } as PaymentRow),
+      change: "0.00",
+      receipt_number: tx.receipt_number,
+      balance: fixed(remaining),
+      paid_order_numbers:
+        remaining <= 0 && tx.order_number ? [tx.order_number] : [],
+    };
+    setLast(result);
+    setBalance(remaining);
+    setAmount(fixed(remaining));
+    setTip("");
+    if (mode === "split") setShareIndex((i) => Math.min(i + 1, ways - 1));
+    qc.invalidateQueries({ queryKey: ["cash-shift"] });
+    onPaid(result, remaining <= 0);
+  };
+
   if (!target) return null;
   const finished = balance <= 0;
 
@@ -170,13 +284,26 @@ export default function PaymentSheet({
           <>
             {error ? <Text style={styles.error}>{error}</Text> : null}
             <Button
-              title={`${t.cash.takePayment} · ${money(totalDue)}`}
+              title={
+                useTerminal
+                  ? `${t.terminals.cardPayment} · ${money(totalDue)}`
+                  : `${t.cash.takePayment} · ${money(totalDue)}`
+              }
               variant="success"
               size="lg"
               fullWidth
-              disabled={pay.isPending || due <= 0 || cashShort}
-              loading={pay.isPending}
-              onPress={() => pay.mutate()}
+              disabled={
+                pay.isPending ||
+                terminalSale.isPending ||
+                due <= 0 ||
+                cashShort ||
+                (useTerminal && !terminalId)
+              }
+              loading={pay.isPending || terminalSale.isPending}
+              onPress={() =>
+                useTerminal ? terminalSale.mutate() : pay.mutate()
+              }
+              testID="take-payment"
             />
           </>
         )
@@ -245,6 +372,44 @@ export default function PaymentSheet({
               </Pressable>
             ))}
           </View>
+
+          {terminalsOn && method === "card_terminal" ? (
+            <View style={styles.terminalRow} testID="terminal-picker">
+              {terminals.length === 0 ? (
+                <Text style={styles.terminalHint}>
+                  {t.terminals.noTerminals}
+                </Text>
+              ) : (
+                terminals.map((x: Terminal) => (
+                  <Pressable
+                    key={x.id}
+                    onPress={() => setTerminalId(x.id)}
+                    style={[
+                      styles.terminalChip,
+                      terminalId === x.id && styles.terminalChipActive,
+                    ]}
+                    testID={`terminal-${x.id}`}
+                  >
+                    <Ionicons
+                      name={x.is_link ? "qr-code-outline" : "card-outline"}
+                      size={16}
+                      color={
+                        terminalId === x.id ? colors.primary : colors.slate600
+                      }
+                    />
+                    <Text
+                      style={[
+                        styles.terminalChipText,
+                        terminalId === x.id && styles.terminalChipTextActive,
+                      ]}
+                    >
+                      {x.name}
+                    </Text>
+                  </Pressable>
+                ))
+              )}
+            </View>
+          ) : null}
 
           <View style={styles.modes}>
             <ModeChip
@@ -382,6 +547,14 @@ export default function PaymentSheet({
           ) : null}
         </>
       )}
+      <TerminalWaitSheet
+        tx={terminalTx}
+        onClose={() => setTerminalTx(null)}
+        onFinished={(tx) => {
+          setTerminalTx(null);
+          onTerminalFinished(tx);
+        }}
+      />
     </Sheet>
   );
 }
@@ -456,6 +629,24 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   methods: { flexDirection: "row", gap: spacing.sm },
+  terminalRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+  terminalHint: { fontSize: 13, color: colors.muted },
+  terminalChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  terminalChipActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryTint,
+  },
+  terminalChipText: { fontSize: 13, color: colors.slate600 },
+  terminalChipTextActive: { color: colors.primary, fontWeight: "600" },
   method: {
     flex: 1,
     minHeight: 64,
