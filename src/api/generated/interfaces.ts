@@ -3,8 +3,16 @@
  * DO NOT EDIT MANUALLY
  */
 
-export interface ActionAf7enum {
+export interface ActionDf1enum {
   [key: string]: any;
+}
+
+export interface AddEntryRequest {
+  name: string;
+  phone?: string;
+  party_size?: number;
+  quoted_minutes?: number;
+  notes?: string;
 }
 
 export interface Amenity {
@@ -30,7 +38,7 @@ export interface AuditLogDetail {
   user_agent?: string;
   restaurant?: string;
   restaurant_name: string;
-  action: ActionAf7enum;
+  action: ActionDf1enum;
   action_display: string;
   target_model?: string;
   target_id?: string;
@@ -45,7 +53,7 @@ export interface AuditLogDetail {
 export interface AuditLogList {
   id: string;
   user_email: string;
-  action: ActionAf7enum;
+  action: ActionDf1enum;
   action_display: string;
   target_model?: string;
   target_id?: string;
@@ -516,6 +524,12 @@ export interface ItemAvailability {
   available_from: string;
   unavailable_until: string;
   is_available: boolean;
+}
+
+export interface JoinRequest {
+  name: string;
+  phone: string;
+  party_size?: number;
 }
 
 export interface Kind0ffEnum {
@@ -1594,6 +1608,15 @@ export interface PatchedTableSectionRequest {
   background_note?: string;
 }
 
+export interface PatchedUpdateEntryRequest {
+  name?: string;
+  phone?: string;
+  party_size?: number;
+  quoted_minutes?: number;
+  notes?: string;
+  position?: number;
+}
+
 export interface PatchedUserUpdateRequest {
   first_name?: string;
   last_name?: string;
@@ -1618,6 +1641,15 @@ export interface PatchedVenueTableWriteRequest {
   shape?: VenueTableWriteShapeEnum;
   section?: string;
   is_active?: boolean;
+}
+
+export interface PatchedWaitlistSettingsRequest {
+  default_wait_minutes?: number;
+  notify_expire_minutes?: number;
+  allow_self_join?: boolean;
+  max_party_size?: number;
+  sms_on_join?: boolean;
+  sms_on_ready?: boolean;
 }
 
 export interface PauseRequest {
@@ -1894,6 +1926,18 @@ export interface PromotionModeEnum {
 
 export interface Provider3c4enum {
   [key: string]: any;
+}
+
+export interface PublicStatus {
+  name: string;
+  party_size: number;
+  status: string;
+  position: number;
+  ahead: number;
+  quoted_minutes: number;
+  estimated_ready_at: string;
+  restaurant: string;
+  restaurant_slug: string;
 }
 
 export interface PurchaseOrder {
@@ -2497,6 +2541,10 @@ export interface RotaShift {
   note?: string;
   published?: boolean;
   hours: string;
+}
+
+export interface SeatRequest {
+  table_id: string;
 }
 
 export interface Segment {
@@ -3267,6 +3315,51 @@ export interface VenueValidateData {
 export interface VenueValidateResponse {
   success: boolean;
   data: VenueValidateData;
+}
+
+export interface WaitlistEntry {
+  id: string;
+  date: string;
+  position: number;
+  name: string;
+  phone: string;
+  party_size: number;
+  quoted_minutes: number;
+  status: WaitlistEntryStatusEnum;
+  status_display: string;
+  is_open: boolean;
+  source: WaitlistEntrySourceEnum;
+  notes: string;
+  notified_at: string;
+  notify_count: number;
+  seated_at: string;
+  left_at: string;
+  table: string;
+  table_number: string;
+  session: string;
+  reservation: string;
+  reservation_code: string;
+  estimated_ready_at: string;
+  waited_minutes: number;
+  created_at: string;
+}
+
+export interface WaitlistEntrySourceEnum {
+  [key: string]: any;
+}
+
+export interface WaitlistEntryStatusEnum {
+  [key: string]: any;
+}
+
+export interface WaitlistSettings {
+  default_wait_minutes?: number;
+  notify_expire_minutes?: number;
+  allow_self_join?: boolean;
+  max_party_size?: number;
+  sms_on_join?: boolean;
+  sms_on_ready?: boolean;
+  join_url: string;
 }
 
 export interface WalletTransaction {

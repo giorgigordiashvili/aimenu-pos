@@ -18,6 +18,8 @@ interface Props {
   onReject?: () => void;
   onSeated?: () => void;
   onComplete?: () => void;
+  /** Waitlist module: move a waitlisted booking into today's walk-in queue. */
+  onToWaitlist?: () => void;
   isMutating?: boolean;
 }
 
@@ -56,6 +58,7 @@ export default function ReservationCard({
   onReject,
   onSeated,
   onComplete,
+  onToWaitlist,
   isMutating,
 }: Props) {
   const status: ReservationStatus = resolveReservationStatus(row.status);
@@ -189,6 +192,16 @@ export default function ReservationCard({
             style={{ flex: 1 }}
             loading={isMutating && !!onComplete}
             onPress={onComplete}
+          />
+        ) : status === "waitlist" && onToWaitlist ? (
+          <Button
+            title={t.waitlist.toWaitlist}
+            variant="primary"
+            size="md"
+            style={{ flex: 1 }}
+            loading={isMutating}
+            onPress={onToWaitlist}
+            testID={`to-waitlist-${row.id}`}
           />
         ) : null}
       </View>

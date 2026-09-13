@@ -192,6 +192,12 @@ import type {
   VenueTableDashboard,
   VenueTableWriteRequest,
   PatchedVenueTableWriteRequest,
+  WaitlistEntry,
+  AddEntryRequest,
+  PatchedUpdateEntryRequest,
+  SeatRequest,
+  WaitlistSettings,
+  PatchedWaitlistSettingsRequest,
   PaginatedFavoriteMenuItemList,
   FavoriteMenuItemCreateRequest,
   FavoriteMenuItemCreate,
@@ -236,6 +242,8 @@ import type {
   VenueDetailResponse,
   VenueMenuResponse,
   VenueValidateResponse,
+  JoinRequest,
+  PublicStatus,
 } from './interfaces';
 
 export async function adminAuditList(
@@ -2778,6 +2786,128 @@ export async function dashboardVenueTablesDeactivateCreate(
   return response.data;
 }
 
+export async function dashboardWaitlistEntriesList(
+  all?: boolean,
+  date?: string,
+): Promise<WaitlistEntry[]> {
+  const response = await axios.get(
+    `/api/v1/dashboard/waitlist/entries/${(() => {
+      const parts = [
+        all ? 'all=' + encodeURIComponent(all) : null,
+        date ? 'date=' + encodeURIComponent(date) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
+  return response.data;
+}
+
+export async function dashboardWaitlistEntriesCreate(
+  data: AddEntryRequest,
+): Promise<WaitlistEntry> {
+  const response = await axios.post(
+    `/api/v1/dashboard/waitlist/entries/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardWaitlistEntriesPartialUpdate(
+  entryId: string,
+  data: PatchedUpdateEntryRequest,
+): Promise<WaitlistEntry> {
+  const response = await axios.patch(
+    `/api/v1/dashboard/waitlist/entries/${entryId}/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardWaitlistEntriesCancelCreate(
+  entryId: string,
+): Promise<WaitlistEntry> {
+  const response = await axios.post(
+    `/api/v1/dashboard/waitlist/entries/${entryId}/cancel/`,
+  );
+  return response.data;
+}
+
+export async function dashboardWaitlistEntriesLeftCreate(
+  entryId: string,
+): Promise<WaitlistEntry> {
+  const response = await axios.post(
+    `/api/v1/dashboard/waitlist/entries/${entryId}/left/`,
+  );
+  return response.data;
+}
+
+export async function dashboardWaitlistEntriesNoShowCreate(
+  entryId: string,
+): Promise<WaitlistEntry> {
+  const response = await axios.post(
+    `/api/v1/dashboard/waitlist/entries/${entryId}/no-show/`,
+  );
+  return response.data;
+}
+
+export async function dashboardWaitlistEntriesNotifyCreate(
+  entryId: string,
+): Promise<WaitlistEntry> {
+  const response = await axios.post(
+    `/api/v1/dashboard/waitlist/entries/${entryId}/notify/`,
+  );
+  return response.data;
+}
+
+export async function dashboardWaitlistEntriesSeatCreate(
+  entryId: string,
+  data: SeatRequest,
+): Promise<WaitlistEntry> {
+  const response = await axios.post(
+    `/api/v1/dashboard/waitlist/entries/${entryId}/seat/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardWaitlistEstimateRetrieve(
+  partySize?: number,
+): Promise<Record<string, any>> {
+  const response = await axios.get(
+    `/api/v1/dashboard/waitlist/estimate/${partySize ? '?party_size=' + encodeURIComponent(partySize) : ''}`,
+  );
+  return response.data;
+}
+
+export async function dashboardWaitlistReservationsToWaitlistCreate(
+  reservationId: string,
+): Promise<WaitlistEntry> {
+  const response = await axios.post(
+    `/api/v1/dashboard/waitlist/reservations/${reservationId}/to-waitlist/`,
+  );
+  return response.data;
+}
+
+export async function dashboardWaitlistSettingsRetrieve(): Promise<WaitlistSettings> {
+  const response = await axios.get(`/api/v1/dashboard/waitlist/settings/`);
+  return response.data;
+}
+
+export async function dashboardWaitlistSettingsPartialUpdate(
+  data: PatchedWaitlistSettingsRequest,
+): Promise<WaitlistSettings> {
+  const response = await axios.patch(
+    `/api/v1/dashboard/waitlist/settings/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardWaitlistSummaryRetrieve(): Promise<Summary> {
+  const response = await axios.get(`/api/v1/dashboard/waitlist/summary/`);
+  return response.data;
+}
+
 export async function favoritesClearDestroy(): Promise<any> {
   const response = await axios.delete(`/api/v1/favorites/clear/`);
   return response.data;
@@ -3750,6 +3880,37 @@ export async function venuesValidateRetrieve(
   code: string,
 ): Promise<VenueValidateResponse> {
   const response = await axios.get(`/api/v1/venues/validate/${code}/`);
+  return response.data;
+}
+
+export async function waitlistRetrieve(
+  slug: string,
+  token: string,
+): Promise<Record<string, any>> {
+  const response = await axios.get(`/api/v1/waitlist/${slug}/${token}/`);
+  return response.data;
+}
+
+export async function waitlistCreate(
+  slug: string,
+  token: string,
+  data: JoinRequest,
+): Promise<Record<string, any>> {
+  const response = await axios.post(`/api/v1/waitlist/${slug}/${token}/`, data);
+  return response.data;
+}
+
+export async function waitlistStatusRetrieve(
+  token: string,
+): Promise<PublicStatus> {
+  const response = await axios.get(`/api/v1/waitlist/status/${token}/`);
+  return response.data;
+}
+
+export async function waitlistStatusDestroy(
+  token: string,
+): Promise<Record<string, any>> {
+  const response = await axios.delete(`/api/v1/waitlist/status/${token}/`);
   return response.data;
 }
 

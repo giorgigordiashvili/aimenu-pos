@@ -22,6 +22,7 @@ export type ModuleCode =
   | "crm"
   | "online_ordering"
   | "terminals"
+  | "waitlist"
   | "payments";
 
 export type Resource =

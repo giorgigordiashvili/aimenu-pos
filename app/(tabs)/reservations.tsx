@@ -21,7 +21,10 @@ import {
   type Reservation,
   type ReservationStatus,
 } from "@/api/reservations";
+import { moduleOn } from "@/api/restaurants";
+import { reservationToWaitlist } from "@/api/waitlist";
 import ReservationCard from "@/components/ReservationCard";
+import { useAuth } from "@/context/AuthContext";
 import StatsBar from "@/components/StatsBar";
 import TopBar from "@/components/TopBar";
 import { useLocale } from "@/i18n";
@@ -83,6 +86,16 @@ export default function ReservationsScreen() {
       .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
   }, [todayRows, upcomingRows, tab]);
 
+  const { currentRestaurant } = useAuth();
+  const waitlistOn = moduleOn(currentRestaurant, "waitlist");
+  const toWaitlist = useMutation({
+    mutationFn: (id: string) => reservationToWaitlist(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["waitlist"] });
+      qc.invalidateQueries({ queryKey: ["reservations-today"] });
+      qc.invalidateQueries({ queryKey: ["reservations-upcoming"] });
+    },
+  });
   const mutate = useMutation({
     mutationFn: ({ id, status }: { id: string; status: ReservationStatus }) =>
       setReservationStatus(id, status),
@@ -204,7 +217,12 @@ export default function ReservationsScreen() {
                             mutate.mutate({ id: row.id, status: "completed" })
                         : undefined
                     }
-                    isMutating={isMutating}
+                    onToWaitlist={
+                      status === "waitlist" && waitlistOn
+                        ? () => toWaitlist.mutate(row.id)
+                        : undefined
+                    }
+                    isMutating={isMutating || toWaitlist.isPending}
                   />
                 </View>
               );

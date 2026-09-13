@@ -46,6 +46,7 @@ import FloorPlan, {
 import PaymentSheet, { type PaymentTarget } from "@/components/PaymentSheet";
 import ShiftBanner from "@/components/ShiftBanner";
 import TableSheet from "@/components/TableSheet";
+import WaitlistPanel from "@/components/WaitlistPanel";
 import TopBar from "@/components/TopBar";
 import { useAuth } from "@/context/AuthContext";
 import { useT } from "@/i18n";
@@ -63,7 +64,7 @@ const CUSTOMER_SITE =
   (process.env.EXPO_PUBLIC_CUSTOMER_URL as string | undefined) ??
   "https://aimenu.ge";
 
-type ViewMode = "floor" | "sessions";
+type ViewMode = "floor" | "sessions" | "waitlist";
 
 export default function TablesScreen() {
   const t = useT();
@@ -320,7 +321,15 @@ export default function TablesScreen() {
       <ShiftBanner />
       <View style={styles.toolbar}>
         <View style={styles.segment}>
-          {(["floor", "sessions"] as ViewMode[]).map((m) => (
+          {(
+            [
+              "floor",
+              "sessions",
+              ...(moduleOn(currentRestaurant, "waitlist")
+                ? (["waitlist"] as ViewMode[])
+                : []),
+            ] as ViewMode[]
+          ).map((m) => (
             <Pressable
               key={m}
               onPress={() => setView(m)}
@@ -328,7 +337,13 @@ export default function TablesScreen() {
               testID={`view-${m}`}
             >
               <Ionicons
-                name={m === "floor" ? "grid-outline" : "list-outline"}
+                name={
+                  m === "floor"
+                    ? "grid-outline"
+                    : m === "sessions"
+                      ? "list-outline"
+                      : "hourglass-outline"
+                }
                 size={16}
                 color={view === m ? colors.white : colors.foreground}
               />
@@ -338,7 +353,11 @@ export default function TablesScreen() {
                   view === m && styles.segmentTextActive,
                 ]}
               >
-                {m === "floor" ? t.floor.floorView : t.floor.sessionsView}
+                {m === "floor"
+                  ? t.floor.floorView
+                  : m === "sessions"
+                    ? t.floor.sessionsView
+                    : t.waitlist.tab}
               </Text>
             </Pressable>
           ))}
@@ -398,7 +417,9 @@ export default function TablesScreen() {
           />
         }
       >
-        {view === "floor" ? (
+        {view === "waitlist" ? (
+          <WaitlistPanel />
+        ) : view === "floor" ? (
           tables.isLoading || sections.isLoading ? (
             <View style={styles.loading}>
               <ActivityIndicator color={colors.primary} size="large" />
