@@ -3,7 +3,7 @@
  * DO NOT EDIT MANUALLY
  */
 
-export interface Action810enum {
+export interface Action23eEnum {
   [key: string]: any;
 }
 
@@ -18,6 +18,10 @@ export interface AppliesToEnum {
   [key: string]: any;
 }
 
+export interface AssignCourierRequest {
+  courier_id: string;
+}
+
 export interface AuditLogDetail {
   id: string;
   user?: string;
@@ -26,7 +30,7 @@ export interface AuditLogDetail {
   user_agent?: string;
   restaurant?: string;
   restaurant_name: string;
-  action: Action810enum;
+  action: Action23eEnum;
   action_display: string;
   target_model?: string;
   target_id?: string;
@@ -41,13 +45,17 @@ export interface AuditLogDetail {
 export interface AuditLogList {
   id: string;
   user_email: string;
-  action: Action810enum;
+  action: Action23eEnum;
   action_display: string;
   target_model?: string;
   target_id?: string;
   description?: string;
   ip_address?: string;
   created_at: string;
+}
+
+export interface AutoRequestCourierOnEnum {
+  [key: string]: any;
 }
 
 export interface BridgeFailRequest {
@@ -87,6 +95,10 @@ export interface CampaignChannelEnum {
 
 export interface CampaignStatusEnum {
   [key: string]: any;
+}
+
+export interface CancelCourierRequest {
+  reason?: string;
 }
 
 export interface CashMovement {
@@ -197,6 +209,41 @@ export interface ContactMessageCreateRequest {
   website?: string;
 }
 
+export interface Courier {
+  id: string;
+  name: string;
+  phone?: string;
+  vehicle?: string;
+  is_active?: boolean;
+  is_available?: boolean;
+  staff?: string;
+  staff_user_id: string;
+}
+
+export interface CourierProviderEnum {
+  [key: string]: any;
+}
+
+export interface CourierRequest {
+  name: string;
+  phone?: string;
+  vehicle?: string;
+  is_active?: boolean;
+  is_available?: boolean;
+  staff?: string;
+}
+
+export interface CourierUpdateRequest {
+  status: CourierUpdateStatusEnum;
+  lat?: number;
+  lng?: number;
+  note?: string;
+}
+
+export interface CourierUpdateStatusEnum {
+  [key: string]: any;
+}
+
 export interface CustomTokenObtainPairRequest {
   email: string;
   password: string;
@@ -237,6 +284,86 @@ export interface DefaultCurrencyEnum {
 
 export interface DefaultLanguageEnum {
   [key: string]: any;
+}
+
+export interface Delivery {
+  id: string;
+  order_id: string;
+  order_number: string;
+  order_status: string;
+  provider: Provider3c4enum;
+  provider_display: string;
+  status: DeliveryStatusEnum;
+  status_display: string;
+  courier_id: string;
+  courier_name: string;
+  courier_phone: string;
+  external_id: string;
+  tracking_url: string;
+  quote: any;
+  cost: string;
+  fee_charged: string;
+  pickup_eta: string;
+  dropoff_eta: string;
+  courier_lat: string;
+  courier_lng: string;
+  error: string;
+  requested_at: string;
+  picked_up_at: string;
+  delivered_at: string;
+  customer_name: string;
+  customer_phone: string;
+  address: string;
+  address_json: any;
+  lat: string;
+  lng: string;
+  instructions: string;
+  scheduled_for: string;
+  total: string;
+  is_paid: string;
+  events: any;
+  created_at: string;
+}
+
+export interface DeliveryQuoteRequestRequest {
+  lat: number;
+  lng: number;
+  subtotal?: string;
+}
+
+export interface DeliveryStatusEnum {
+  [key: string]: any;
+}
+
+export interface DeliveryZone {
+  id: string;
+  name: string;
+  kind?: DeliveryZoneKindEnum;
+  radius_km?: string;
+  polygon?: any;
+  fee?: string;
+  min_order?: string;
+  eta_minutes?: number;
+  is_active?: boolean;
+  sort?: number;
+  color?: string;
+}
+
+export interface DeliveryZoneKindEnum {
+  [key: string]: any;
+}
+
+export interface DeliveryZoneRequest {
+  name: string;
+  kind?: DeliveryZoneKindEnum;
+  radius_km?: string;
+  polygon?: any;
+  fee?: string;
+  min_order?: string;
+  eta_minutes?: number;
+  is_active?: boolean;
+  sort?: number;
+  color?: string;
 }
 
 export interface DestinationEnum {
@@ -742,6 +869,27 @@ export interface NullEnum {
   [key: string]: any;
 }
 
+export interface OnlineOrderingSettings {
+  pickup_enabled?: boolean;
+  delivery_enabled?: boolean;
+  asap_enabled?: boolean;
+  scheduling_enabled?: boolean;
+  lead_minutes?: number;
+  delivery_extra_minutes?: number;
+  slot_interval_minutes?: number;
+  max_days_ahead?: number;
+  cutoff_minutes_before_close?: number;
+  min_order_pickup?: string;
+  min_order_delivery?: string;
+  free_delivery_over?: string;
+  packaging_fee?: string;
+  courier_provider?: CourierProviderEnum;
+  auto_request_courier_on?: AutoRequestCourierOnEnum;
+  pass_platform_fee_to_guest?: boolean;
+  paused_until: string;
+  pause_reason: string;
+}
+
 export interface OpenShiftRequest {
   opening_float?: string;
   register?: string;
@@ -761,6 +909,14 @@ export interface Order {
   customer_email?: string | string;
   customer_notes?: string;
   delivery_address?: string;
+  address_json?: any;
+  delivery_lat?: string;
+  delivery_lng?: string;
+  delivery_instructions?: string;
+  delivery_fee?: string;
+  packaging_fee?: string;
+  scheduled_for?: string;
+  delivery: string;
   subtotal: string;
   tax_amount: string;
   service_charge: string;
@@ -1203,11 +1359,33 @@ export interface PasswordResetRequestRequest {
   email: string;
 }
 
+export interface PatchedCourierRequest {
+  name?: string;
+  phone?: string;
+  vehicle?: string;
+  is_active?: boolean;
+  is_available?: boolean;
+  staff?: string;
+}
+
 export interface PatchedCustomerRequest {
   name?: string;
   birthday?: string;
   tags?: any;
   notes?: string;
+}
+
+export interface PatchedDeliveryZoneRequest {
+  name?: string;
+  kind?: DeliveryZoneKindEnum;
+  radius_km?: string;
+  polygon?: any;
+  fee?: string;
+  min_order?: string;
+  eta_minutes?: number;
+  is_active?: boolean;
+  sort?: number;
+  color?: string;
 }
 
 export interface PatchedLoyaltyProgramWriteRequest {
@@ -1261,6 +1439,25 @@ export interface PatchedModifierGroupDashboardRequest {
   display_order?: number;
   is_active?: boolean;
   internal_name?: string;
+}
+
+export interface PatchedOnlineOrderingSettingsRequest {
+  pickup_enabled?: boolean;
+  delivery_enabled?: boolean;
+  asap_enabled?: boolean;
+  scheduling_enabled?: boolean;
+  lead_minutes?: number;
+  delivery_extra_minutes?: number;
+  slot_interval_minutes?: number;
+  max_days_ahead?: number;
+  cutoff_minutes_before_close?: number;
+  min_order_pickup?: string;
+  min_order_delivery?: string;
+  free_delivery_over?: string;
+  packaging_fee?: string;
+  courier_provider?: CourierProviderEnum;
+  auto_request_courier_on?: AutoRequestCourierOnEnum;
+  pass_platform_fee_to_guest?: boolean;
 }
 
 export interface PatchedPrinterRequest {
@@ -1664,6 +1861,10 @@ export interface PromotionModeEnum {
   [key: string]: any;
 }
 
+export interface Provider3c4enum {
+  [key: string]: any;
+}
+
 export interface PurchaseOrder {
   id: string;
   number: string;
@@ -1797,6 +1998,14 @@ export interface RefundCreateRequest {
 
 export interface RefundStatusEnum {
   [key: string]: any;
+}
+
+export interface RequestCourierProviderEnum {
+  [key: string]: any;
+}
+
+export interface RequestCourierRequest {
+  provider?: RequestCourierProviderEnum;
 }
 
 export interface ReservationBlockedTime {
@@ -2117,12 +2326,30 @@ export interface RestaurantDetail {
   updated_at: string;
 }
 
+export interface RestaurantDomain {
+  id: string;
+  domain: string;
+  is_primary?: boolean;
+  verified_at: string;
+  last_check_at: string;
+  error: string;
+  is_verified: boolean;
+  created_at: string;
+}
+
+export interface RestaurantDomainRequest {
+  domain: string;
+  is_primary?: boolean;
+}
+
 export interface RestaurantHours {
   id: string;
   day_of_week: DayOfWeekEnum;
   day_name: string;
   open_time: string;
   close_time: string;
+  open_time_2?: string;
+  close_time_2?: string;
   is_closed?: boolean;
 }
 

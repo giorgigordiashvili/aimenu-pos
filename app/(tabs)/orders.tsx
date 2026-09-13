@@ -675,6 +675,15 @@ function OrderCard({
         </Text>
         <Text style={styles.cardMeta}>{formatTime(row.created_at)}</Text>
       </View>
+      {row.scheduled_for &&
+      (row.order_type === "takeaway" || row.order_type === "delivery") ? (
+        <View style={styles.scheduledPill} testID="scheduled-pill">
+          <Text style={styles.scheduledText}>
+            {row.order_type === "delivery" ? "🛵" : "🛍"}{" "}
+            {formatTime(row.scheduled_for)}
+          </Text>
+        </View>
+      ) : null}
       {row.customer_name ? (
         <Text style={styles.cardGuest}>{row.customer_name}</Text>
       ) : null}
@@ -703,6 +712,19 @@ function OrderCard({
 }
 
 const styles = StyleSheet.create({
+  scheduledPill: {
+    alignSelf: "flex-start",
+    backgroundColor: colors.primaryTint,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginTop: 4,
+  },
+  scheduledText: {
+    fontSize: typography.sizes.xs,
+    fontWeight: typography.weights.bold,
+    color: colors.primary,
+  },
   root: { flex: 1, backgroundColor: colors.background },
   loading: { flex: 1, alignItems: "center", justifyContent: "center" },
   headerActions: {

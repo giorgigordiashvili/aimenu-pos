@@ -70,6 +70,21 @@ import type {
   Notification,
   TestMessageRequest,
   OutboundMessage,
+  Courier,
+  CourierRequest,
+  PatchedCourierRequest,
+  Delivery,
+  RestaurantDomain,
+  RestaurantDomainRequest,
+  AssignCourierRequest,
+  CancelCourierRequest,
+  RequestCourierRequest,
+  CourierUpdateRequest,
+  OnlineOrderingSettings,
+  PatchedOnlineOrderingSettingsRequest,
+  DeliveryZone,
+  DeliveryZoneRequest,
+  PatchedDeliveryZoneRequest,
   PaginatedOrderListList,
   Order,
   OrderDiscountCreateRequest,
@@ -176,6 +191,7 @@ import type {
   PaginatedFavoriteRestaurantList,
   FavoriteRestaurantCreateRequest,
   FavoriteRestaurantCreate,
+  DeliveryQuoteRequestRequest,
   PaginatedOrderList,
   PaginatedPaymentMethodList,
   BridgeFailRequest,
@@ -919,6 +935,303 @@ export async function dashboardNotificationsTestMessageCreate(
 export async function dashboardNotificationsUnreadCountRetrieve(): Promise<UnreadCount> {
   const response = await axios.get(
     `/api/v1/dashboard/notifications/unread-count/`,
+  );
+  return response.data;
+}
+
+export async function dashboardOrderingCouriersList(
+  ordering?: string,
+  search?: string,
+): Promise<Courier[]> {
+  const response = await axios.get(
+    `/api/v1/dashboard/ordering/couriers/${(() => {
+      const parts = [
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
+  return response.data;
+}
+
+export async function dashboardOrderingCouriersCreate(
+  data: CourierRequest,
+): Promise<Courier> {
+  const response = await axios.post(
+    `/api/v1/dashboard/ordering/couriers/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardOrderingCouriersRetrieve(
+  courierId: string,
+): Promise<Courier> {
+  const response = await axios.get(
+    `/api/v1/dashboard/ordering/couriers/${courierId}/`,
+  );
+  return response.data;
+}
+
+export async function dashboardOrderingCouriersUpdate(
+  courierId: string,
+  data: CourierRequest,
+): Promise<Courier> {
+  const response = await axios.put(
+    `/api/v1/dashboard/ordering/couriers/${courierId}/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardOrderingCouriersPartialUpdate(
+  courierId: string,
+  data: PatchedCourierRequest,
+): Promise<Courier> {
+  const response = await axios.patch(
+    `/api/v1/dashboard/ordering/couriers/${courierId}/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardOrderingCouriersDestroy(
+  courierId: string,
+): Promise<any> {
+  const response = await axios.delete(
+    `/api/v1/dashboard/ordering/couriers/${courierId}/`,
+  );
+  return response.data;
+}
+
+export async function dashboardOrderingCouriersMeRetrieve(): Promise<Courier> {
+  const response = await axios.get(`/api/v1/dashboard/ordering/couriers/me/`);
+  return response.data;
+}
+
+export async function dashboardOrderingCouriersMePartialUpdate(): Promise<Courier> {
+  const response = await axios.patch(`/api/v1/dashboard/ordering/couriers/me/`);
+  return response.data;
+}
+
+export async function dashboardOrderingDeliveriesList(
+  mine?: boolean,
+  ordering?: string,
+  search?: string,
+  status?: string,
+): Promise<Delivery[]> {
+  const response = await axios.get(
+    `/api/v1/dashboard/ordering/deliveries/${(() => {
+      const parts = [
+        mine ? 'mine=' + encodeURIComponent(mine) : null,
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
+        status ? 'status=' + encodeURIComponent(status) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
+  return response.data;
+}
+
+export async function dashboardOrderingDomainsList(
+  ordering?: string,
+  search?: string,
+): Promise<RestaurantDomain[]> {
+  const response = await axios.get(
+    `/api/v1/dashboard/ordering/domains/${(() => {
+      const parts = [
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
+  return response.data;
+}
+
+export async function dashboardOrderingDomainsCreate(
+  data: RestaurantDomainRequest,
+): Promise<RestaurantDomain> {
+  const response = await axios.post(
+    `/api/v1/dashboard/ordering/domains/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardOrderingDomainsRetrieve(
+  domainId: string,
+): Promise<RestaurantDomain> {
+  const response = await axios.get(
+    `/api/v1/dashboard/ordering/domains/${domainId}/`,
+  );
+  return response.data;
+}
+
+export async function dashboardOrderingDomainsDestroy(
+  domainId: string,
+): Promise<any> {
+  const response = await axios.delete(
+    `/api/v1/dashboard/ordering/domains/${domainId}/`,
+  );
+  return response.data;
+}
+
+export async function dashboardOrderingDomainsVerifyCreate(
+  domainId: string,
+): Promise<RestaurantDomain> {
+  const response = await axios.post(
+    `/api/v1/dashboard/ordering/domains/${domainId}/verify/`,
+  );
+  return response.data;
+}
+
+export async function dashboardOrderingOrdersDeliveryRetrieve(
+  orderId: string,
+): Promise<Delivery> {
+  const response = await axios.get(
+    `/api/v1/dashboard/ordering/orders/${orderId}/delivery/`,
+  );
+  return response.data;
+}
+
+export async function dashboardOrderingOrdersDeliveryAssignCreate(
+  orderId: string,
+  data: AssignCourierRequest,
+): Promise<Delivery> {
+  const response = await axios.post(
+    `/api/v1/dashboard/ordering/orders/${orderId}/delivery/assign/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardOrderingOrdersDeliveryCancelCreate(
+  orderId: string,
+  data: CancelCourierRequest,
+): Promise<Delivery> {
+  const response = await axios.post(
+    `/api/v1/dashboard/ordering/orders/${orderId}/delivery/cancel/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardOrderingOrdersDeliveryRequestCreate(
+  orderId: string,
+  data: RequestCourierRequest,
+): Promise<Delivery> {
+  const response = await axios.post(
+    `/api/v1/dashboard/ordering/orders/${orderId}/delivery/request/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardOrderingOrdersDeliveryUpdateCreate(
+  orderId: string,
+  data: CourierUpdateRequest,
+): Promise<Delivery> {
+  const response = await axios.post(
+    `/api/v1/dashboard/ordering/orders/${orderId}/delivery/update/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardOrderingPauseCreate(
+  data: PauseRequest,
+): Promise<OnlineOrderingSettings> {
+  const response = await axios.post(`/api/v1/dashboard/ordering/pause/`, data);
+  return response.data;
+}
+
+export async function dashboardOrderingPauseDestroy(): Promise<any> {
+  const response = await axios.delete(`/api/v1/dashboard/ordering/pause/`);
+  return response.data;
+}
+
+export async function dashboardOrderingSettingsRetrieve(): Promise<OnlineOrderingSettings> {
+  const response = await axios.get(`/api/v1/dashboard/ordering/settings/`);
+  return response.data;
+}
+
+export async function dashboardOrderingSettingsPartialUpdate(
+  data: PatchedOnlineOrderingSettingsRequest,
+): Promise<OnlineOrderingSettings> {
+  const response = await axios.patch(
+    `/api/v1/dashboard/ordering/settings/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardOrderingSummaryRetrieve(): Promise<Summary> {
+  const response = await axios.get(`/api/v1/dashboard/ordering/summary/`);
+  return response.data;
+}
+
+export async function dashboardOrderingZonesList(
+  ordering?: string,
+  search?: string,
+): Promise<DeliveryZone[]> {
+  const response = await axios.get(
+    `/api/v1/dashboard/ordering/zones/${(() => {
+      const parts = [
+        ordering ? 'ordering=' + encodeURIComponent(ordering) : null,
+        search ? 'search=' + encodeURIComponent(search) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
+  return response.data;
+}
+
+export async function dashboardOrderingZonesCreate(
+  data: DeliveryZoneRequest,
+): Promise<DeliveryZone> {
+  const response = await axios.post(`/api/v1/dashboard/ordering/zones/`, data);
+  return response.data;
+}
+
+export async function dashboardOrderingZonesRetrieve(
+  zoneId: string,
+): Promise<DeliveryZone> {
+  const response = await axios.get(
+    `/api/v1/dashboard/ordering/zones/${zoneId}/`,
+  );
+  return response.data;
+}
+
+export async function dashboardOrderingZonesUpdate(
+  zoneId: string,
+  data: DeliveryZoneRequest,
+): Promise<DeliveryZone> {
+  const response = await axios.put(
+    `/api/v1/dashboard/ordering/zones/${zoneId}/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardOrderingZonesPartialUpdate(
+  zoneId: string,
+  data: PatchedDeliveryZoneRequest,
+): Promise<DeliveryZone> {
+  const response = await axios.patch(
+    `/api/v1/dashboard/ordering/zones/${zoneId}/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function dashboardOrderingZonesDestroy(
+  zoneId: string,
+): Promise<any> {
+  const response = await axios.delete(
+    `/api/v1/dashboard/ordering/zones/${zoneId}/`,
   );
   return response.data;
 }
@@ -2519,6 +2832,46 @@ export async function menuItemsRetrieve(
   slug: string,
 ): Promise<MenuItem> {
   const response = await axios.get(`/api/v1/menu/${slug}/items/${id}/`);
+  return response.data;
+}
+
+export async function orderingConfigRetrieve(slug: string): Promise<any> {
+  const response = await axios.get(`/api/v1/ordering/${slug}/config/`);
+  return response.data;
+}
+
+export async function orderingDeliveryQuoteCreate(
+  slug: string,
+  data: DeliveryQuoteRequestRequest,
+): Promise<any> {
+  const response = await axios.post(
+    `/api/v1/ordering/${slug}/delivery-quote/`,
+    data,
+  );
+  return response.data;
+}
+
+export async function orderingSlotsRetrieve(
+  slug: string,
+  date?: string,
+  kind?: string,
+): Promise<any> {
+  const response = await axios.get(
+    `/api/v1/ordering/${slug}/slots/${(() => {
+      const parts = [
+        date ? 'date=' + encodeURIComponent(date) : null,
+        kind ? 'kind=' + encodeURIComponent(kind) : null,
+      ].filter(Boolean);
+      return parts.length > 0 ? '?' + parts.join('&') : '';
+    })()}`,
+  );
+  return response.data;
+}
+
+export async function orderingByDomainRetrieve(host?: string): Promise<any> {
+  const response = await axios.get(
+    `/api/v1/ordering/by-domain/${host ? '?host=' + encodeURIComponent(host) : ''}`,
+  );
   return response.data;
 }
 

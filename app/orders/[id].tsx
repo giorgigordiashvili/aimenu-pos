@@ -32,6 +32,7 @@ import {
 import type { RecordPaymentResult } from "@/api/payments";
 import { can, moduleOn } from "@/api/restaurants";
 import Button from "@/components/Button";
+import DeliveryPanel from "@/components/DeliveryPanel";
 import DiscountSheet, { type DiscountInput } from "@/components/DiscountSheet";
 import PromoCodeSheet from "@/components/PromoCodeSheet";
 import { lookupCustomer } from "@/api/crm";
@@ -324,6 +325,8 @@ export default function OrderDetailScreen() {
           ) : null}
         </View>
 
+        <DeliveryPanel order={order} onChanged={invalidateOnOrderChange} />
+
         {error ? (
           <Pressable onPress={() => setError(null)} style={styles.errorBox}>
             <Text style={styles.errorText}>{error}</Text>
@@ -499,6 +502,18 @@ export default function OrderDetailScreen() {
           ) : null}
           {num(order.tip_amount) > 0 ? (
             <Row label={t.orderDetail.tip} value={money(order.tip_amount)} />
+          ) : null}
+          {num(order.delivery_fee) > 0 ? (
+            <Row
+              label={t.ordering.deliveryFee}
+              value={money(order.delivery_fee)}
+            />
+          ) : null}
+          {num(order.packaging_fee) > 0 ? (
+            <Row
+              label={t.ordering.packaging}
+              value={money(order.packaging_fee)}
+            />
           ) : null}
           <Row
             label={t.orderDetail.total}

@@ -62,6 +62,8 @@ export interface OrderListRow {
   id: string;
   order_number: string;
   order_type?: string;
+  /** Pickup / delivery time the guest chose (first-party online orders). */
+  scheduled_for?: string | null;
   status?: OrderStatus | { value: string };
   source?: OrderSource;
   table?: string | null;
@@ -76,6 +78,12 @@ export interface OrderListRow {
 }
 
 export interface Order extends OrderListRow {
+  address_json?: Record<string, string>;
+  delivery_instructions?: string;
+  delivery_fee?: string;
+  packaging_fee?: string;
+  /** Courier summary for delivery orders (null otherwise). */
+  delivery?: import("./ordering").OrderDeliverySummary | null;
   subtotal?: string;
   tax_amount?: string;
   service_charge?: string;

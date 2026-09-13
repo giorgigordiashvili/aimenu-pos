@@ -13,13 +13,19 @@ import {
 
 import Button from "@/components/Button";
 import TopBar from "@/components/TopBar";
-import { moduleOn } from "@/api/restaurants";
+import { can, moduleOn } from "@/api/restaurants";
 import { useAuth } from "@/context/AuthContext";
 import { useLocale } from "@/i18n";
 import { money } from "@/lib/money";
 import { useShift } from "@/lib/useShift";
 import { usePrinters } from "@/lib/usePrinters";
 import { useDeliveryPlatforms } from "@/lib/useDeliveryPlatforms";
+import {
+  myCourier,
+  orderingSummary,
+  pauseOnlineOrders,
+  resumeOnlineOrders,
+} from "@/api/ordering";
 import { useNotifications } from "@/lib/useNotifications";
 import {
   clock,
@@ -53,6 +59,30 @@ export default function SettingsScreen() {
   const delivery = useDeliveryPlatforms();
   const notifications = useNotifications();
   const timekeepingOn = moduleOn(currentRestaurant, "timekeeping");
+  const orderingOn = moduleOn(currentRestaurant, "online_ordering");
+  const orderingQuery = useQuery({
+    queryKey: ["ordering-summary"],
+    queryFn: orderingSummary,
+    enabled: orderingOn,
+    refetchInterval: 60_000,
+  });
+  const courierMe = useQuery({
+    queryKey: ["courier-me"],
+    queryFn: myCourier,
+    enabled: orderingOn,
+  });
+  const [orderingBusy, setOrderingBusy] = useState(false);
+  const runOrdering = async (fn: () => Promise<unknown>) => {
+    setOrderingBusy(true);
+    try {
+      await fn();
+      await orderingQuery.refetch();
+    } catch {
+      setPlatformNote(t.delivery.failed);
+    } finally {
+      setOrderingBusy(false);
+    }
+  };
   const clockQuery = useQuery({
     queryKey: ["clock-status"],
     queryFn: clockStatus,
@@ -338,6 +368,73 @@ export default function SettingsScreen() {
               </Pressable>
             </View>
             {testNote ? <Text style={styles.cardBody}>{testNote}</Text> : null}
+          </View>
+        ) : null}
+
+        {orderingOn ? (
+          <View style={styles.card} testID="online-ordering-card">
+            <Text style={styles.cardTitle}>{t.ordering.title}</Text>
+            <View style={styles.printerRow}>
+              <View
+                style={[
+                  styles.printerDot,
+                  {
+                    backgroundColor: orderingQuery.data?.paused
+                      ? colors.warning
+                      : colors.success,
+                  },
+                ]}
+              />
+              <Text style={styles.printerName}>
+                {orderingQuery.data
+                  ? `${orderingQuery.data.pickup_today} ${t.ordering.pickupToday} · ${orderingQuery.data.delivery_today} ${t.ordering.deliveryToday} · ${orderingQuery.data.in_flight} ${t.ordering.inFlight}`
+                  : t.common.loading}
+              </Text>
+              {can(currentRestaurant, "orders", "update") ? (
+                orderingQuery.data?.paused ? (
+                  <Pressable
+                    disabled={orderingBusy}
+                    onPress={() => runOrdering(resumeOnlineOrders)}
+                    style={styles.printerTest}
+                    testID="ordering-resume"
+                  >
+                    <Text style={styles.printerTestText}>
+                      {t.ordering.resume}
+                    </Text>
+                  </Pressable>
+                ) : (
+                  <>
+                    <Pressable
+                      disabled={orderingBusy}
+                      onPress={() => runOrdering(() => pauseOnlineOrders(30))}
+                      style={styles.printerTest}
+                      testID="ordering-pause-30"
+                    >
+                      <Text style={styles.printerTestText}>
+                        {t.ordering.pause} {t.ordering.pause30}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      disabled={orderingBusy}
+                      onPress={() => runOrdering(() => pauseOnlineOrders(60))}
+                      style={styles.printerTest}
+                    >
+                      <Text style={styles.printerTestText}>
+                        {t.ordering.pause60}
+                      </Text>
+                    </Pressable>
+                  </>
+                )
+              ) : null}
+            </View>
+            {courierMe.data || can(currentRestaurant, "orders", "update") ? (
+              <Button
+                title={t.ordering.myDeliveries}
+                variant="outline"
+                onPress={() => router.push("/deliveries" as Href)}
+                testID="open-deliveries"
+              />
+            ) : null}
           </View>
         ) : null}
 
