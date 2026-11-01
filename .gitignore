@@ -19,3 +19,5 @@ yarn-error.*
 /android
 .cxx/
 expo-env.d.ts
+credentials.json
+credentials/

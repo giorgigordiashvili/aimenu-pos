@@ -28,10 +28,24 @@
         {
           "sounds": []
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "8f93b370-c9b2-4d90-9c3f-0943670a445d"
+      }
+    },
+    "owner": "ggordiashvili",
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/8f93b370-c9b2-4d90-9c3f-0943670a445d"
     }
   }
 }
